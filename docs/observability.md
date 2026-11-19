@@ -38,7 +38,7 @@ API keys, connection strings and `Authorization` / `x-api-key` headers are never
 | 7000–7099 | Synthesis | 7000–7001 report, 7002 output sanitized, 7003 uncited report |
 | 8000–8099 | Anthropic provider | 8000–8002 |
 | 8100–8199 | RabbitMQ provider | 8100–8103 listener |
-| 8200–8299 | Postgres provider | 8200–8201 outbox store |
+| 8200–8299 | Postgres provider | 8200–8202 outbox store (8202: a message was parked) |
 | 8300–8399 | OpenAI provider | 8300–8302 |
 | 8400–8499 | Valkey provider | 8400 |
 | 9100–9299 | HTTP | 9100–9101 unhandled exception, 9200 correlation, 9210–9211 content logging |

@@ -4,6 +4,8 @@ namespace Research.Contracts.Planning;
 public sealed record PlanRequested(Guid JobId, string StepKey, string Question, int MaxSubQuestions) : IIntegrationMessage
 {
     public static string MessageType => "planning.plan-requested";
+
+    public static MessageKind Kind => MessageKind.Command;
 }
 
 /// <summary>Planning's answer: the sub-questions to search for, and what the plan cost.</summary>
@@ -15,4 +17,6 @@ public sealed record PlanReady(
     long OutputTokens) : IIntegrationMessage
 {
     public static string MessageType => "planning.plan-ready";
+
+    public static MessageKind Kind => MessageKind.Event;
 }

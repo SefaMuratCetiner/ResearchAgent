@@ -8,7 +8,9 @@ namespace Research.Messaging.Outbox;
 /// <summary>
 /// Publishes committed outbox rows. Runs on every replica: the store claims rows with <c>SKIP LOCKED</c>, so replicas
 /// share the work without a leader. Wakes on the store's signal (NOTIFY) or the poll interval, and drains in full
-/// batches while there is a backlog. Batch size and poll interval are read on every pass, so a reload applies from
+/// batches while there is a backlog. A message that fails is retried after one poll interval, then after twice as
+/// long each time up to <see cref="MessagingOptions.OutboxMaxRetryDelaySeconds"/>, and parked after
+/// <see cref="MessagingOptions.OutboxMaxAttempts"/>. The settings are read on every pass, so a reload applies from
 /// the next pass.
 /// </summary>
 public sealed partial class OutboxBackgroundService(
@@ -31,7 +33,11 @@ public sealed partial class OutboxBackgroundService(
             var pollInterval = TimeSpan.FromMilliseconds(settings.OutboxPollIntervalMs);
             try
             {
-                var published = await store.PublishPendingAsync(publisher.PublishAsync, settings.OutboxBatchSize, stoppingToken)
+                var retry = new OutboxRetryPolicy(
+                    settings.OutboxMaxAttempts,
+                    pollInterval,
+                    TimeSpan.FromSeconds(settings.OutboxMaxRetryDelaySeconds));
+                var published = await store.PublishPendingAsync(publisher.PublishAsync, settings.OutboxBatchSize, retry, stoppingToken)
                     .ConfigureAwait(false);
                 metrics.OutboxPublished(published);
                 backoff = pollInterval;

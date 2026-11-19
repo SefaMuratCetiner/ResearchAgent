@@ -10,7 +10,11 @@
   until its per-queue TTL expires, then dead-letters back to the work queue through the default exchange.
 - **Dead-letter queue:** each work queue has a DLQ, `{queue}.dlq`. Nothing consumes it automatically, so inspect and
   replay its messages by hand.
-- **Publishing:** publisher confirms are on for every publish, and messages are persistent.
+- **Publishing:** publisher confirms are on for every publish, and messages are persistent. Each contract declares
+  its `MessageKind` (PLAN §11). **Commands** (`*-requested`) have exactly one consuming service and are published
+  *mandatory*: if no queue is bound yet, the broker returns the message (`312 NO_ROUTE`) and the sender retries it.
+  **Events** (everything else) have zero or more consumers and are not mandatory: an event nobody consumes, such as
+  `jobs.job-created`, is confirmed and dropped by the broker. Delay-queue copies and dead letters are mandatory.
 
 ## Contracts
 
@@ -61,6 +65,19 @@ Delivery is at least once everywhere, and duplicates are absorbed where state ch
 - Documents are unique per content hash and embedding model, and job links are upserted.
 
 Outbox order is **best effort**. Jobs does not depend on reply order: each reply checks the job's current state.
+
+### Outbox retries
+
+A message whose publish fails stays in `outbox_messages` with `attempts`, `last_error` and `next_attempt_at`. It is
+not claimed again before `next_attempt_at`, so it never holds back the messages behind it. The delay starts at
+`Messaging:OutboxPollIntervalMs` and doubles up to `Messaging:OutboxMaxRetryDelaySeconds` (1 s, 2 s, 4 s … 5 min).
+After `Messaging:OutboxMaxAttempts` failures (about an hour with the defaults) the row is **parked**: `parked_at` is
+set, it is never tried again, and event 8202 is logged as an error. To send a parked message again, after fixing the
+cause:
+
+```sql
+UPDATE outbox_messages SET parked_at = NULL, next_attempt_at = NULL, attempts = 0 WHERE id = '<message id>';
+```
 
 ## Lost messages
 

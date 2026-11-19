@@ -9,6 +9,8 @@ public sealed record SynthesisRequested(
     int TopK) : IIntegrationMessage
 {
     public static string MessageType => "synthesis.synthesis-requested";
+
+    public static MessageKind Kind => MessageKind.Command;
 }
 
 /// <summary>The finished report in Markdown, with numbered citations matching the <c>[n]</c> markers in the text.</summary>
@@ -23,6 +25,8 @@ public sealed record ReportReady(
     string Model) : IIntegrationMessage
 {
     public static string MessageType => "synthesis.report-ready";
+
+    public static MessageKind Kind => MessageKind.Event;
 }
 
 /// <summary>One numbered source of a report.</summary>

@@ -9,4 +9,6 @@ namespace Research.Contracts.Steps;
 public sealed record StepFailed(Guid JobId, string StepKey, string ErrorCode, string Service) : IIntegrationMessage
 {
     public static string MessageType => "research.step-failed";
+
+    public static MessageKind Kind => MessageKind.Event;
 }

@@ -7,4 +7,6 @@ namespace Research.Contracts.Knowledge;
 public sealed record DocumentIndexed(Guid JobId, string StepKey, Guid DocumentId, int PassageCount, bool Reused) : IIntegrationMessage
 {
     public static string MessageType => "knowledge.document-indexed";
+
+    public static MessageKind Kind => MessageKind.Event;
 }

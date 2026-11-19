@@ -2,14 +2,17 @@ using System.Globalization;
 using System.Text;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using Research.Contracts;
 using Research.SharedKernel.Messaging;
 
 namespace Research.Providers.RabbitMq;
 
 /// <summary>
 /// Publishes persistent messages on a channel with publisher confirmation tracking: each publish returns only after
-/// the broker confirmed it, and throws when the broker nacks or returns it (mandatory routing). One channel per
-/// process, guarded by a semaphore; recreated when it closes. The exchange is read once at startup: it says where
+/// the broker confirmed it, and throws when the broker nacks it. Commands, delay-queue copies and dead letters are
+/// mandatory, so a message no queue receives comes back as an error (its consumer has not declared its queue yet) and the
+/// sender retries it. Events are not: an event may have no consumer (PLAN §11), and the broker drops it. One channel
+/// per process, guarded by a semaphore; recreated when it closes. The exchange is read once at startup: it says where
 /// messages live, so the listeners keep the startup value too and a change needs a restart.
 /// </summary>
 public sealed class RabbitMqMessagePublisher(IConnection connection, IOptionsMonitor<RabbitMqOptions> options)
@@ -23,34 +26,18 @@ public sealed class RabbitMqMessagePublisher(IConnection connection, IOptionsMon
     {
         ArgumentNullException.ThrowIfNull(envelope);
         var properties = CreateProperties(envelope.MessageId, envelope.MessageType, envelope.OccurredAt, envelope.Headers);
-        return PublishRawAsync(_exchange, envelope.MessageType, properties, Encoding.UTF8.GetBytes(envelope.Payload), cancellationToken);
+        var mandatory = MessageCatalog.KindOf(envelope.MessageType) == MessageKind.Command;
+        return PublishAsync(_exchange, envelope.MessageType, mandatory, properties, Encoding.UTF8.GetBytes(envelope.Payload), cancellationToken);
     }
 
-    /// <summary>Publishes to any exchange and routing key; listeners use it for delay queues and DLQs.</summary>
-    public async Task PublishRawAsync(
+    /// <summary>Publishes to any exchange and routing key, mandatory; listeners use it for delay queues and DLQs.</summary>
+    public Task PublishRawAsync(
         string exchange,
         string routingKey,
         BasicProperties properties,
         ReadOnlyMemory<byte> body,
-        CancellationToken cancellationToken)
-    {
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            var channel = await GetChannelAsync(cancellationToken).ConfigureAwait(false);
-            await channel.BasicPublishAsync(
-                exchange,
-                routingKey,
-                mandatory: true,
-                basicProperties: properties,
-                body: body,
-                cancellationToken: cancellationToken).ConfigureAwait(false);
-        }
-        finally
-        {
-            _gate.Release();
-        }
-    }
+        CancellationToken cancellationToken) =>
+        PublishAsync(exchange, routingKey, mandatory: true, properties, body, cancellationToken);
 
     public static BasicProperties CreateProperties(
         Guid messageId,
@@ -78,6 +65,32 @@ public sealed class RabbitMqMessagePublisher(IConnection connection, IOptionsMon
         }
 
         _gate.Dispose();
+    }
+
+    private async Task PublishAsync(
+        string exchange,
+        string routingKey,
+        bool mandatory,
+        BasicProperties properties,
+        ReadOnlyMemory<byte> body,
+        CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var channel = await GetChannelAsync(cancellationToken).ConfigureAwait(false);
+            await channel.BasicPublishAsync(
+                exchange,
+                routingKey,
+                mandatory,
+                basicProperties: properties,
+                body: body,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
 
     private async Task<IChannel> GetChannelAsync(CancellationToken cancellationToken)

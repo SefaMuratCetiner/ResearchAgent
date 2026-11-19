@@ -4,6 +4,8 @@ namespace Research.Contracts.Fetching;
 public sealed record FetchRequested(Guid JobId, string StepKey, string Url, string? Title) : IIntegrationMessage
 {
     public static string MessageType => "fetching.fetch-requested";
+
+    public static MessageKind Kind => MessageKind.Command;
 }
 
 /// <summary>
@@ -21,4 +23,6 @@ public sealed record DocumentFetched(
     int CharacterCount) : IIntegrationMessage
 {
     public static string MessageType => "fetching.document-fetched";
+
+    public static MessageKind Kind => MessageKind.Event;
 }

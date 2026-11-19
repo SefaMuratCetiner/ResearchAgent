@@ -17,10 +17,14 @@ var openAIApiKey = string.IsNullOrEmpty(builder.Configuration["Parameters:openai
 
 // Infrastructure ----------------------------------------------------------------------------------------------------
 
+// Aspire starts each container on its own; Podman Desktop and Docker Desktop group containers by this compose label.
+const string ContainerGroup = "com.docker.compose.project=research";
+
 var pg = builder.AddPostgres("pg")
     .WithImage("pgvector/pgvector")
     .WithImageTag("pg17")
-    .WithDataVolume();
+    .WithDataVolume()
+    .WithContainerRuntimeArgs("--label", ContainerGroup);
 
 var jobsDb = pg.AddDatabase("jobs-db", "research_jobs");
 var fetchingDb = pg.AddDatabase("fetching-db", "research_fetching");
@@ -28,13 +32,17 @@ var knowledgeDb = pg.AddDatabase("knowledge-db", "research_knowledge");
 
 var bus = builder.AddRabbitMQ("bus")
     .WithManagementPlugin()
-    .WithDataVolume();
+    .WithDataVolume()
+    .WithContainerRuntimeArgs("--label", ContainerGroup);
 
 var cache = builder.AddValkey("cache")
-    .WithDataVolume();
+    .WithDataVolume()
+    .WithContainerRuntimeArgs("--label", ContainerGroup);
 
 var blobs = builder.AddAzureStorage("storage")
-    .RunAsEmulator(static emulator => emulator.WithDataVolume())
+    .RunAsEmulator(static emulator => emulator
+        .WithDataVolume()
+        .WithContainerRuntimeArgs("--label", ContainerGroup))
     .AddBlobs("blobs");
 
 // Schema scripts: run once, to completion, before any service that owns a database starts --------------------------

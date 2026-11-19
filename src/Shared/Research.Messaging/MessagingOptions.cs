@@ -21,8 +21,14 @@ public sealed class MessagingOptions
 
     public int OutboxBatchSize { get; set; } = 100;
 
-    /// <summary>Fallback poll when no NOTIFY arrives.</summary>
+    /// <summary>Fallback poll when no NOTIFY arrives; also the first retry delay of a message whose publish failed.</summary>
     public int OutboxPollIntervalMs { get; set; } = 1000;
+
+    /// <summary>Failed publishes of one outbox message before it is parked (about an hour with the defaults).</summary>
+    public int OutboxMaxAttempts { get; set; } = 20;
+
+    /// <summary>Upper bound of the doubling retry delay of a failed outbox message.</summary>
+    public int OutboxMaxRetryDelaySeconds { get; set; } = 300;
 
     /// <summary>Longest a handler may run; above the longest LLM call, below the broker's consumer timeout.</summary>
     public int MessageTimeoutSeconds { get; set; } = 900;
@@ -64,6 +70,16 @@ public sealed class MessagingOptionsValidator : IValidateOptions<MessagingOption
         if (options.OutboxPollIntervalMs < 50)
         {
             failures.Add("Messaging:OutboxPollIntervalMs must be at least 50.");
+        }
+
+        if (options.OutboxMaxAttempts < 1)
+        {
+            failures.Add("Messaging:OutboxMaxAttempts must be at least 1.");
+        }
+
+        if (options.OutboxMaxRetryDelaySeconds < 1)
+        {
+            failures.Add("Messaging:OutboxMaxRetryDelaySeconds must be positive.");
         }
 
         if (options.MessageTimeoutSeconds < 1)

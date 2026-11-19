@@ -19,7 +19,10 @@
 - **Out-of-order events (e.g. `DocumentIndexed` before `ResultsFound` is recorded):** The state machine accepts any order, and step rows are upserted.
 - **Late result for a cancelled or expired job:** Acknowledge and discard.
 - **Poison or unknown contract version:** Send straight to the DLQ with an alert.
-- **Broker down at publish:** The outbox keeps the message and retries; nothing is lost.
+- **Broker down at publish:** The outbox keeps the message and retries with a growing delay; nothing is lost. After
+  about an hour of failures the message is parked for an operator (see [messaging](messaging.md#outbox-retries)).
+- **Event with no consumer:** Events are not published mandatory, so the broker drops them; only a command nobody
+  can receive is an error.
 - **Broker down at consume:** Listeners reconnect with backoff, and readiness reports unready.
 - **Message larger than the broker limit:** Use claim check (send a blob reference); never inline documents.
 - **Retries exhausted:** Send to the DLQ and emit `StepFailed`; the job degrades instead of waiting forever.

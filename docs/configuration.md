@@ -19,7 +19,7 @@ where they use the value. When a change takes effect:
 | API keys (`Anthropic:ApiKey`, `OpenAI:ApiKey`, `AnthropicWebSearch:ApiKey`) | The next call: the SDK client is rebuilt with the new key (key rotation) |
 | `Fetching` HTTP handler settings, `Synthesis` Knowledge base address | When the HTTP client factory builds its next handler or client (handlers are recycled every few minutes) |
 | `Jobs` worker intervals | After the current tick |
-| `Messaging` outbox batch size and poll interval | The next outbox pass |
+| `Messaging` outbox batch size, poll interval and retry settings | The next outbox pass |
 | `Messaging:Prefetch`, `Messaging:RetryDelaysSeconds` | Each listener finishes its in-flight messages and subscribes again with the new values |
 | `Messaging:MaxAttempts`, `Messaging:MessageTimeoutSeconds`, `RabbitMq:ShutdownDrainSeconds` | The next message, or the next drain |
 | **`Messaging:ServiceName`, `RabbitMq:Exchange`** | **Restart only.** They name the queues and exchange where messages live; changing them live would strand messages in the old queue. A change logs a warning (event 8105) and the startup value stays. |
@@ -61,7 +61,9 @@ results, page text, reports, API bodies) **is** logged; see [observability.md](o
 | `RetryDelaysSeconds` | [10, 60, 300] | Delay queue per retry; the last repeats |
 | `Prefetch` | 8 | QoS and handler concurrency per replica |
 | `OutboxBatchSize` | 100 | Rows per outbox claim |
-| `OutboxPollIntervalMs` | 1000 | Poll interval when no NOTIFY arrives |
+| `OutboxPollIntervalMs` | 1000 | Poll interval when no NOTIFY arrives; also the first retry delay of a failed publish |
+| `OutboxMaxAttempts` | 20 | Failed publishes of one outbox message before it is parked (about an hour) |
+| `OutboxMaxRetryDelaySeconds` | 300 | Upper bound of the doubling retry delay |
 | `MessageTimeoutSeconds` | 900 | Handler timeout |
 
 ### `RabbitMq`

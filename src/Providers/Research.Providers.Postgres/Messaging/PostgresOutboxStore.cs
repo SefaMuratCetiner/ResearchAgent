@@ -7,17 +7,21 @@ using Research.SharedKernel.Messaging;
 namespace Research.Providers.Postgres.Messaging;
 
 /// <summary>
-/// The dispatcher side of the outbox. Each run claims a batch with <c>FOR UPDATE SKIP LOCKED</c> (replicas never
-/// publish the same row at the same time), publishes it, and marks rows published only after the broker confirmed
-/// them. A crash after the confirm but before the commit republishes the row: consumers are idempotent.
+/// The dispatcher side of the outbox. Each run claims a batch of due rows with <c>FOR UPDATE SKIP LOCKED</c> (replicas
+/// never publish the same row at the same time), publishes it, and marks rows published only after the broker
+/// confirmed them. A crash after the confirm but before the commit republishes the row: consumers are idempotent. A row
+/// whose publish failed is due again after the retry delay (<c>next_attempt_at</c>) and is parked (<c>parked_at</c>)
+/// once it used up its attempts; a parked row stays in the table until someone requeues it.
 /// </summary>
 public sealed partial class PostgresOutboxStore(NpgsqlDataSource dataSource, ILogger<PostgresOutboxStore> logger)
     : IOutboxStore, IAsyncDisposable
 {
     private const string ClaimSql = """
-        SELECT id, message_type, payload::text AS payload, headers::text AS headers, occurred_at
+        SELECT id, message_type, payload::text AS payload, headers::text AS headers, occurred_at, attempts
         FROM outbox_messages
         WHERE published_at IS NULL
+          AND parked_at IS NULL
+          AND (next_attempt_at IS NULL OR next_attempt_at <= now())
         ORDER BY created_at, id
         LIMIT @BatchSize
         FOR UPDATE SKIP LOCKED
@@ -26,7 +30,12 @@ public sealed partial class PostgresOutboxStore(NpgsqlDataSource dataSource, ILo
     private const string MarkPublishedSql = "UPDATE outbox_messages SET published_at = now() WHERE id = ANY(@Ids)";
 
     private const string MarkFailedSql = """
-        UPDATE outbox_messages SET attempts = attempts + 1, last_error = @Error WHERE id = @Id
+        UPDATE outbox_messages
+        SET attempts = @Attempts,
+            last_error = @Error,
+            next_attempt_at = now() + @DelaySeconds * interval '1 second',
+            parked_at = CASE WHEN @Park THEN now() END
+        WHERE id = @Id
         """;
 
     private NpgsqlConnection? _listenConnection;
@@ -34,9 +43,11 @@ public sealed partial class PostgresOutboxStore(NpgsqlDataSource dataSource, ILo
     public async Task<int> PublishPendingAsync(
         Func<OutgoingEnvelope, CancellationToken, Task> publish,
         int batchSize,
+        OutboxRetryPolicy retry,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(publish);
+        ArgumentNullException.ThrowIfNull(retry);
 
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
@@ -63,10 +74,28 @@ public sealed partial class PostgresOutboxStore(NpgsqlDataSource dataSource, ILo
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
-                LogPublishFailed(logger, exception, row.Id, row.MessageType);
+                var attempts = row.Attempts + 1;
+                var park = retry.ShouldPark(attempts);
+                var delay = retry.DelayAfter(attempts);
+                if (park)
+                {
+                    LogParked(logger, exception, row.Id, row.MessageType, attempts);
+                }
+                else
+                {
+                    LogPublishFailed(logger, exception, row.Id, row.MessageType, attempts, delay.TotalSeconds);
+                }
+
                 await connection.ExecuteAsync(new CommandDefinition(
                     MarkFailedSql,
-                    new { row.Id, Error = exception.GetType().Name + ": " + exception.Message },
+                    new
+                    {
+                        row.Id,
+                        Attempts = attempts,
+                        Error = exception.GetType().Name + ": " + exception.Message,
+                        DelaySeconds = delay.TotalSeconds,
+                        Park = park,
+                    },
                     transaction,
                     cancellationToken: cancellationToken)).ConfigureAwait(false);
                 break;
@@ -131,13 +160,19 @@ public sealed partial class PostgresOutboxStore(NpgsqlDataSource dataSource, ILo
         }
     }
 
-    [LoggerMessage(EventId = 8200, Level = LogLevel.Warning, Message = "Publishing outbox message {MessageId} ({MessageType}) failed")]
-    private static partial void LogPublishFailed(ILogger logger, Exception exception, Guid messageId, string messageType);
+    [LoggerMessage(EventId = 8200, Level = LogLevel.Warning,
+        Message = "Publishing outbox message {MessageId} ({MessageType}) failed (attempt {Attempts}); retrying in {DelaySeconds} s")]
+    private static partial void LogPublishFailed(
+        ILogger logger, Exception exception, Guid messageId, string messageType, int attempts, double delaySeconds);
 
     [LoggerMessage(EventId = 8201, Level = LogLevel.Warning, Message = "The outbox LISTEN connection failed; polling until it is re-established")]
     private static partial void LogListenFailed(ILogger logger, Exception exception);
 
-    private sealed record OutboxRow(Guid Id, string MessageType, string Payload, string Headers, DateTimeOffset OccurredAt)
+    [LoggerMessage(EventId = 8202, Level = LogLevel.Error,
+        Message = "Outbox message {MessageId} ({MessageType}) failed {Attempts} times; parked, it will not be retried")]
+    private static partial void LogParked(ILogger logger, Exception exception, Guid messageId, string messageType, int attempts);
+
+    private sealed record OutboxRow(Guid Id, string MessageType, string Payload, string Headers, DateTimeOffset OccurredAt, int Attempts)
     {
         public OutgoingEnvelope ToEnvelope() => new(
             Id,

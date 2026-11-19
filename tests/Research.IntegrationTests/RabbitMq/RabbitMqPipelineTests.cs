@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Research.Contracts.Jobs;
+using Research.Contracts.Planning;
 using Research.Contracts.Search;
 using Research.Contracts.Steps;
 using Research.Messaging;
@@ -14,7 +16,8 @@ namespace Research.IntegrationTests.RabbitMq;
 
 /// <summary>
 /// The production listener, topology and dispatcher against a real broker: a transient failure goes through the
-/// delay queue and succeeds on the next attempt; exhausted attempts publish <c>StepFailed</c> and dead-letter.
+/// delay queue and succeeds on the next attempt; exhausted attempts publish <c>StepFailed</c> and dead-letter; a command
+/// nobody can receive fails, an event nobody receives does not.
 /// </summary>
 public sealed class RabbitMqPipelineTests : IAsyncLifetime
 {
@@ -50,6 +53,17 @@ public sealed class RabbitMqPipelineTests : IAsyncLifetime
         succeeded.Attempt.ShouldBe(2);
         script.Attempts.ShouldBe(2);
         await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task UnroutableCommand_Fails_UnroutedEvent_IsConfirmed()
+    {
+        // The host is not started, so no queue exists: nothing can receive either message.
+        using var host = BuildHost("routingtest", maxAttempts: 1, new Script());
+
+        await PublishAsync(host, new JobCreated(Guid.NewGuid(), "job", "q"));
+        await Should.ThrowAsync<RabbitMQ.Client.Exceptions.PublishReturnException>(
+            () => PublishAsync(host, new PlanRequested(Guid.NewGuid(), "plan", "q", 3)));
     }
 
     [Fact]
