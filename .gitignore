@@ -1,0 +1,88 @@
+## Secrets and credentials ##################################################
+# Secrets come from user secrets (outside the repo) locally and environment variables when deployed;
+# see docs/configuration.md. These patterns catch the usual ways one slips into the working tree anyway.
+appsettings.*.local.json
+appsettings.local.json
+secrets.json
+*.secrets.json
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.pem
+*.key
+*.snk
+*.cer
+*.crt
+*.jks
+*.keystore
+*.publishsettings
+*.pubxml.user
+*.azurePubxml
+id_rsa*
+id_ed25519*
+
+## Diagnostics output (can hold secrets, tokens and request content) #########
+# MSBuild binary logs record environment variables; dumps and traces record process memory.
+*.binlog
+*.dmp
+*.mdmp
+*.gcdump
+*.nettrace
+*.speedscope.json
+logs/
+*.log
+
+## Build output ###############################################################
+bin/
+obj/
+artifacts/
+publish/
+*.nupkg
+*.snupkg
+packages/
+BenchmarkDotNet.Artifacts/
+
+## Tests ######################################################################
+TestResults/
+*.trx
+coverage*/
+*.coverage
+*.coveragexml
+*.received.*
+
+## Local emulators and Aspire state ###########################################
+.aspire/
+__azurite_db*
+__blobstorage__/
+__queuestorage__/
+.azurite/
+*.db
+*.sqlite
+*.sqlite-*
+
+## IDE and editor #############################################################
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+_ReSharper*/
+*.ncrunch*
+*.swp
+*~
+
+## Local AI-assistant settings ################################################
+.claude/settings.local.json
+CLAUDE.local.md
+
+## OS #########################################################################
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

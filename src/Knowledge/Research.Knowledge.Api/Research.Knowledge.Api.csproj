@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The internal HTTP surface of Knowledge (called by Synthesis through service discovery, never through the gateway):
+    POST /knowledge/passages/search. Minimal API endpoint classes (D25), RFC 9457 problems.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Knowledge.Api</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Knowledge\Research.Knowledge.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Problems\Research.Problems.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
+</Project>

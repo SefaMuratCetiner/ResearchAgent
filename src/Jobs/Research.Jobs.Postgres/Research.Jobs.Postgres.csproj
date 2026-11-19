@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The Jobs module's Postgres adapter: Dapper repositories over research_jobs, job_steps and research_reports, and
+    the versioned schema scripts in db/ (applied by tools/Research.DbScripts; no migrations at startup).
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Jobs.Postgres</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Jobs\Research.Jobs.csproj" />
+    <ProjectReference Include="..\..\Providers\Research.Providers.Postgres\Research.Providers.Postgres.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="db\**\*.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

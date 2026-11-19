@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Shared HTTP middleware of the APIs: the correlation id and content logging of request and response bodies
+    (Research.Content.Http). Headers are never logged, so credentials cannot leak through this path.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Http</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.SharedKernel\Research.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

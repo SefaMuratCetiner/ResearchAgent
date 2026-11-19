@@ -1,0 +1,28 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.0.0">
+  <!--
+    The local orchestrator (D22): starts Postgres (pgvector), RabbitMQ, Valkey, Azurite, the schema scripts and every
+    service with its replicas. References Host projects and tools only (§5).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Research.AppHost</RootNamespace>
+    <UserSecretsId>research-apphost</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\tools\Research.DbScripts\Research.DbScripts.csproj" />
+    <ProjectReference Include="..\Jobs\Research.Jobs.Host\Research.Jobs.Host.csproj" />
+    <ProjectReference Include="..\Planning\Research.Planning.Host\Research.Planning.Host.csproj" />
+    <ProjectReference Include="..\Search\Research.Search.Host\Research.Search.Host.csproj" />
+    <ProjectReference Include="..\Fetching\Research.Fetching.Host\Research.Fetching.Host.csproj" />
+    <ProjectReference Include="..\Knowledge\Research.Knowledge.Host\Research.Knowledge.Host.csproj" />
+    <ProjectReference Include="..\Synthesis\Research.Synthesis.Host\Research.Synthesis.Host.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" />
+    <PackageReference Include="Aspire.Hosting.Valkey" />
+    <PackageReference Include="Aspire.Hosting.Azure.Storage" />
+  </ItemGroup>
+</Project>

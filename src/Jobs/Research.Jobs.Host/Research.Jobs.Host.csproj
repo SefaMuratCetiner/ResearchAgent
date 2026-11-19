@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!--
+    The Jobs process: the public research API, the orchestrating message handlers, the outbox dispatcher and the
+    recovery and deadline workers. Only composition lives here (Program, CompositionRoot, Features, Workers).
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Jobs.Host</RootNamespace>
+    <UserSecretsId>research-jobs-host</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Jobs\Research.Jobs.csproj" />
+    <ProjectReference Include="..\Research.Jobs.Postgres\Research.Jobs.Postgres.csproj" />
+    <ProjectReference Include="..\Research.Jobs.Api\Research.Jobs.Api.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Hosting\Research.Hosting.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Http\Research.Http.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Problems\Research.Problems.csproj" />
+    <ProjectReference Include="..\..\Providers\Research.Providers.Postgres\Research.Providers.Postgres.csproj" />
+    <ProjectReference Include="..\..\Providers\Research.Providers.RabbitMq\Research.Providers.RabbitMq.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Npgsql" />
+    <PackageReference Include="Aspire.RabbitMQ.Client" />
+  </ItemGroup>
+</Project>

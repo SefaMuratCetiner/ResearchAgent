@@ -1,0 +1,83 @@
+<Project>
+  <!--
+    Central package management. Project files reference packages without versions.
+    Only free and open-source packages (MIT / Apache-2.0 / BSD / PostgreSQL License) are allowed. Explicitly excluded
+    because of commercial licenses: FluentAssertions 8+, MediatR 13+, AutoMapper 15+, MassTransit 9+, JsonSchema.Net 8+.
+    RabbitMQ.Client is dual-licensed Apache-2.0 / MPL-2.0 and used under Apache-2.0.
+
+    The versions below were chosen without network access and have NOT been restored yet. Verify each one (and its
+    license) on the first restore; the first restore also writes the packages.lock.json files to commit.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup Label="Aspire hosting (AppHost only)">
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.0.0" />
+    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.0.0" />
+    <PackageVersion Include="Aspire.Hosting.Valkey" Version="13.0.0" />
+    <PackageVersion Include="Aspire.Hosting.Azure.Storage" Version="13.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Aspire client integrations (Hosts only)">
+    <PackageVersion Include="Aspire.Npgsql" Version="13.0.0" />
+    <PackageVersion Include="Aspire.RabbitMQ.Client" Version="13.0.0" />
+    <PackageVersion Include="Aspire.StackExchange.Redis" Version="13.0.0" />
+    <PackageVersion Include="Aspire.Azure.Storage.Blobs" Version="13.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Infrastructure clients (providers)">
+    <!-- Must not be lower than what the Aspire client integrations above depend on (NU1109). -->
+    <PackageVersion Include="Npgsql" Version="9.0.4" />
+    <PackageVersion Include="RabbitMQ.Client" Version="7.1.2" />
+    <PackageVersion Include="StackExchange.Redis" Version="2.9.25" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.26.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Application">
+    <PackageVersion Include="Anthropic" Version="13.1.0" />
+    <PackageVersion Include="Dapper" Version="2.1.66" />
+    <PackageVersion Include="AngleSharp" Version="1.3.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Microsoft.Extensions">
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Observability">
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.13.1" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.13.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.13.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.13.0" />
+    <PackageVersion Include="Serilog.Extensions.Hosting" Version="9.0.0" />
+    <PackageVersion Include="Serilog.Extensions.Logging" Version="9.0.2" />
+    <PackageVersion Include="Serilog.Settings.Configuration" Version="9.0.0" />
+    <PackageVersion Include="Serilog.Formatting.Compact" Version="3.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers">
+    <PackageVersion Include="Meziantou.Analyzer" Version="2.0.250" />
+    <PackageVersion Include="Roslynator.Analyzers" Version="4.14.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="Tests">
+    <PackageVersion Include="xunit.v3" Version="3.1.0" />
+    <PackageVersion Include="Shouldly" Version="4.3.0" />
+    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.8.1" />
+    <PackageVersion Include="Testcontainers.RabbitMq" Version="4.8.1" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.0.0" />
+  </ItemGroup>
+</Project>

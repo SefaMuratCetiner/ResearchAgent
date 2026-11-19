@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The integration messages services exchange over the bus. Records only, no behaviour and no package references.
+    Changes are additive: a new optional field is fine, renaming or removing one needs a new message type.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Contracts</RootNamespace>
+  </PropertyGroup>
+</Project>

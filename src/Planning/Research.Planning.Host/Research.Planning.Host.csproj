@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!--
+    The Planning process: consumes PlanRequested, answers PlanReady / StepFailed. Stateless (no database); Valkey
+    caches plans. HTTP serves health endpoints only.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Planning.Host</RootNamespace>
+    <UserSecretsId>research-planning-host</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Planning\Research.Planning.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Hosting\Research.Hosting.csproj" />
+    <ProjectReference Include="..\..\Providers\Research.Providers.Anthropic\Research.Providers.Anthropic.csproj" />
+    <ProjectReference Include="..\..\Providers\Research.Providers.RabbitMq\Research.Providers.RabbitMq.csproj" />
+    <ProjectReference Include="..\..\Providers\Research.Providers.Valkey\Research.Providers.Valkey.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.RabbitMQ.Client" />
+    <PackageReference Include="Aspire.StackExchange.Redis" />
+  </ItemGroup>
+</Project>

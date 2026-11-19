@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Enforces the reference rules (PLAN §5, docs/architecture.md) by reading the project files and source tree, so a
+    forbidden reference fails CI. No packages beyond the test framework.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.ArchitectureTests</RootNamespace>
+  </PropertyGroup>
+</Project>

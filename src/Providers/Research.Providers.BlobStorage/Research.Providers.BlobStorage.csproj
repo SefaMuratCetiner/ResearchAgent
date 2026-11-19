@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    IDocumentStore on Azure Blob Storage (Azurite locally): the claim-check store for page text. The
+    BlobServiceClient comes from Aspire's Azure Blob client integration.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Providers.BlobStorage</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Storage.Blobs" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" />
+  </ItemGroup>
+</Project>

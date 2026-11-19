@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Applies the versioned schema scripts (db/*.sql of the Postgres adapters) to each database, once, in file-name
+    order, and records them in schema_scripts. Run by the AppHost before the services (WaitForCompletion); runnable by
+    hand against any environment. No migrations framework (dotnet-standards: SQL scripts, no migrations).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Research.DbScripts</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Host, configuration and logging come from the ASP.NET Core shared framework: no extra packages. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The scripts stay next to the code that uses them; they are linked here per database. -->
+    <Content Include="..\..\src\Providers\Research.Providers.Postgres\db\*.sql" Link="db\shared\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\Jobs\Research.Jobs.Postgres\db\*.sql" Link="db\jobs\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\Fetching\Research.Fetching.Postgres\db\*.sql" Link="db\fetching\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\Knowledge\Research.Knowledge.Postgres\db\*.sql" Link="db\knowledge\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

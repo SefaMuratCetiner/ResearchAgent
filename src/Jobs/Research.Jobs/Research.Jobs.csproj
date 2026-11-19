@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The Jobs module: the research job aggregate, its state machine and outcome policy, and one slice per use case
+    (create, read, cancel, advance on each worker reply, recovery and deadlines). Jobs is the orchestrator: every other
+    service only answers the step it was asked for. No HTTP, no SQL: ports here, adapters in Jobs.Postgres / Jobs.Api.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Jobs</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Contracts\Research.Contracts.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Messaging\Research.Messaging.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+</Project>

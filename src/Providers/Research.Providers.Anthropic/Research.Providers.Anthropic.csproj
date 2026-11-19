@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    ILlmClient on the official Anthropic C# SDK: Messages API, effort, structured outputs, prompt caching of the
+    system prompt, client-side refusal fallback, LLM metrics and content logging (Research.Content.Llm).
+    The API key comes from configuration and is never logged.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Providers.Anthropic</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Anthropic" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+</Project>

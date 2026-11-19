@@ -1,0 +1,19 @@
+{
+  "solution": {
+    "path": "..\\Research.slnx",
+    "projects": [
+      "src\\Shared\\Research.SharedKernel\\Research.SharedKernel.csproj",
+      "src\\Shared\\Research.Contracts\\Research.Contracts.csproj",
+      "src\\Shared\\Research.Hosting\\Research.Hosting.csproj",
+      "src\\Shared\\Research.Messaging\\Research.Messaging.csproj",
+      "src\\Shared\\Research.Problems\\Research.Problems.csproj",
+      "src\\Shared\\Research.Http\\Research.Http.csproj",
+      "src\\Providers\\Research.Providers.Postgres\\Research.Providers.Postgres.csproj",
+      "src\\Providers\\Research.Providers.RabbitMq\\Research.Providers.RabbitMq.csproj",
+      "src\\Jobs\\Research.Jobs\\Research.Jobs.csproj",
+      "src\\Jobs\\Research.Jobs.Postgres\\Research.Jobs.Postgres.csproj",
+      "src\\Jobs\\Research.Jobs.Api\\Research.Jobs.Api.csproj",
+      "src\\Jobs\\Research.Jobs.Host\\Research.Jobs.Host.csproj"
+    ]
+  }
+}

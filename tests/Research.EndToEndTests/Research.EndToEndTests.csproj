@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The real AppHost (every service, Postgres, RabbitMQ, Valkey, Azurite) under Aspire.Hosting.Testing. Needs Docker.
+    The API tests run with a dummy key; the full research flow runs only when ANTHROPIC_API_KEY is set.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.EndToEndTests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Research.AppHost\Research.AppHost.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Testing" />
+  </ItemGroup>
+</Project>

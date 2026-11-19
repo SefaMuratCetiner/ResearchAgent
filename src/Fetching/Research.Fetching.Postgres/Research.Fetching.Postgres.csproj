@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The Fetching module's Postgres adapter: the fetched_documents repository and the schema script in db/ (applied by
+    tools/Research.DbScripts).
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Fetching.Postgres</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Fetching\Research.Fetching.csproj" />
+    <ProjectReference Include="..\..\Providers\Research.Providers.Postgres\Research.Providers.Postgres.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="db\**\*.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

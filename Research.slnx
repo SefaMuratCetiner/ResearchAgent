@@ -1,0 +1,91 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="nuget.config" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Solution Items/docs/">
+    <File Path="docs/PLAN.md" />
+    <File Path="docs/edge-cases.md" />
+    <File Path="docs/architecture.md" />
+    <File Path="docs/configuration.md" />
+    <File Path="docs/database.md" />
+    <File Path="docs/errors.md" />
+    <File Path="docs/messaging.md" />
+    <File Path="docs/observability.md" />
+    <File Path="docs/security.md" />
+  </Folder>
+
+  <Folder Name="/src/">
+    <Project Path="src/Research.AppHost/Research.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/Research.SharedKernel/Research.SharedKernel.csproj" />
+    <Project Path="src/Shared/Research.Contracts/Research.Contracts.csproj" />
+    <Project Path="src/Shared/Research.Hosting/Research.Hosting.csproj" />
+    <Project Path="src/Shared/Research.Messaging/Research.Messaging.csproj" />
+    <Project Path="src/Shared/Research.Problems/Research.Problems.csproj" />
+    <Project Path="src/Shared/Research.Http/Research.Http.csproj" />
+  </Folder>
+  <Folder Name="/src/Providers/">
+    <Project Path="src/Providers/Research.Providers.Anthropic/Research.Providers.Anthropic.csproj" />
+    <Project Path="src/Providers/Research.Providers.BlobStorage/Research.Providers.BlobStorage.csproj" />
+    <Project Path="src/Providers/Research.Providers.MockEmbeddings/Research.Providers.MockEmbeddings.csproj" />
+    <Project Path="src/Providers/Research.Providers.Postgres/Research.Providers.Postgres.csproj" />
+    <Project Path="src/Providers/Research.Providers.RabbitMq/Research.Providers.RabbitMq.csproj" />
+    <Project Path="src/Providers/Research.Providers.Valkey/Research.Providers.Valkey.csproj" />
+  </Folder>
+  <Folder Name="/src/Jobs/">
+    <Project Path="src/Jobs/Research.Jobs/Research.Jobs.csproj" />
+    <Project Path="src/Jobs/Research.Jobs.Postgres/Research.Jobs.Postgres.csproj" />
+    <Project Path="src/Jobs/Research.Jobs.Api/Research.Jobs.Api.csproj" />
+    <Project Path="src/Jobs/Research.Jobs.Host/Research.Jobs.Host.csproj" />
+  </Folder>
+  <Folder Name="/src/Planning/">
+    <Project Path="src/Planning/Research.Planning/Research.Planning.csproj" />
+    <Project Path="src/Planning/Research.Planning.Host/Research.Planning.Host.csproj" />
+  </Folder>
+  <Folder Name="/src/Search/">
+    <Project Path="src/Search/Research.Search/Research.Search.csproj" />
+    <Project Path="src/Search/Research.Search.AnthropicWebSearch/Research.Search.AnthropicWebSearch.csproj" />
+    <Project Path="src/Search/Research.Search.Host/Research.Search.Host.csproj" />
+  </Folder>
+  <Folder Name="/src/Fetching/">
+    <Project Path="src/Fetching/Research.Fetching/Research.Fetching.csproj" />
+    <Project Path="src/Fetching/Research.Fetching.Postgres/Research.Fetching.Postgres.csproj" />
+    <Project Path="src/Fetching/Research.Fetching.Host/Research.Fetching.Host.csproj" />
+  </Folder>
+  <Folder Name="/src/Knowledge/">
+    <Project Path="src/Knowledge/Research.Knowledge/Research.Knowledge.csproj" />
+    <Project Path="src/Knowledge/Research.Knowledge.Postgres/Research.Knowledge.Postgres.csproj" />
+    <Project Path="src/Knowledge/Research.Knowledge.Api/Research.Knowledge.Api.csproj" />
+    <Project Path="src/Knowledge/Research.Knowledge.Host/Research.Knowledge.Host.csproj" />
+  </Folder>
+  <Folder Name="/src/Synthesis/">
+    <Project Path="src/Synthesis/Research.Synthesis/Research.Synthesis.csproj" />
+    <Project Path="src/Synthesis/Research.Synthesis.HttpKnowledge/Research.Synthesis.HttpKnowledge.csproj" />
+    <Project Path="src/Synthesis/Research.Synthesis.Host/Research.Synthesis.Host.csproj" />
+  </Folder>
+
+  <Folder Name="/tools/">
+    <Project Path="tools/Research.DbScripts/Research.DbScripts.csproj" />
+  </Folder>
+
+  <Folder Name="/tests/">
+    <File Path="tests/Directory.Build.props" />
+    <Project Path="tests/Research.UnitTests/Research.UnitTests.csproj" />
+    <Project Path="tests/Research.ArchitectureTests/Research.ArchitectureTests.csproj" />
+    <Project Path="tests/Research.IntegrationTests/Research.IntegrationTests.csproj" />
+    <Project Path="tests/Research.EndToEndTests/Research.EndToEndTests.csproj" />
+  </Folder>
+
+  <Folder Name="/Solution Items/.github/">
+    <File Path=".github/dependabot.yml" />
+    <File Path=".github/workflows/ci.yml" />
+    <File Path=".github/workflows/release.yml" />
+  </Folder>
+</Solution>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The public HTTP surface of Jobs (behind the gateway): create, read, report, cancel and the SSE event stream.
+    Minimal API endpoint classes (D25), RFC 9457 problems, built-in OpenAPI document.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Jobs.Api</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Jobs\Research.Jobs.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Problems\Research.Problems.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
+</Project>

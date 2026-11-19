@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    A deterministic, offline IEmbeddingGenerator (feature hashing) standing in until a real embedding model is chosen.
+    Similar texts get similar vectors (shared words), so retrieval works end to end; quality is not the goal.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Providers.MockEmbeddings</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

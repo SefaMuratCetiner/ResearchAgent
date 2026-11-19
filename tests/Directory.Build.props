@@ -1,0 +1,30 @@
+<Project>
+  <!-- Test projects: the repository settings plus xUnit v3 on Microsoft.Testing.Platform (global.json "test.runner"). -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!--
+      CA1707: test names use underscores (Method_Condition_Result).
+      CA2007 / MA0004: no ConfigureAwait in tests (xUnit has no synchronization context to avoid).
+      CA1515: test classes must be public for discovery.
+      CA1861: inline arrays in test data are clearer than static fields.
+      CA2000: short-lived disposables in tests end with the test.
+    -->
+    <NoWarn>$(NoWarn);CA1707;CA2007;MA0004;CA1515;CA1861;CA2000</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Shouldly" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The Search module: finds sources for one sub-question through an ISearchProvider (strategy), decorated with a
+    Valkey cache and a concurrency limiter, then canonicalizes and deduplicates the URLs. The only provider today is
+    Anthropic web search (Research.Search.AnthropicWebSearch); another engine is another adapter.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Search</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Contracts\Research.Contracts.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Messaging\Research.Messaging.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!--
+    The Fetching process: consumes FetchRequested, downloads and extracts pages, stores the text in blob storage and
+    replies through the outbox. HTTP serves health endpoints only.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Fetching.Host</RootNamespace>
+    <UserSecretsId>research-fetching-host</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Fetching\Research.Fetching.csproj" />
+    <ProjectReference Include="..\Research.Fetching.Postgres\Research.Fetching.Postgres.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Hosting\Research.Hosting.csproj" />
+    <ProjectReference Include="..\..\Providers\Research.Providers.Postgres\Research.Providers.Postgres.csproj" />
+    <ProjectReference Include="..\..\Providers\Research.Providers.RabbitMq\Research.Providers.RabbitMq.csproj" />
+    <ProjectReference Include="..\..\Providers\Research.Providers.BlobStorage\Research.Providers.BlobStorage.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Npgsql" />
+    <PackageReference Include="Aspire.RabbitMQ.Client" />
+    <PackageReference Include="Aspire.Azure.Storage.Blobs" />
+  </ItemGroup>
+</Project>

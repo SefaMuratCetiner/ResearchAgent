@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The Knowledge module's Postgres adapter: documents, passages (pgvector) and job links, and the schema script in
+    db/ (applied by tools/Research.DbScripts). Vectors travel as pgvector text literals ('[0.1,0.2,...]') cast in SQL,
+    so no pgvector .NET package is needed.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Knowledge.Postgres</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Knowledge\Research.Knowledge.csproj" />
+    <ProjectReference Include="..\..\Providers\Research.Providers.Postgres\Research.Providers.Postgres.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="db\**\*.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
