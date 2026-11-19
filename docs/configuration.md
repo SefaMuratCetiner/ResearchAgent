@@ -14,15 +14,16 @@ where they use the value. When a change takes effect:
 | Setting | Applies |
 | --- | --- |
 | Handler and endpoint settings (`Jobs`, `Planning`, `Search`, `Fetching`, `Knowledge`, `Synthesis` limits) | The next request or message |
-| Concurrency limits (`Anthropic:MaxConcurrentRequests`, `Search:MaxConcurrentSearches`, `Fetching` per-domain limit) | The next call; calls already holding a slot finish under the old limit |
+| Concurrency limits (`Anthropic:MaxConcurrentRequests`, `OpenAI:MaxConcurrentRequests`, `Search:MaxConcurrentSearches`, `Fetching` per-domain limit) | The next call; calls already holding a slot finish under the old limit |
 | `Search` cache time-to-live | The next cached search |
-| API keys (`Anthropic:ApiKey`, `AnthropicWebSearch:ApiKey`) | The next call: the SDK client is rebuilt with the new key (key rotation) |
+| API keys (`Anthropic:ApiKey`, `OpenAI:ApiKey`, `AnthropicWebSearch:ApiKey`) | The next call: the SDK client is rebuilt with the new key (key rotation) |
 | `Fetching` HTTP handler settings, `Synthesis` Knowledge base address | When the HTTP client factory builds its next handler or client (handlers are recycled every few minutes) |
 | `Jobs` worker intervals | After the current tick |
 | `Messaging` outbox batch size and poll interval | The next outbox pass |
 | `Messaging:Prefetch`, `Messaging:RetryDelaysSeconds` | Each listener finishes its in-flight messages and subscribes again with the new values |
 | `Messaging:MaxAttempts`, `Messaging:MessageTimeoutSeconds`, `RabbitMq:ShutdownDrainSeconds` | The next message, or the next drain |
 | **`Messaging:ServiceName`, `RabbitMq:Exchange`** | **Restart only.** They name the queues and exchange where messages live; changing them live would strand messages in the old queue. A change logs a warning (event 8105) and the startup value stays. |
+| **`Llm:Provider`** | **Restart only.** It decides which provider is registered at composition time. |
 
 A reloaded value goes through the same validators as at startup. If it is invalid, reading the options throws
 `OptionsValidationException` (and the affected calls fail) until the configuration is fixed; the process does not
@@ -33,6 +34,7 @@ fall back to the previous value. Check a change in a non-production environment 
 | Secret | Where it comes from | Read as |
 | --- | --- | --- |
 | Anthropic API key | AppHost parameter `anthropic-api-key` (user secrets `Parameters:anthropic-api-key`) | `Anthropic__ApiKey` (Planning, Synthesis), `AnthropicWebSearch__ApiKey` (Search) |
+| OpenAI API key (optional) | AppHost parameter `openai-api-key` (user secrets `Parameters:openai-api-key`); passed on only while it is set | `OpenAI__ApiKey` (Planning, Synthesis) |
 | Connection strings | Injected by Aspire (`ConnectionStrings__jobs`, `__bus`, `__cache`, `__blobs`, ...) | Aspire client integrations |
 
 Secrets, connection strings and auth headers are **never logged**. Content (questions, prompts, model output, search
@@ -75,13 +77,33 @@ results, page text, reports, API bodies) **is** logged; see [observability.md](o
 | --- | --- | --- |
 | `MaxChars` | 64000 | Longer content is truncated in log events (with a marker) |
 
+### `Llm` (Planning, Synthesis)
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `Provider` | `Anthropic` | `Anthropic` or `OpenAI`. Only the selected provider's section is validated, so the other one's key is not needed. The module's `Model` must name a model of this provider; `OpenAI` with a `claude-*` model stops startup. |
+
 ### `Anthropic` (Planning, Synthesis)
+
+Required only when `Llm:Provider` is `Anthropic`.
 
 | Key | Default |
 | --- | --- |
 | `ApiKey` | — (required, secret) |
 | `MaxConcurrentRequests` | 4 per replica (concurrency limiter) |
 | `RefusalFallbackModel` | `claude-sonnet-5` (one retry on a refusal) |
+
+### `OpenAI` (Planning, Synthesis)
+
+Required only when `Llm:Provider` is `OpenAI`. Calls go to the Chat Completions API; a JSON schema becomes a strict
+structured output, and OpenAI caches the repeated system prompt by itself.
+
+| Key | Default |
+| --- | --- |
+| `ApiKey` | — (required, secret) |
+| `MaxConcurrentRequests` | 4 per replica in Planning, 2 in Synthesis (concurrency limiter) |
+| `RefusalFallbackModel` | empty: no retry on a refusal |
+| `UseReasoningEffort` | `true`: the module's `Effort` is sent as `reasoning_effort` (`Max` as `high`). Set `false` for models without reasoning, which reject it. With reasoning, `MaxTokens` also covers the reasoning tokens. |
 
 ## Per service
 

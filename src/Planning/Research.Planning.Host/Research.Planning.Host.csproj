@@ -12,6 +12,7 @@
     <ProjectReference Include="..\Research.Planning\Research.Planning.csproj" />
     <ProjectReference Include="..\..\Shared\Research.Hosting\Research.Hosting.csproj" />
     <ProjectReference Include="..\..\Providers\Research.Providers.Anthropic\Research.Providers.Anthropic.csproj" />
+    <ProjectReference Include="..\..\Providers\Research.Providers.OpenAI\Research.Providers.OpenAI.csproj" />
     <ProjectReference Include="..\..\Providers\Research.Providers.RabbitMq\Research.Providers.RabbitMq.csproj" />
     <ProjectReference Include="..\..\Providers\Research.Providers.Valkey\Research.Providers.Valkey.csproj" />
   </ItemGroup>

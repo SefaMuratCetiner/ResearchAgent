@@ -12,11 +12,11 @@ sub-questions, searches the web, fetches and indexes pages, and writes a cited r
 | Service | Role | State | HTTP |
 | --- | --- | --- | --- |
 | `jobs` | Public API and orchestrator: job state machine, steps, deadlines, recovery | Postgres `research_jobs` | `/research/*` (the gateway's target), SSE |
-| `planning` | Splits the question into sub-questions (Claude, structured output) | Stateless; Valkey cache | health only |
+| `planning` | Splits the question into sub-questions (Claude or OpenAI, structured output) | Stateless; Valkey cache | health only |
 | `search` | Web search through `ISearchProvider` (Anthropic web search today) | Stateless; Valkey cache | health only |
 | `fetching` | Downloads pages safely, extracts text, stores it in blob storage | Postgres `research_fetching`, blobs | health only |
 | `knowledge` | Chunks, embeds (mock model) and indexes pages; passage search | Postgres `research_knowledge` (pgvector) | `/knowledge/passages/search` (internal) |
-| `synthesis` | Writes the cited report from retrieved passages (Claude) | Stateless | health only |
+| `synthesis` | Writes the cited report from retrieved passages (Claude or OpenAI) | Stateless | health only |
 
 They communicate through RabbitMQ (topic exchange `research.events`). Jobs sends a request to a worker service, and
 the worker replies. Synthesis also calls the Knowledge API over HTTP through Aspire service discovery.
@@ -51,7 +51,8 @@ The commands below are for Linux (bash). They work the same on macOS and in WSL;
     export TESTCONTAINERS_RYUK_DISABLED=true
     ```
 
-- **An Anthropic API key.**
+- **An Anthropic API key.** Web search always uses it.
+- **An OpenAI API key**, only if Planning or Synthesis should use OpenAI (see [Use OpenAI](#use-openai)).
 - **`curl`**, and **`jq`** for the examples below.
 
 ### Raise the file-watcher limit (once per machine)
@@ -75,6 +76,25 @@ Once, in the AppHost's user secrets. They are stored outside the repository, in
 ```bash
 dotnet user-secrets set "Parameters:anthropic-api-key" "<key>" --project src/Research.AppHost
 ```
+
+### Use OpenAI
+
+Planning and Synthesis use Claude by default. Each can use OpenAI instead; web search stays on Anthropic. In the
+`appsettings.json` of each service that should switch (`src/Planning/Research.Planning.Host`,
+`src/Synthesis/Research.Synthesis.Host`), change two existing values:
+
+- `Llm:Provider` from `Anthropic` to `OpenAI`;
+- `Planning:Model` (or `Synthesis:Model`) to an OpenAI model, such as `gpt-5`. A service set to OpenAI with a
+  `claude-*` model refuses to start.
+
+For a model without reasoning (the GPT-4 family), also set `OpenAI:UseReasoningEffort` to `false`. Then store the key
+once; the AppHost passes it on only while it is set:
+
+```bash
+dotnet user-secrets set "Parameters:openai-api-key" "<key>" --project src/Research.AppHost
+```
+
+Changing `Llm:Provider` needs a restart. See [docs/configuration.md](docs/configuration.md#llm-planning-synthesis).
 
 ### Start everything
 
@@ -128,7 +148,7 @@ and survives restarts. To start from an empty state, remove those volumes. List 
 Research.slnx                 everything; filters/*.slnf open one service with its dependencies
 src/Research.AppHost          local topology (Aspire)
 src/Shared                    SharedKernel, Contracts, Messaging, Hosting (platform features), Problems, Http
-src/Providers                 adapters: Anthropic, RabbitMQ, Postgres, Valkey, BlobStorage, MockEmbeddings
+src/Providers                 adapters: Anthropic, OpenAI, RabbitMQ, Postgres, Valkey, BlobStorage, MockEmbeddings
 src/<Service>                 <Service> module · <Service>.Postgres · <Service>.Api · <Service>.Host
 tools/Research.DbScripts      applies db/*.sql per database
 docs/                         architecture, configuration, errors, messaging, database, observability, security

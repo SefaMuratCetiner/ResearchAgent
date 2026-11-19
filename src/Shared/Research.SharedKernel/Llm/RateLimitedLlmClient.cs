@@ -1,12 +1,11 @@
 using Research.SharedKernel.Concurrency;
-using Research.SharedKernel.Llm;
 
-namespace Research.Providers.Anthropic;
+namespace Research.SharedKernel.Llm;
 
 /// <summary>
 /// Caps concurrent LLM requests per replica (D: concurrency limiter only). Requests beyond the cap wait; the SDK's
 /// own retries honour <c>retry-after</c> on 429s. The cap is read on every request, so a reloaded
-/// <c>Anthropic:MaxConcurrentRequests</c> applies without a restart.
+/// <c>MaxConcurrentRequests</c> of the selected provider (<c>Anthropic</c> or <c>OpenAI</c>) applies without a restart.
 /// </summary>
 public sealed class RateLimitedLlmClient(ILlmClient inner, Func<int> maxConcurrentRequests) : ILlmClient, IDisposable
 {

@@ -1,7 +1,10 @@
+using Microsoft.Extensions.Options;
 using Research.Hosting.Composition;
 using Research.Messaging;
 using Research.Providers.Anthropic;
+using Research.Providers.OpenAI;
 using Research.Providers.RabbitMq;
+using Research.SharedKernel.Llm;
 using Research.SharedKernel.Logging;
 
 namespace Research.Synthesis.Host.CompositionRoot;
@@ -13,7 +16,25 @@ internal sealed class SynthesisSettings
     {
         var binder = new SettingsBinder(services, configuration);
         Synthesis = binder.Add(SynthesisOptions.SectionName, new SynthesisOptionsValidator());
-        Anthropic = binder.Add(AnthropicOptions.SectionName, new AnthropicOptionsValidator());
+        Llm = binder.Add<LlmOptions>(LlmOptions.SectionName);
+
+        // Only the selected provider's section is bound, so the other one's API key is not required.
+        if (Llm.Provider == LlmProvider.OpenAI)
+        {
+            OpenAI = binder.Add(OpenAIOptions.SectionName, new OpenAIOptionsValidator());
+            if (Synthesis.Model.StartsWith("claude-", StringComparison.Ordinal))
+            {
+                throw new OptionsValidationException(
+                    SynthesisOptions.SectionName,
+                    typeof(SynthesisOptions),
+                    ["Synthesis:Model names a Claude model, but Llm:Provider is OpenAI: set an OpenAI model."]);
+            }
+        }
+        else
+        {
+            Anthropic = binder.Add(AnthropicOptions.SectionName, new AnthropicOptionsValidator());
+        }
+
         Messaging = binder.Add(MessagingOptions.SectionName, new MessagingOptionsValidator());
         RabbitMq = binder.Add(RabbitMqOptions.SectionName, new RabbitMqOptionsValidator());
         ContentLogging = binder.Add<ContentLoggingOptions>(ContentLoggingOptions.SectionName);
@@ -21,7 +42,13 @@ internal sealed class SynthesisSettings
 
     public SynthesisOptions Synthesis { get; }
 
-    public AnthropicOptions Anthropic { get; }
+    public LlmOptions Llm { get; }
+
+    /// <summary>Bound when <see cref="Llm"/> selects Anthropic.</summary>
+    public AnthropicOptions? Anthropic { get; }
+
+    /// <summary>Bound when <see cref="Llm"/> selects OpenAI.</summary>
+    public OpenAIOptions? OpenAI { get; }
 
     public MessagingOptions Messaging { get; }
 

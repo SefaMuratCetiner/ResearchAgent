@@ -36,6 +36,7 @@
     <Project Path="src/Providers/Research.Providers.Anthropic/Research.Providers.Anthropic.csproj" />
     <Project Path="src/Providers/Research.Providers.BlobStorage/Research.Providers.BlobStorage.csproj" />
     <Project Path="src/Providers/Research.Providers.MockEmbeddings/Research.Providers.MockEmbeddings.csproj" />
+    <Project Path="src/Providers/Research.Providers.OpenAI/Research.Providers.OpenAI.csproj" />
     <Project Path="src/Providers/Research.Providers.Postgres/Research.Providers.Postgres.csproj" />
     <Project Path="src/Providers/Research.Providers.RabbitMq/Research.Providers.RabbitMq.csproj" />
     <Project Path="src/Providers/Research.Providers.Valkey/Research.Providers.Valkey.csproj" />
@@ -82,11 +83,5 @@
     <Project Path="tests/Research.ArchitectureTests/Research.ArchitectureTests.csproj" />
     <Project Path="tests/Research.IntegrationTests/Research.IntegrationTests.csproj" />
     <Project Path="tests/Research.EndToEndTests/Research.EndToEndTests.csproj" />
-  </Folder>
-
-  <Folder Name="/Solution Items/.github/">
-    <File Path=".github/dependabot.yml" />
-    <File Path=".github/workflows/ci.yml" />
-    <File Path=".github/workflows/release.yml" />
   </Folder>
 </Solution>

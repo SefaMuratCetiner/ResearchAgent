@@ -13,6 +13,7 @@
     <ProjectReference Include="..\Research.Synthesis.HttpKnowledge\Research.Synthesis.HttpKnowledge.csproj" />
     <ProjectReference Include="..\..\Shared\Research.Hosting\Research.Hosting.csproj" />
     <ProjectReference Include="..\..\Providers\Research.Providers.Anthropic\Research.Providers.Anthropic.csproj" />
+    <ProjectReference Include="..\..\Providers\Research.Providers.OpenAI\Research.Providers.OpenAI.csproj" />
     <ProjectReference Include="..\..\Providers\Research.Providers.RabbitMq\Research.Providers.RabbitMq.csproj" />
   </ItemGroup>
 

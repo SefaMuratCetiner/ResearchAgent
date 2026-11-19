@@ -7,6 +7,7 @@
       "src\\Shared\\Research.Hosting\\Research.Hosting.csproj",
       "src\\Shared\\Research.Messaging\\Research.Messaging.csproj",
       "src\\Providers\\Research.Providers.Anthropic\\Research.Providers.Anthropic.csproj",
+      "src\\Providers\\Research.Providers.OpenAI\\Research.Providers.OpenAI.csproj",
       "src\\Providers\\Research.Providers.RabbitMq\\Research.Providers.RabbitMq.csproj",
       "src\\Providers\\Research.Providers.Valkey\\Research.Providers.Valkey.csproj",
       "src\\Planning\\Research.Planning\\Research.Planning.csproj",

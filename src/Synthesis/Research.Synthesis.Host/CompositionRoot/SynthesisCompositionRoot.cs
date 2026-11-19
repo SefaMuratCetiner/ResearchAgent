@@ -2,7 +2,7 @@ using Research.Hosting.Composition;
 using Research.Hosting.Features;
 using Research.Messaging;
 using Research.Messaging.Tracing;
-using Research.Providers.Anthropic;
+using Research.SharedKernel.Llm;
 using Research.Synthesis.Host.Features;
 
 namespace Research.Synthesis.Host.CompositionRoot;
@@ -17,33 +17,34 @@ public sealed class SynthesisCompositionRoot
         ArgumentNullException.ThrowIfNull(builder);
         _builder = builder;
         Settings = new SynthesisSettings(builder.Services, builder.Configuration);
+        Features =
+        [
+            // Observability
+            new LoggingFeature(),
+            new TelemetryFeature(
+                sources: [MessagingTracing.SourceName, LlmTracing.SourceName],
+                meters: [MessagingMetrics.MeterName, LlmMetrics.MeterName]),
+            new HealthChecksFeature(),
+
+            // Platform
+            new ActorsFeature(),
+            new HttpClientsFeature(),
+            new ErrorsFeature(new MessagingErrorCatalog(), new SynthesisErrorCatalog()),
+
+            // Infrastructure
+            LlmFeature(Settings.Llm.Provider),
+            new KnowledgeClientFeature(),
+            new MessagingFeature(),
+
+            // Synthesis module
+            new SynthesisModuleFeature(),
+        ];
     }
 
     internal SynthesisSettings Settings { get; }
 
     /// <summary>Every feature, in registration order, grouped by concern.</summary>
-    internal IReadOnlyList<IResearchFeature> Features { get; } =
-    [
-        // Observability
-        new LoggingFeature(),
-        new TelemetryFeature(
-            sources: [MessagingTracing.SourceName, AnthropicLlmClient.ActivitySourceName],
-            meters: [MessagingMetrics.MeterName, LlmMetrics.MeterName]),
-        new HealthChecksFeature(),
-
-        // Platform
-        new ActorsFeature(),
-        new HttpClientsFeature(),
-        new ErrorsFeature(new MessagingErrorCatalog(), new SynthesisErrorCatalog()),
-
-        // Infrastructure
-        new AnthropicFeature(),
-        new KnowledgeClientFeature(),
-        new MessagingFeature(),
-
-        // Synthesis module
-        new SynthesisModuleFeature(),
-    ];
+    internal IReadOnlyList<IResearchFeature> Features { get; }
 
     public void ComposeServices()
     {
@@ -58,4 +59,8 @@ public sealed class SynthesisCompositionRoot
 
     /// <summary>Health endpoints only.</summary>
     public void ComposeEndpoints(WebApplication app) => HealthEndpoints.Map(app);
+
+    /// <summary>The LLM provider selected by <c>Llm:Provider</c>.</summary>
+    private static IResearchFeature LlmFeature(LlmProvider provider) =>
+        provider == LlmProvider.OpenAI ? new OpenAIFeature() : new AnthropicFeature();
 }

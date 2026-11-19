@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    ILlmClient on the official OpenAI .NET SDK: Chat Completions, reasoning effort, structured outputs (strict JSON
+    schema), client-side refusal fallback, the shared LLM metrics and span, and content logging (Research.Content.Llm).
+    OpenAI caches long prompt prefixes on its own, so the stable system prompt goes first. The API key comes from
+    configuration and is never logged.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Providers.OpenAI</RootNamespace>
+    <!-- reasoning_effort is a stable API parameter, but the SDK still marks ChatReasoningEffortLevel as evaluation-only. -->
+    <NoWarn>$(NoWarn);OPENAI001</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenAI" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+</Project>

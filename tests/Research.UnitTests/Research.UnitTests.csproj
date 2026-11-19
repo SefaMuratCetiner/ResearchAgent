@@ -16,6 +16,7 @@
     <ProjectReference Include="..\..\src\Shared\Research.Hosting\Research.Hosting.csproj" />
     <ProjectReference Include="..\..\src\Shared\Research.Problems\Research.Problems.csproj" />
     <ProjectReference Include="..\..\src\Providers\Research.Providers.MockEmbeddings\Research.Providers.MockEmbeddings.csproj" />
+    <ProjectReference Include="..\..\src\Providers\Research.Providers.OpenAI\Research.Providers.OpenAI.csproj" />
     <ProjectReference Include="..\..\src\Jobs\Research.Jobs\Research.Jobs.csproj" />
     <ProjectReference Include="..\..\src\Planning\Research.Planning\Research.Planning.csproj" />
     <ProjectReference Include="..\..\src\Search\Research.Search\Research.Search.csproj" />

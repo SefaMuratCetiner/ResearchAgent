@@ -15,7 +15,9 @@ AppHost ──► Hosts, tools
 
 Modules define ports: interfaces in `Domain/` or in SharedKernel (`ILlmClient`, `IDocumentStore`, `ICacheStore`,
 `IEmbeddingGenerator`, `IMessagePublisher`). Providers and `*.Postgres` projects implement them. Only Hosts know the
-concrete types.
+concrete types. Where a port has more than one provider, the Host picks one from its startup settings: `Llm:Provider`
+registers the Anthropic or the OpenAI `ILlmClient`. Code the providers share (`LlmMetrics`, `LlmTracing`, the
+concurrency limiter) lives in SharedKernel, because a provider never references another provider.
 
 ## Host shape (composition root)
 

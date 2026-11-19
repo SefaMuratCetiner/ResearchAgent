@@ -1,6 +1,6 @@
 using System.Diagnostics.Metrics;
 
-namespace Research.Providers.Anthropic;
+namespace Research.SharedKernel.Llm;
 
 /// <summary>LLM instruments: duration, tokens and throttling, tagged by model and operation only.</summary>
 public sealed class LlmMetrics

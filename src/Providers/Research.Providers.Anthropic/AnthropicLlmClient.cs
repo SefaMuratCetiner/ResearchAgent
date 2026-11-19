@@ -18,9 +18,6 @@ namespace Research.Providers.Anthropic;
 /// </summary>
 public sealed partial class AnthropicLlmClient : ILlmClient
 {
-    public const string ActivitySourceName = "Research.Llm";
-    private static readonly ActivitySource Source = new(ActivitySourceName);
-
     private readonly AnthropicClientSource _clients;
     private readonly IOptionsMonitor<AnthropicOptions> _options;
     private readonly IOptionsMonitor<ContentLoggingOptions> _contentOptions;
@@ -71,7 +68,7 @@ public sealed partial class AnthropicLlmClient : ILlmClient
 
     private async Task<LlmCompletion> SendAsync(LlmRequest request, string model, CancellationToken cancellationToken)
     {
-        using var activity = Source.StartActivity("llm " + request.Operation, ActivityKind.Client);
+        using var activity = LlmTracing.Source.StartActivity("llm " + request.Operation, ActivityKind.Client);
         activity?.SetTag("gen_ai.system", "anthropic");
         activity?.SetTag("gen_ai.request.model", model);
         activity?.SetTag("gen_ai.operation.name", request.Operation);

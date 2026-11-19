@@ -17,7 +17,7 @@ The user's rule is to log content but never credentials.
 | Category | What | Where |
 | --- | --- | --- |
 | `Research.Content.Http` | Request and response bodies (never headers); skips `text/event-stream` and `/health` | `HttpContentLoggingMiddleware` (Jobs, Knowledge) |
-| `Research.Content.Llm` | System prompt, user prompt, model output; the raw web search response | `AnthropicLlmClient`, `AnthropicWebSearchProvider` |
+| `Research.Content.Llm` | System prompt, user prompt, model output; the raw web search response | `AnthropicLlmClient`, `OpenAILlmClient`, `AnthropicWebSearchProvider` |
 | `Research.Content.Search` | Query and each hit | `RunSearchHandler` |
 | `Research.Content.Documents` | Extracted page text | `FetchPageHandler` |
 | `Research.Content.Reports` | The report | `WriteReportHandler` |
@@ -39,6 +39,7 @@ API keys, connection strings and `Authorization` / `x-api-key` headers are never
 | 8000–8099 | Anthropic provider | 8000–8002 |
 | 8100–8199 | RabbitMQ provider | 8100–8103 listener |
 | 8200–8299 | Postgres provider | 8200–8201 outbox store |
+| 8300–8399 | OpenAI provider | 8300–8302 |
 | 8400–8499 | Valkey provider | 8400 |
 | 9100–9299 | HTTP | 9100–9101 unhandled exception, 9200 correlation, 9210–9211 content logging |
 
@@ -50,7 +51,7 @@ API keys, connection strings and `Authorization` / `x-api-key` headers are never
 | Npgsql, RabbitMQ, StackExchange.Redis, Azure Blob | Instrumented by the Aspire client integrations |
 | `Research.Messaging` | One consume span per delivery, the **root of a new trace** with a link to the producer |
 | `Research.Jobs` | Worker runs |
-| `Research.Llm` | One span per model call |
+| `Research.Llm` | One span per model call; `gen_ai.system` is `anthropic` or `openai` |
 
 Span tags: `research.job.id`, `research.step.key`, `research.error.code`. Each step also stores the producer's trace
 id in `job_steps.trace_id`.
