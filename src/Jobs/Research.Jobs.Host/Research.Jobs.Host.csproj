@@ -6,6 +6,8 @@
   <PropertyGroup>
     <RootNamespace>Research.Jobs.Host</RootNamespace>
     <UserSecretsId>research-jobs-host</UserSecretsId>
+    <!-- The OpenAPI XML-comment source generator emits interceptors in this namespace. -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
   </PropertyGroup>
 
   <ItemGroup>

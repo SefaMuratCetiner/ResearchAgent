@@ -187,29 +187,11 @@ ANTHROPIC_API_KEY=<key> dotnet test --project tests/Research.EndToEndTests
 The integration and end-to-end tests start containers; with Podman, set the variables shown under
 [Prerequisites](#prerequisites) first.
 
-## CI/CD
-
-The workflows live in `.github/workflows`:
-
-- **`ci.yml`** runs on every push and pull request:
-  1. a locked restore;
-  2. a build that treats warnings as errors;
-  3. `dotnet format --verify-no-changes`;
-  4. the unit and architecture tests, then the integration tests and the end-to-end API tests.
-
-  The full flow against Claude runs only when the workflow is started by hand with `run_full_flow`, and it uses the
-  `ANTHROPIC_API_KEY` repository secret.
-- **`release.yml`** runs on a `v*.*.*` tag. It verifies the build, then publishes a container image for each service
-  and for the schema tool to `ghcr.io/<owner>/research-<service>`, using the SDK's container support. There is no
-  deploy step yet, because there is no hosting target (D22).
-
-Dependabot proposes NuGet and Actions updates weekly.
-
 ## Line endings
 
 Every text file uses LF, on every OS. `.editorconfig` sets `end_of_line = lf`, and `.gitattributes` makes git store
 and check out LF everywhere (`* text=auto eol=lf`), so `dotnet format --verify-no-changes` gives the same answer on
-Linux, Windows and CI. On Windows, an editor that writes CRLF is corrected by git on commit.
+Linux and Windows. On Windows, an editor that writes CRLF is corrected by git on commit.
 
 ## Before the first build
 

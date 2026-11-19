@@ -6,6 +6,8 @@
   <PropertyGroup>
     <RootNamespace>Research.Knowledge.Host</RootNamespace>
     <UserSecretsId>research-knowledge-host</UserSecretsId>
+    <!-- The OpenAPI XML-comment source generator emits interceptors in this namespace. -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
   </PropertyGroup>
 
   <ItemGroup>

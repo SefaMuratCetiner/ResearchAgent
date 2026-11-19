@@ -107,7 +107,11 @@ public sealed class RabbitMqPipelineTests : IAsyncLifetime
         return host.Services.GetRequiredService<IMessagePublisher>().PublishAsync(envelope, TestContext.Current.CancellationToken);
     }
 
-    /// <summary>The listener declares its queue after start; publishing before that would drop the message.</summary>
+    /// <summary>
+    /// The listener declares and binds its queue after start; publishing before that would drop the message. A quorum
+    /// queue is visible before its declaration completes, so wait for the listener's consumer, which is attached only
+    /// after the binding.
+    /// </summary>
     private async Task WaitForQueueAsync(string queue)
     {
         var deadline = DateTime.UtcNow + Timeout;
@@ -116,13 +120,22 @@ public sealed class RabbitMqPipelineTests : IAsyncLifetime
             try
             {
                 await using var channel = await _connection.CreateChannelAsync();
-                await channel.QueueDeclarePassiveAsync(queue);
-                return;
+                var declared = await channel.QueueDeclarePassiveAsync(queue);
+                if (declared.ConsumerCount > 0)
+                {
+                    return;
+                }
             }
             catch (RabbitMQ.Client.Exceptions.OperationInterruptedException) when (DateTime.UtcNow < deadline)
             {
-                await Task.Delay(200, TestContext.Current.CancellationToken);
             }
+
+            if (DateTime.UtcNow >= deadline)
+            {
+                throw new TimeoutException("No consumer on " + queue);
+            }
+
+            await Task.Delay(200, TestContext.Current.CancellationToken);
         }
     }
 

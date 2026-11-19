@@ -15,7 +15,7 @@ public static class MessageJson
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         };
         options.Converters.Add(new JsonStringEnumConverter());
-        options.MakeReadOnly();
+        options.MakeReadOnly(populateMissingResolver: true);
         return options;
     }
 }
