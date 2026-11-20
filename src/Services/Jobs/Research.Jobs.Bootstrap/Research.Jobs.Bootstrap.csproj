@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!--
+    Jobs HTTP API bootstrapper: hosts the public /research endpoints and SSE stream, backed by Postgres and the
+    transactional outbox. Background consumers, outbox publishing and timer workers run in Research.Jobs.Worker.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Jobs.Bootstrap</RootNamespace>
+    <UserSecretsId>research-jobs-host</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Jobs.Application\Research.Jobs.Application.csproj" />
+    <ProjectReference Include="..\Research.Jobs.Infrastructure\Research.Jobs.Infrastructure.csproj" />
+    <ProjectReference Include="..\Research.Jobs.Api\Research.Jobs.Api.csproj" />
+    <ProjectReference Include="..\..\..\Research.ServiceDefaults\Research.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
+    <ProjectReference Include="..\..\..\Providers\Research.Providers.Postgres\Research.Providers.Postgres.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Npgsql" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
+</Project>

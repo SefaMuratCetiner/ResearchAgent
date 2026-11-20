@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Fetching Application: FetchPage use case and ports (IPageDownloader, IRobotsPolicy, IDomainThrottle,
+    IContentExtractor, IFetchedDocumentRepository). Zero HTTP client or HTML parser dependencies.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Fetching.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Fetching.Domain\Research.Fetching.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Contracts\Research.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+</Project>

@@ -36,8 +36,9 @@
 
   <!-- Tests may reach internal helpers (normalizers, literals, hashes) without making them public. -->
   <ItemGroup Condition="!$(MSBuildProjectName.EndsWith('Tests'))">
-    <InternalsVisibleTo Include="Research.UnitTests" />
-    <InternalsVisibleTo Include="Research.IntegrationTests" />
+    <InternalsVisibleTo Include="Research.Domain.UnitTests" />
+    <InternalsVisibleTo Include="Research.Application.UnitTests" />
+    <InternalsVisibleTo Include="Research.Infrastructure.IntegrationTests" />
   </ItemGroup>
 
   <ItemGroup>

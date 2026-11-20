@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Jobs Application: use cases (create, read, cancel, advance on worker replies, recovery and deadlines),
+    lifecycle orchestration and repository ports. Depends only on Jobs.Domain, Shared.Core and Contracts.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Jobs.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Jobs.Domain\Research.Jobs.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Contracts\Research.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+</Project>

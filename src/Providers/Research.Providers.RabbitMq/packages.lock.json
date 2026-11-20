@@ -90,7 +90,7 @@
       "research.contracts": {
         "type": "Project"
       },
-      "research.messaging": {
+      "research.shared.adapters": {
         "type": "Project",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.15, )",
@@ -98,6 +98,14 @@
           "Microsoft.Extensions.Hosting.Abstractions": "[10.0.15, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.15, )",
           "Microsoft.Extensions.Options": "[10.0.15, )",
+          "Research.Contracts": "[1.0.0, )",
+          "Research.Shared.Core": "[1.0.0, )",
+          "Research.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "research.shared.core": {
+        "type": "Project",
+        "dependencies": {
           "Research.Contracts": "[1.0.0, )",
           "Research.SharedKernel": "[1.0.0, )"
         }

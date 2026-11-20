@@ -2,7 +2,7 @@ using System.Text.Json;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using Npgsql;
-using Research.SharedKernel.Messaging;
+using Research.Shared.Core.Messaging;
 
 namespace Research.Providers.Postgres.Messaging;
 

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!--
+    Planning worker host: consumes PlanRequested and selects the configured LLM provider (Anthropic or OpenAI).
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Planning.Bootstrap</RootNamespace>
+    <UserSecretsId>research-planning-host</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Planning.Application\Research.Planning.Application.csproj" />
+    <ProjectReference Include="..\..\..\Research.ServiceDefaults\Research.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
+    <ProjectReference Include="..\..\..\Providers\Research.Providers.Anthropic\Research.Providers.Anthropic.csproj" />
+    <ProjectReference Include="..\..\..\Providers\Research.Providers.OpenAI\Research.Providers.OpenAI.csproj" />
+    <ProjectReference Include="..\..\..\Providers\Research.Providers.RabbitMq\Research.Providers.RabbitMq.csproj" />
+    <ProjectReference Include="..\..\..\Providers\Research.Providers.Valkey\Research.Providers.Valkey.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.RabbitMQ.Client" />
+    <PackageReference Include="Aspire.StackExchange.Redis" />
+  </ItemGroup>
+</Project>

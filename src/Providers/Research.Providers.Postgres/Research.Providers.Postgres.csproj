@@ -2,14 +2,14 @@
   <!--
     Generic Postgres plumbing shared by the services that own a database (Jobs, Fetching, Knowledge): transactions,
     the outbox and inbox tables with LISTEN/NOTIFY wake-up, Dapper type handlers and the schema readiness check.
-    Module SQL stays in each module's own .Postgres adapter.
+    Module SQL stays in each service's own Infrastructure project.
   -->
   <PropertyGroup>
     <RootNamespace>Research.Providers.Postgres</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

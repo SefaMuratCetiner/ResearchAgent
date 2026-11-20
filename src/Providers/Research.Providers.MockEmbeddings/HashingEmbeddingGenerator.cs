@@ -1,5 +1,5 @@
 using System.Text;
-using Research.SharedKernel.Embeddings;
+using Research.Shared.Core.Embeddings;
 
 namespace Research.Providers.MockEmbeddings;
 

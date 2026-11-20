@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using Research.SharedKernel.Caching;
+using Research.Shared.Core.Caching;
 using StackExchange.Redis;
 
 namespace Research.Providers.Valkey;

@@ -90,29 +90,35 @@ var dbScripts = builder.AddProject<Projects.Research_DbScripts>("db-scripts")
 
 // Services ----------------------------------------------------------------------------------------------------------
 
-builder.AddProject<Projects.Research_Jobs_Host>("jobs")
+builder.AddProject<Projects.Research_Jobs_Bootstrap>("jobs")
     .WithReference(elasticsearch)
     .WithExternalHttpEndpoints()
+    .WithReference(jobsDb, connectionName: "jobs").WaitFor(jobsDb)
+    .WaitForCompletion(dbScripts)
+    .WithReplicas(2);
+
+builder.AddProject<Projects.Research_Jobs_Worker>("jobs-worker")
+    .WithReference(elasticsearch)
     .WithReference(jobsDb, connectionName: "jobs").WaitFor(jobsDb)
     .WithReference(bus).WaitFor(bus)
     .WaitForCompletion(dbScripts)
     .WithReplicas(2);
 
-var planning = builder.AddProject<Projects.Research_Planning_Host>("planning")
+var planning = builder.AddProject<Projects.Research_Planning_Bootstrap>("planning")
     .WithReference(elasticsearch)
     .WithReference(bus).WaitFor(bus)
     .WithReference(cache)
     .WithEnvironment("Anthropic__ApiKey", anthropicApiKey)
     .WithReplicas(2);
 
-builder.AddProject<Projects.Research_Search_Host>("search")
+builder.AddProject<Projects.Research_Search_Bootstrap>("search")
     .WithReference(elasticsearch)
     .WithReference(bus).WaitFor(bus)
     .WithReference(cache)
     .WithEnvironment("AnthropicWebSearch__ApiKey", anthropicApiKey)
     .WithReplicas(3);
 
-builder.AddProject<Projects.Research_Fetching_Host>("fetching")
+builder.AddProject<Projects.Research_Fetching_Bootstrap>("fetching")
     .WithReference(elasticsearch)
     .WithReference(fetchingDb, connectionName: "fetching").WaitFor(fetchingDb)
     .WithReference(bus).WaitFor(bus)
@@ -120,7 +126,7 @@ builder.AddProject<Projects.Research_Fetching_Host>("fetching")
     .WaitForCompletion(dbScripts)
     .WithReplicas(3);
 
-var knowledge = builder.AddProject<Projects.Research_Knowledge_Host>("knowledge")
+var knowledge = builder.AddProject<Projects.Research_Knowledge_Bootstrap>("knowledge")
     .WithReference(elasticsearch)
     .WithReference(knowledgeDb, connectionName: "knowledge").WaitFor(knowledgeDb)
     .WithReference(bus).WaitFor(bus)
@@ -128,7 +134,7 @@ var knowledge = builder.AddProject<Projects.Research_Knowledge_Host>("knowledge"
     .WaitForCompletion(dbScripts)
     .WithReplicas(2);
 
-var synthesis = builder.AddProject<Projects.Research_Synthesis_Host>("synthesis")
+var synthesis = builder.AddProject<Projects.Research_Synthesis_Bootstrap>("synthesis")
     .WithReference(elasticsearch)
     .WithReference(bus).WaitFor(bus)
     .WithReference(knowledge)

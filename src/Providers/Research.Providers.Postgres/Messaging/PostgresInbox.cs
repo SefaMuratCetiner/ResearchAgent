@@ -1,8 +1,8 @@
 using Dapper;
 using Npgsql;
 using Research.Providers.Postgres.Transactions;
-using Research.SharedKernel.Messaging;
-using Research.SharedKernel.Transactions;
+using Research.Shared.Core.Messaging;
+using Research.Shared.Core.Transactions;
 
 namespace Research.Providers.Postgres.Messaging;
 

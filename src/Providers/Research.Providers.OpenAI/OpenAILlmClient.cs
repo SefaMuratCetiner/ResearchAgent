@@ -3,8 +3,9 @@ using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenAI.Chat;
-using Research.SharedKernel.Llm;
-using Research.SharedKernel.Logging;
+using Research.Shared.Adapters.Llm;
+using Research.Shared.Core.Llm;
+using Research.Shared.Core.Logging;
 
 namespace Research.Providers.OpenAI;
 

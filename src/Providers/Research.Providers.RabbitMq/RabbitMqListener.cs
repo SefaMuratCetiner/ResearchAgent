@@ -5,9 +5,9 @@ using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Research.Contracts;
-using Research.Messaging;
-using Research.Messaging.Consuming;
-using Research.SharedKernel.Messaging;
+using Research.Shared.Adapters.Messaging;
+using Research.Shared.Adapters.Messaging.Consuming;
+using Research.Shared.Core.Messaging;
 
 namespace Research.Providers.RabbitMq;
 

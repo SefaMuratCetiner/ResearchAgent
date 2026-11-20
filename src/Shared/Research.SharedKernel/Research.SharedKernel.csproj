@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
-    The code every process shares: base entities, Result and errors, the current actor, transaction and messaging
-    ports, and the ports for external capabilities (LLM, embeddings, documents, cache). No package references and
-    no DI registration code: the Hosts' composition roots wire these types.
+    Pure Domain primitives shared across services: base entities and Result/Error types.
+    Zero package references and zero project references.
   -->
   <PropertyGroup>
     <RootNamespace>Research.SharedKernel</RootNamespace>

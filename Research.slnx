@@ -23,17 +23,17 @@
 
   <Folder Name="/src/">
     <Project Path="src/Research.AppHost/Research.AppHost.csproj" />
+    <Project Path="src/Research.ServiceDefaults/Research.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/Research.SharedKernel/Research.SharedKernel.csproj" />
+    <Project Path="src/Shared/Research.Shared.Core/Research.Shared.Core.csproj" />
     <Project Path="src/Shared/Research.Contracts/Research.Contracts.csproj" />
-    <Project Path="src/Shared/Research.Hosting/Research.Hosting.csproj" />
-    <Project Path="src/Shared/Research.Messaging/Research.Messaging.csproj" />
-    <Project Path="src/Shared/Research.Problems/Research.Problems.csproj" />
-    <Project Path="src/Shared/Research.Http/Research.Http.csproj" />
+    <Project Path="src/Shared/Research.Shared.Adapters/Research.Shared.Adapters.csproj" />
   </Folder>
   <Folder Name="/src/Providers/">
     <Project Path="src/Providers/Research.Providers.Anthropic/Research.Providers.Anthropic.csproj" />
+    <Project Path="src/Providers/Research.Providers.AnthropicWebSearch/Research.Providers.AnthropicWebSearch.csproj" />
     <Project Path="src/Providers/Research.Providers.BlobStorage/Research.Providers.BlobStorage.csproj" />
     <Project Path="src/Providers/Research.Providers.MockEmbeddings/Research.Providers.MockEmbeddings.csproj" />
     <Project Path="src/Providers/Research.Providers.OpenAI/Research.Providers.OpenAI.csproj" />
@@ -41,36 +41,40 @@
     <Project Path="src/Providers/Research.Providers.RabbitMq/Research.Providers.RabbitMq.csproj" />
     <Project Path="src/Providers/Research.Providers.Valkey/Research.Providers.Valkey.csproj" />
   </Folder>
-  <Folder Name="/src/Jobs/">
-    <Project Path="src/Jobs/Research.Jobs/Research.Jobs.csproj" />
-    <Project Path="src/Jobs/Research.Jobs.Postgres/Research.Jobs.Postgres.csproj" />
-    <Project Path="src/Jobs/Research.Jobs.Api/Research.Jobs.Api.csproj" />
-    <Project Path="src/Jobs/Research.Jobs.Host/Research.Jobs.Host.csproj" />
+  <Folder Name="/src/Services/Jobs/">
+    <Project Path="src/Services/Jobs/Research.Jobs.Domain/Research.Jobs.Domain.csproj" />
+    <Project Path="src/Services/Jobs/Research.Jobs.Application/Research.Jobs.Application.csproj" />
+    <Project Path="src/Services/Jobs/Research.Jobs.Infrastructure/Research.Jobs.Infrastructure.csproj" />
+    <Project Path="src/Services/Jobs/Research.Jobs.Api/Research.Jobs.Api.csproj" />
+    <Project Path="src/Services/Jobs/Research.Jobs.Bootstrap/Research.Jobs.Bootstrap.csproj" />
+    <Project Path="src/Services/Jobs/Research.Jobs.Worker/Research.Jobs.Worker.csproj" />
   </Folder>
-  <Folder Name="/src/Planning/">
-    <Project Path="src/Planning/Research.Planning/Research.Planning.csproj" />
-    <Project Path="src/Planning/Research.Planning.Host/Research.Planning.Host.csproj" />
+  <Folder Name="/src/Services/Planning/">
+    <Project Path="src/Services/Planning/Research.Planning.Application/Research.Planning.Application.csproj" />
+    <Project Path="src/Services/Planning/Research.Planning.Bootstrap/Research.Planning.Bootstrap.csproj" />
   </Folder>
-  <Folder Name="/src/Search/">
-    <Project Path="src/Search/Research.Search/Research.Search.csproj" />
-    <Project Path="src/Search/Research.Search.AnthropicWebSearch/Research.Search.AnthropicWebSearch.csproj" />
-    <Project Path="src/Search/Research.Search.Host/Research.Search.Host.csproj" />
+  <Folder Name="/src/Services/Search/">
+    <Project Path="src/Services/Search/Research.Search.Application/Research.Search.Application.csproj" />
+    <Project Path="src/Services/Search/Research.Search.Infrastructure/Research.Search.Infrastructure.csproj" />
+    <Project Path="src/Services/Search/Research.Search.Bootstrap/Research.Search.Bootstrap.csproj" />
   </Folder>
-  <Folder Name="/src/Fetching/">
-    <Project Path="src/Fetching/Research.Fetching/Research.Fetching.csproj" />
-    <Project Path="src/Fetching/Research.Fetching.Postgres/Research.Fetching.Postgres.csproj" />
-    <Project Path="src/Fetching/Research.Fetching.Host/Research.Fetching.Host.csproj" />
+  <Folder Name="/src/Services/Fetching/">
+    <Project Path="src/Services/Fetching/Research.Fetching.Domain/Research.Fetching.Domain.csproj" />
+    <Project Path="src/Services/Fetching/Research.Fetching.Application/Research.Fetching.Application.csproj" />
+    <Project Path="src/Services/Fetching/Research.Fetching.Infrastructure/Research.Fetching.Infrastructure.csproj" />
+    <Project Path="src/Services/Fetching/Research.Fetching.Bootstrap/Research.Fetching.Bootstrap.csproj" />
   </Folder>
-  <Folder Name="/src/Knowledge/">
-    <Project Path="src/Knowledge/Research.Knowledge/Research.Knowledge.csproj" />
-    <Project Path="src/Knowledge/Research.Knowledge.Postgres/Research.Knowledge.Postgres.csproj" />
-    <Project Path="src/Knowledge/Research.Knowledge.Api/Research.Knowledge.Api.csproj" />
-    <Project Path="src/Knowledge/Research.Knowledge.Host/Research.Knowledge.Host.csproj" />
+  <Folder Name="/src/Services/Knowledge/">
+    <Project Path="src/Services/Knowledge/Research.Knowledge.Domain/Research.Knowledge.Domain.csproj" />
+    <Project Path="src/Services/Knowledge/Research.Knowledge.Application/Research.Knowledge.Application.csproj" />
+    <Project Path="src/Services/Knowledge/Research.Knowledge.Infrastructure/Research.Knowledge.Infrastructure.csproj" />
+    <Project Path="src/Services/Knowledge/Research.Knowledge.Api/Research.Knowledge.Api.csproj" />
+    <Project Path="src/Services/Knowledge/Research.Knowledge.Bootstrap/Research.Knowledge.Bootstrap.csproj" />
   </Folder>
-  <Folder Name="/src/Synthesis/">
-    <Project Path="src/Synthesis/Research.Synthesis/Research.Synthesis.csproj" />
-    <Project Path="src/Synthesis/Research.Synthesis.HttpKnowledge/Research.Synthesis.HttpKnowledge.csproj" />
-    <Project Path="src/Synthesis/Research.Synthesis.Host/Research.Synthesis.Host.csproj" />
+  <Folder Name="/src/Services/Synthesis/">
+    <Project Path="src/Services/Synthesis/Research.Synthesis.Application/Research.Synthesis.Application.csproj" />
+    <Project Path="src/Services/Synthesis/Research.Synthesis.Infrastructure/Research.Synthesis.Infrastructure.csproj" />
+    <Project Path="src/Services/Synthesis/Research.Synthesis.Bootstrap/Research.Synthesis.Bootstrap.csproj" />
   </Folder>
 
   <Folder Name="/tools/">
@@ -79,9 +83,10 @@
 
   <Folder Name="/tests/">
     <File Path="tests/Directory.Build.props" />
-    <Project Path="tests/Research.UnitTests/Research.UnitTests.csproj" />
+    <Project Path="tests/Research.Domain.UnitTests/Research.Domain.UnitTests.csproj" />
+    <Project Path="tests/Research.Application.UnitTests/Research.Application.UnitTests.csproj" />
     <Project Path="tests/Research.ArchitectureTests/Research.ArchitectureTests.csproj" />
-    <Project Path="tests/Research.IntegrationTests/Research.IntegrationTests.csproj" />
+    <Project Path="tests/Research.Infrastructure.IntegrationTests/Research.Infrastructure.IntegrationTests.csproj" />
     <Project Path="tests/Research.EndToEndTests/Research.EndToEndTests.csproj" />
   </Folder>
 </Solution>

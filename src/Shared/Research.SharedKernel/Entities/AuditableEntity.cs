@@ -2,7 +2,7 @@ namespace Research.SharedKernel.Entities;
 
 /// <summary>
 /// An entity with its audit trail. Nothing fills these fields automatically: the handler sets them from
-/// <see cref="TimeProvider"/> and <see cref="Actors.ICurrentActor"/>, and the SQL stores them as ordinary columns.
+/// <see cref="TimeProvider"/> and the current actor, and the SQL stores them as ordinary columns.
 /// </summary>
 public abstract record AuditableEntity : Entity
 {

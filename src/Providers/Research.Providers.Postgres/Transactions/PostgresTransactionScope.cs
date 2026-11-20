@@ -1,5 +1,5 @@
 using Npgsql;
-using Research.SharedKernel.Transactions;
+using Research.Shared.Core.Transactions;
 
 namespace Research.Providers.Postgres.Transactions;
 

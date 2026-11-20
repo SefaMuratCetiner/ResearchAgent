@@ -2,20 +2,20 @@
   "solution": {
     "path": "..\\Research.slnx",
     "projects": [
+      "src\\Research.ServiceDefaults\\Research.ServiceDefaults.csproj",
       "src\\Shared\\Research.SharedKernel\\Research.SharedKernel.csproj",
+      "src\\Shared\\Research.Shared.Core\\Research.Shared.Core.csproj",
       "src\\Shared\\Research.Contracts\\Research.Contracts.csproj",
-      "src\\Shared\\Research.Hosting\\Research.Hosting.csproj",
-      "src\\Shared\\Research.Messaging\\Research.Messaging.csproj",
-      "src\\Shared\\Research.Problems\\Research.Problems.csproj",
-      "src\\Shared\\Research.Http\\Research.Http.csproj",
+      "src\\Shared\\Research.Shared.Adapters\\Research.Shared.Adapters.csproj",
       "src\\Providers\\Research.Providers.Postgres\\Research.Providers.Postgres.csproj",
       "src\\Providers\\Research.Providers.RabbitMq\\Research.Providers.RabbitMq.csproj",
       "src\\Providers\\Research.Providers.BlobStorage\\Research.Providers.BlobStorage.csproj",
       "src\\Providers\\Research.Providers.MockEmbeddings\\Research.Providers.MockEmbeddings.csproj",
-      "src\\Knowledge\\Research.Knowledge\\Research.Knowledge.csproj",
-      "src\\Knowledge\\Research.Knowledge.Postgres\\Research.Knowledge.Postgres.csproj",
-      "src\\Knowledge\\Research.Knowledge.Api\\Research.Knowledge.Api.csproj",
-      "src\\Knowledge\\Research.Knowledge.Host\\Research.Knowledge.Host.csproj"
+      "src\\Services\\Knowledge\\Research.Knowledge.Domain\\Research.Knowledge.Domain.csproj",
+      "src\\Services\\Knowledge\\Research.Knowledge.Application\\Research.Knowledge.Application.csproj",
+      "src\\Services\\Knowledge\\Research.Knowledge.Infrastructure\\Research.Knowledge.Infrastructure.csproj",
+      "src\\Services\\Knowledge\\Research.Knowledge.Api\\Research.Knowledge.Api.csproj",
+      "src\\Services\\Knowledge\\Research.Knowledge.Bootstrap\\Research.Knowledge.Bootstrap.csproj"
     ]
   }
 }

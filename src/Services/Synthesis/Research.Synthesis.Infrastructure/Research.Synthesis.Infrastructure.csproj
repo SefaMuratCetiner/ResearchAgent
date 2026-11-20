@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Synthesis Infrastructure: HTTP adapter implementing IKnowledgeRetriever against the internal Knowledge API.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Synthesis.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Synthesis.Application\Research.Synthesis.Application.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!--
+    Jobs background worker host: consumes worker replies (PlanReady, ResultsFound, DocumentIndexed, ReportReady,
+    StepFailed), drains the transactional outbox to RabbitMQ, and runs the deadline and stuck-job recovery timers.
+    HTTP serves health endpoints only.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Jobs.Worker</RootNamespace>
+    <UserSecretsId>research-jobs-worker</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Jobs.Application\Research.Jobs.Application.csproj" />
+    <ProjectReference Include="..\Research.Jobs.Infrastructure\Research.Jobs.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Research.ServiceDefaults\Research.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
+    <ProjectReference Include="..\..\..\Providers\Research.Providers.Postgres\Research.Providers.Postgres.csproj" />
+    <ProjectReference Include="..\..\..\Providers\Research.Providers.RabbitMq\Research.Providers.RabbitMq.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Npgsql" />
+    <PackageReference Include="Aspire.RabbitMQ.Client" />
+  </ItemGroup>
+</Project>

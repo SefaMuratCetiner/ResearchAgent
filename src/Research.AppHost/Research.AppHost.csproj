@@ -1,7 +1,7 @@
 <Project Sdk="Aspire.AppHost.Sdk/13.6.5">
   <!--
     The local orchestrator (D22): starts Postgres (pgvector), RabbitMQ, Valkey, Azurite, Elasticsearch and Kibana, the schema scripts and every
-    service with its replicas. References Host projects and tools only (§5).
+    service with its replicas. References Bootstrap/Worker entry points and tools only.
   -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -11,12 +11,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\tools\Research.DbScripts\Research.DbScripts.csproj" />
-    <ProjectReference Include="..\Jobs\Research.Jobs.Host\Research.Jobs.Host.csproj" />
-    <ProjectReference Include="..\Planning\Research.Planning.Host\Research.Planning.Host.csproj" />
-    <ProjectReference Include="..\Search\Research.Search.Host\Research.Search.Host.csproj" />
-    <ProjectReference Include="..\Fetching\Research.Fetching.Host\Research.Fetching.Host.csproj" />
-    <ProjectReference Include="..\Knowledge\Research.Knowledge.Host\Research.Knowledge.Host.csproj" />
-    <ProjectReference Include="..\Synthesis\Research.Synthesis.Host\Research.Synthesis.Host.csproj" />
+    <ProjectReference Include="..\Services\Jobs\Research.Jobs.Bootstrap\Research.Jobs.Bootstrap.csproj" />
+    <ProjectReference Include="..\Services\Jobs\Research.Jobs.Worker\Research.Jobs.Worker.csproj" />
+    <ProjectReference Include="..\Services\Planning\Research.Planning.Bootstrap\Research.Planning.Bootstrap.csproj" />
+    <ProjectReference Include="..\Services\Search\Research.Search.Bootstrap\Research.Search.Bootstrap.csproj" />
+    <ProjectReference Include="..\Services\Fetching\Research.Fetching.Bootstrap\Research.Fetching.Bootstrap.csproj" />
+    <ProjectReference Include="..\Services\Knowledge\Research.Knowledge.Bootstrap\Research.Knowledge.Bootstrap.csproj" />
+    <ProjectReference Include="..\Services\Synthesis\Research.Synthesis.Bootstrap\Research.Synthesis.Bootstrap.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,26 +1,25 @@
 namespace Research.ArchitectureTests;
 
-/// <summary>Every Host has the composition-root shape: Program, CompositionRoot (root + settings), Features.</summary>
+/// <summary>Every service entry point (.Bootstrap or .Worker) has consistent host files and keeps secrets out of appsettings.</summary>
 public sealed class HostShapeTests
 {
-    public static TheoryData<string> Hosts => [.. Solution.Projects.Where(static p => p.IsHost).Select(static p => p.Name)];
+    public static TheoryData<string> EntryPoints => [.. Solution.Projects.Where(static p => p.IsEntryPoint).Select(static p => p.Name)];
 
     [Theory]
-    [MemberData(nameof(Hosts))]
-    public void Host_HasCompositionRootShape(string name)
+    [MemberData(nameof(EntryPoints))]
+    public void EntryPoint_HasCompositionRootShape(string name)
     {
         var directory = Path.GetDirectoryName(Solution.Get(name).Path)!;
-        var service = name.Split('.')[1];
 
         File.Exists(Path.Combine(directory, "Program.cs")).ShouldBeTrue($"{name}/Program.cs");
-        File.Exists(Path.Combine(directory, "CompositionRoot", $"{service}CompositionRoot.cs")).ShouldBeTrue($"{name} composition root");
-        File.Exists(Path.Combine(directory, "CompositionRoot", $"{service}Settings.cs")).ShouldBeTrue($"{name} settings");
+        Directory.EnumerateFiles(Path.Combine(directory, "CompositionRoot"), "*CompositionRoot.cs").ShouldNotBeEmpty($"{name} composition root");
+        Directory.EnumerateFiles(Path.Combine(directory, "CompositionRoot"), "*Settings.cs").ShouldNotBeEmpty($"{name} settings");
         Directory.EnumerateFiles(Path.Combine(directory, "Features"), "*Feature.cs").ShouldNotBeEmpty($"{name} features");
     }
 
     [Theory]
-    [MemberData(nameof(Hosts))]
-    public void Host_ProgramOnlyComposes(string name)
+    [MemberData(nameof(EntryPoints))]
+    public void EntryPoint_ProgramOnlyComposes(string name)
     {
         var program = File.ReadAllText(Path.Combine(Path.GetDirectoryName(Solution.Get(name).Path)!, "Program.cs"));
 
@@ -30,8 +29,8 @@ public sealed class HostShapeTests
     }
 
     [Theory]
-    [MemberData(nameof(Hosts))]
-    public void Host_HasAppSettingsWithServiceName(string name)
+    [MemberData(nameof(EntryPoints))]
+    public void EntryPoint_HasAppSettingsWithServiceName(string name)
     {
         var settings = File.ReadAllText(Path.Combine(Path.GetDirectoryName(Solution.Get(name).Path)!, "appsettings.json"));
         settings.ShouldContain($"\"ServiceName\": \"{name.Split('.')[1].ToLowerInvariant()}\"");
@@ -40,7 +39,10 @@ public sealed class HostShapeTests
     [Fact]
     public void NoSecretsInAppSettings()
     {
-        foreach (var file in Directory.EnumerateFiles(Path.Combine(Solution.Root, "src"), "appsettings*.json", SearchOption.AllDirectories))
+        var objSegment = $"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}";
+        var binSegment = $"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}";
+        foreach (var file in Directory.EnumerateFiles(Path.Combine(Solution.Root, "src"), "appsettings*.json", SearchOption.AllDirectories)
+            .Where(f => !f.Contains(objSegment, StringComparison.OrdinalIgnoreCase) && !f.Contains(binSegment, StringComparison.OrdinalIgnoreCase)))
         {
             File.ReadAllText(file).ShouldNotContain("\"ApiKey\"", customMessage: $"{file} must not hold an API key");
         }

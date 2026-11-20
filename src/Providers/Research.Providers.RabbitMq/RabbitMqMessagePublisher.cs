@@ -3,7 +3,7 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using Research.Contracts;
-using Research.SharedKernel.Messaging;
+using Research.Shared.Core.Messaging;
 
 namespace Research.Providers.RabbitMq;
 

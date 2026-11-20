@@ -21,8 +21,8 @@
   <ItemGroup>
     <!-- The scripts stay next to the code that uses them; they are linked here per database. -->
     <Content Include="..\..\src\Providers\Research.Providers.Postgres\db\*.sql" Link="db\shared\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="..\..\src\Jobs\Research.Jobs.Postgres\db\*.sql" Link="db\jobs\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="..\..\src\Fetching\Research.Fetching.Postgres\db\*.sql" Link="db\fetching\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="..\..\src\Knowledge\Research.Knowledge.Postgres\db\*.sql" Link="db\knowledge\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\Services\Jobs\Research.Jobs.Infrastructure\Persistence\db\*.sql" Link="db\jobs\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\Services\Fetching\Research.Fetching.Infrastructure\Persistence\db\*.sql" Link="db\fetching\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\Services\Knowledge\Research.Knowledge.Infrastructure\Persistence\db\*.sql" Link="db\knowledge\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,66 @@
+using Research.Jobs.Observability;
+using Research.Jobs.Worker.Features;
+using Research.ServiceDefaults.Composition;
+using Research.ServiceDefaults.Features;
+using Research.Shared.Adapters.Messaging;
+using Research.Shared.Adapters.Messaging.Tracing;
+using Research.Shared.Core.Messaging;
+
+namespace Research.Jobs.Worker.CompositionRoot;
+
+/// <summary>
+/// The composition root of the Jobs Worker host: RabbitMQ reply consumers, transactional outbox publisher and timer
+/// loops (deadlines, stuck-job recovery). HTTP serves health endpoints only.
+/// </summary>
+public sealed class JobsWorkerCompositionRoot
+{
+    private readonly WebApplicationBuilder _builder;
+
+    public JobsWorkerCompositionRoot(WebApplicationBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        _builder = builder;
+        Settings = new JobsWorkerSettings(builder.Services, builder.Configuration);
+    }
+
+    internal JobsWorkerSettings Settings { get; }
+
+    /// <summary>Every feature, in registration order, grouped by concern.</summary>
+    internal IReadOnlyList<IResearchFeature> Features { get; } =
+    [
+        // Observability
+        new LoggingFeature(),
+        new TelemetryFeature(
+            sources: [MessagingTracing.SourceName, JobsTracing.SourceName],
+            meters: [MessagingMetrics.MeterName, JobsMetrics.MeterName]),
+        new HealthChecksFeature(),
+
+        // Platform
+        new ActorsFeature(),
+        new HttpClientsFeature(),
+        new ErrorsFeature(new MessagingErrorCatalog(), new JobsErrorCatalog()),
+
+        // Infrastructure
+        new PostgresFeature(),
+        new MessagingFeature(),
+
+        // Jobs worker handlers and timers
+        new JobsModuleFeature(),
+        new WorkersFeature(),
+    ];
+
+    /// <summary>Registers every service: shared infrastructure, then each feature in order.</summary>
+    public void ComposeServices()
+    {
+        _builder.Services.AddSingleton(TimeProvider.System);
+
+        var app = new ResearchBuilder(_builder);
+        foreach (var feature in Features)
+        {
+            feature.Register(app);
+        }
+    }
+
+    /// <summary>Health endpoints only.</summary>
+    public void ComposeEndpoints(WebApplication app) => HealthEndpoints.Map(app);
+}

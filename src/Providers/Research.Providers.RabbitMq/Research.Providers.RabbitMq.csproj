@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
     The RabbitMQ transport: topology (topic exchange, quorum queues, TTL delay queues, DLQs), the confirmed publisher,
-    and one listener per consumed contract that feeds deliveries to Research.Messaging's MessageDispatcher.
+    and one listener per consumed contract that feeds deliveries to Research.Shared.Adapters' MessageDispatcher.
     The IConnection comes from Aspire's RabbitMQ client integration.
   -->
   <PropertyGroup>
@@ -9,9 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
     <ProjectReference Include="..\..\Shared\Research.Contracts\Research.Contracts.csproj" />
-    <ProjectReference Include="..\..\Shared\Research.Messaging\Research.Messaging.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
   </ItemGroup>
 
   <ItemGroup>

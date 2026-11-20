@@ -1,9 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Research.Contracts;
-using Research.Messaging;
-using Research.Messaging.Consuming;
-using Research.SharedKernel.Messaging;
+using Research.Shared.Adapters.Messaging;
+using Research.Shared.Adapters.Messaging.Consuming;
+using Research.Shared.Core.Messaging;
 
 namespace Research.Providers.RabbitMq;
 
@@ -18,6 +18,7 @@ public static class RabbitMqServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         services.TryAddSingleton<EnvelopeFactory>();
+        services.TryAddSingleton<IEnvelopeFactory>(static provider => provider.GetRequiredService<EnvelopeFactory>());
         services.TryAddSingleton<MessagingMetrics>();
         services.TryAddSingleton<RabbitMqMessagePublisher>();
         services.TryAddSingleton<IMessagePublisher>(static provider => provider.GetRequiredService<RabbitMqMessagePublisher>());

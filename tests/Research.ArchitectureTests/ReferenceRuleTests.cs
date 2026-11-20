@@ -1,8 +1,15 @@
 namespace Research.ArchitectureTests;
 
+/// <summary>Enforces the Clean Architecture Dependency Rule across all 6 microservices, shared libraries and providers.</summary>
 public sealed class ReferenceRuleTests
 {
-    public static TheoryData<string> Modules => [.. Solution.Projects.Where(static p => p.IsModule).Select(static p => p.Name)];
+    public static TheoryData<string> Domains => [.. Solution.Projects.Where(static p => p.IsDomain).Select(static p => p.Name)];
+
+    public static TheoryData<string> Applications => [.. Solution.Projects.Where(static p => p.IsApplication).Select(static p => p.Name)];
+
+    public static TheoryData<string> Infrastructures => [.. Solution.Projects.Where(static p => p.IsInfrastructure).Select(static p => p.Name)];
+
+    public static TheoryData<string> Apis => [.. Solution.Projects.Where(static p => p.IsApi).Select(static p => p.Name)];
 
     public static TheoryData<string> Providers => [.. Solution.Projects.Where(static p => p.IsProvider).Select(static p => p.Name)];
 
@@ -17,49 +24,104 @@ public sealed class ReferenceRuleTests
             var project = Solution.Get(name);
             project.PackageReferences.ShouldBeEmpty(name);
             project.FrameworkReferences.ShouldBeEmpty(name);
-            if (name == "Research.Contracts")
-            {
-                project.ProjectReferences.ShouldBeEmpty(name);
-            }
+            project.ProjectReferences.ShouldBeEmpty(name);
+        }
+    }
+
+    [Fact]
+    public void SharedCore_DependsOnlyOnSharedKernelAndContracts_WithNoPackages()
+    {
+        var project = Solution.Get("Research.Shared.Core");
+        project.PackageReferences.ShouldBeEmpty();
+        project.FrameworkReferences.ShouldBeEmpty();
+        foreach (var reference in project.ProjectReferences)
+        {
+            (reference is "Research.SharedKernel" or "Research.Contracts")
+                .ShouldBeTrue($"Research.Shared.Core must not reference {reference}");
         }
     }
 
     [Theory]
-    [MemberData(nameof(Modules))]
-    public void Modules_DependOnlyOnSharedLibrariesAndTheirOwnModule(string name)
+    [MemberData(nameof(Domains))]
+    public void Domain_DependsOnlyOnSharedKernel_WithNoPackages(string name)
     {
         var project = Solution.Get(name);
-        var service = name.Split('.')[1];
+        project.PackageReferences.ShouldBeEmpty($"{name} must have zero package references");
+        project.FrameworkReferences.ShouldBeEmpty($"{name} must have zero framework references");
+        foreach (var reference in project.ProjectReferences)
+        {
+            reference.ShouldBe("Research.SharedKernel", $"{name} must not reference {reference}");
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Applications))]
+    public void Application_DependsOnlyOnOwnDomainSharedCoreAndContracts(string name)
+    {
+        var project = Solution.Get(name);
+        var ownDomain = $"Research.{project.ServiceName}.Domain";
 
         foreach (var reference in project.ProjectReferences)
         {
-            var allowed = reference is "Research.SharedKernel" or "Research.Contracts" or "Research.Messaging"
-                || reference == $"Research.{service}";
+            var allowed = reference is "Research.Shared.Core" or "Research.Contracts"
+                || reference == ownDomain;
             allowed.ShouldBeTrue($"{name} must not reference {reference}");
         }
 
         project.FrameworkReferences.ShouldNotContain("Microsoft.AspNetCore.App", $"{name} must not depend on ASP.NET Core");
         project.PackageReferences.ShouldNotContain(static p => p.StartsWith("Aspire.", StringComparison.Ordinal), $"{name} must not use Aspire");
+        project.PackageReferences.ShouldNotContain("AngleSharp", $"{name} must not use AngleSharp");
+        project.PackageReferences.ShouldNotContain("Microsoft.Extensions.Http", $"{name} must not use HttpClient");
         project.PackageReferences.ShouldNotContain("Npgsql", $"{name} must not use Npgsql");
         project.PackageReferences.ShouldNotContain("Dapper", $"{name} must not use Dapper");
         project.PackageReferences.ShouldNotContain("RabbitMQ.Client", $"{name} must not use RabbitMQ.Client");
     }
 
     [Theory]
+    [MemberData(nameof(Infrastructures))]
+    public void Infrastructure_DependsOnlyOnOwnApplicationSharedAdaptersAndProviders(string name)
+    {
+        var project = Solution.Get(name);
+        var ownApp = $"Research.{project.ServiceName}.Application";
+
+        foreach (var reference in project.ProjectReferences)
+        {
+            var allowed = reference == ownApp
+                || reference == "Research.Shared.Adapters"
+                || reference.StartsWith("Research.Providers.", StringComparison.Ordinal);
+            allowed.ShouldBeTrue($"{name} must not reference {reference}");
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Apis))]
+    public void Api_DependsOnlyOnOwnApplicationAndServiceDefaults(string name)
+    {
+        var project = Solution.Get(name);
+        var ownApp = $"Research.{project.ServiceName}.Application";
+
+        foreach (var reference in project.ProjectReferences)
+        {
+            var allowed = reference == ownApp || reference == "Research.ServiceDefaults";
+            allowed.ShouldBeTrue($"{name} must not reference {reference}");
+        }
+    }
+
+    [Theory]
     [MemberData(nameof(Providers))]
-    public void Providers_DoNotReferenceModulesOrHosting(string name)
+    public void Providers_DependOnlyOnSharedCoreSharedAdaptersAndContracts(string name)
     {
         foreach (var reference in Solution.Get(name).ProjectReferences)
         {
-            (reference is "Research.SharedKernel" or "Research.Contracts" or "Research.Messaging")
+            (reference is "Research.Shared.Core" or "Research.Shared.Adapters" or "Research.Contracts")
                 .ShouldBeTrue($"{name} must not reference {reference}");
         }
     }
 
     [Fact]
-    public void OnlyHostsAndTheAppHostReferenceAspireClientIntegrations()
+    public void OnlyEntryPointsAndAppHostReferenceAspireClientIntegrations()
     {
-        foreach (var project in Solution.Projects.Where(static p => !p.IsHost && !p.IsAppHost))
+        foreach (var project in Solution.Projects.Where(static p => !p.IsEntryPoint && !p.IsAppHost))
         {
             project.PackageReferences.ShouldNotContain(
                 static p => p.StartsWith("Aspire.", StringComparison.Ordinal),
@@ -68,22 +130,23 @@ public sealed class ReferenceRuleTests
     }
 
     [Fact]
-    public void NoProjectReferencesAHost()
+    public void NoProjectReferencesAnEntryPointExceptAppHost()
     {
         foreach (var project in Solution.Projects.Where(static p => !p.IsAppHost))
         {
             project.ProjectReferences.ShouldNotContain(
-                static r => r.EndsWith(".Host", StringComparison.Ordinal),
-                $"{project.Name} must not reference a Host");
+                static r => r.EndsWith(".Bootstrap", StringComparison.Ordinal) || r.EndsWith(".Worker", StringComparison.Ordinal),
+                $"{project.Name} must not reference a Bootstrap or Worker entry point");
         }
     }
 
     [Fact]
-    public void AppHost_ReferencesOnlyHostsAndTools()
+    public void AppHost_ReferencesOnlyEntryPointsAndTools()
     {
         foreach (var reference in Solution.Get("Research.AppHost").ProjectReferences)
         {
-            (reference.EndsWith(".Host", StringComparison.Ordinal) || reference == "Research.DbScripts")
+            var target = Solution.Get(reference);
+            (target.IsEntryPoint || target.IsTool)
                 .ShouldBeTrue($"AppHost must not reference {reference}");
         }
     }
@@ -91,23 +154,26 @@ public sealed class ReferenceRuleTests
     [Fact]
     public void Services_DoNotReferenceEachOther()
     {
-        foreach (var project in Solution.Projects.Where(static p => p.IsHost || p.IsApi || p.IsPostgresAdapter || p.IsModule))
+        foreach (var project in Solution.Projects.Where(static p => p.IsServiceProject))
         {
-            var service = project.Name.Split('.')[1];
             foreach (var reference in project.ProjectReferences)
             {
-                var parts = reference.Split('.');
-                var referencedService = parts.Length > 1 ? parts[1] : reference;
-                var isServiceProject = Solution.Projects.Any(p => p.Name == reference && (p.IsModule || p.IsHost || p.IsApi || p.IsPostgresAdapter));
-                if (isServiceProject)
+                var target = Solution.Projects.FirstOrDefault(p => p.Name == reference);
+                if (target is { IsServiceProject: true })
                 {
-                    referencedService.ShouldBe(service, $"{project.Name} must not reference {reference} of another service");
+                    target.ServiceName.ShouldBe(project.ServiceName, $"{project.Name} must not reference {reference} of another service");
                 }
             }
         }
     }
 
     [Fact]
-    public void ServiceDefaultsProject_DoesNotExist() =>
-        Solution.Projects.ShouldNotContain(static p => p.Name.Contains("ServiceDefaults", StringComparison.Ordinal));
+    public void ServiceDefaultsProject_ExistsAndIsOnlyReferencedByEntryPointsAndApis()
+    {
+        Solution.Projects.ShouldContain(static p => p.IsServiceDefaults);
+        foreach (var project in Solution.Projects.Where(static p => !p.IsEntryPoint && !p.IsApi))
+        {
+            project.ProjectReferences.ShouldNotContain("Research.ServiceDefaults", $"{project.Name} must not reference Research.ServiceDefaults");
+        }
+    }
 }

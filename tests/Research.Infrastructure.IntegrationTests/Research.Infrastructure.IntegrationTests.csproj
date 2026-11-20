@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Real Postgres (pgvector) and RabbitMQ via Testcontainers. Needs Docker or Podman. -->
+  <PropertyGroup>
+    <RootNamespace>Research.Infrastructure.IntegrationTests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
+    <ProjectReference Include="..\..\src\Providers\Research.Providers.Postgres\Research.Providers.Postgres.csproj" />
+    <ProjectReference Include="..\..\src\Providers\Research.Providers.RabbitMq\Research.Providers.RabbitMq.csproj" />
+    <ProjectReference Include="..\..\src\Providers\Research.Providers.MockEmbeddings\Research.Providers.MockEmbeddings.csproj" />
+    <ProjectReference Include="..\..\src\Services\Fetching\Research.Fetching.Infrastructure\Research.Fetching.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Services\Knowledge\Research.Knowledge.Infrastructure\Research.Knowledge.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.RabbitMq" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="RabbitMQ.Client" />
+  </ItemGroup>
+</Project>

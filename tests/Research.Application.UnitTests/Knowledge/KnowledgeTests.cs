@@ -1,0 +1,229 @@
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Time.Testing;
+using Research.Knowledge;
+using Research.Knowledge.Application.Common.Interfaces;
+using Research.Knowledge.Domain;
+using Research.Knowledge.IndexDocument;
+using Research.Knowledge.Infrastructure.Persistence;
+using Research.Knowledge.SearchPassages;
+using Research.Providers.MockEmbeddings;
+using Research.Shared.Core.Transactions;
+using Research.Application.UnitTests.TestSupport;
+
+namespace Research.Application.UnitTests.Knowledge;
+
+public sealed class TextChunkerTests
+{
+    [Fact]
+    public void ShortText_IsOneChunk() =>
+        TextChunker.Split("One paragraph.\n\nAnother one.", 1200, 200, 10).ShouldBe(["One paragraph.\n\nAnother one."]);
+
+    [Fact]
+    public void Empty_HasNoChunks() => TextChunker.Split("  \n\n  ", 1200, 200, 10).ShouldBeEmpty();
+
+    [Fact]
+    public void LongText_RespectsSizeAndOverlaps()
+    {
+        var paragraphs = Enumerable.Range(0, 40).Select(static i => $"Paragraph {i} " + new string('x', 100) + ".");
+        var text = string.Join("\n\n", paragraphs);
+
+        var chunks = TextChunker.Split(text, chunkChars: 500, overlapChars: 100, maxChunks: 100);
+
+        chunks.Count.ShouldBeGreaterThan(1);
+        chunks.ShouldAllBe(static c => c.Length <= 500 + 100 + 2);
+        for (var i = 1; i < chunks.Count; i++)
+        {
+            var previousTail = chunks[i - 1][^20..];
+            chunks[i].ShouldContain(previousTail);
+        }
+    }
+
+    [Fact]
+    public void LongParagraph_IsCutAtSentences()
+    {
+        var sentence = "This is a sentence with several words in it. ";
+        var paragraph = string.Concat(Enumerable.Repeat(sentence, 60));
+
+        var chunks = TextChunker.Split(paragraph, chunkChars: 400, overlapChars: 0, maxChunks: 100);
+
+        chunks.Count.ShouldBeGreaterThan(1);
+        chunks.Take(chunks.Count - 1).ShouldAllBe(static c => c.EndsWith('.'));
+    }
+
+    [Fact]
+    public void MaxChunks_Caps() =>
+        TextChunker.Split(string.Join("\n\n", Enumerable.Repeat(new string('a', 300), 50)), 400, 0, 3).Count.ShouldBe(3);
+}
+
+public sealed class HashingEmbeddingGeneratorTests
+{
+    [Fact]
+    public void Vectors_AreNormalizedAndDeterministic()
+    {
+        var a = HashingEmbeddingGenerator.Embed("pgvector hnsw index");
+        var b = HashingEmbeddingGenerator.Embed("pgvector hnsw index");
+
+        a.Length.ShouldBe(HashingEmbeddingGenerator.VectorDimensions);
+        a.ShouldBe(b);
+        Math.Sqrt(a.Sum(static v => (double)v * v)).ShouldBe(1.0, 1e-5);
+    }
+
+    [Fact]
+    public void SimilarTexts_AreCloserThanUnrelatedTexts()
+    {
+        var query = HashingEmbeddingGenerator.Embed("how does the hnsw index in pgvector work");
+        var related = HashingEmbeddingGenerator.Embed("the pgvector hnsw index builds a layered graph");
+        var unrelated = HashingEmbeddingGenerator.Embed("baking sourdough bread at home");
+
+        Cosine(query, related).ShouldBeGreaterThan(Cosine(query, unrelated));
+    }
+
+    private static double Cosine(float[] a, float[] b) => a.Zip(b, static (x, y) => (double)x * y).Sum();
+}
+
+public sealed class VectorLiteralTests
+{
+    [Fact]
+    public void ToVectorLiteral_IsInvariantPgvectorText() =>
+        KnowledgeRepository.ToVectorLiteral([0.5f, -1.25f, 0f]).ShouldBe("[0.5,-1.25,0]");
+}
+
+public sealed class SearchPassagesHandlerTests
+{
+    private readonly FakeRepository _repository = new();
+
+    [Fact]
+    public async Task MergesQueries_KeepsBestScore_AndCaps()
+    {
+        var passageA = Guid.NewGuid();
+        var passageB = Guid.NewGuid();
+        var passageC = Guid.NewGuid();
+        _repository.Results.Enqueue([Match(passageA, 0.4), Match(passageB, 0.9)]);
+        _repository.Results.Enqueue([Match(passageA, 0.8), Match(passageC, 0.5)]);
+
+        var result = await CreateHandler().HandleAsync(new SearchPassagesQuery(Guid.NewGuid(), ["q1", "q2"], TopK: 2), CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+        result.Value!.Select(static m => (m.PassageId, m.Score)).ShouldBe([(passageB, 0.9), (passageA, 0.8)]);
+    }
+
+    [Fact]
+    public async Task DuplicateQueries_AreSearchedOnce()
+    {
+        await CreateHandler().HandleAsync(new SearchPassagesQuery(Guid.NewGuid(), ["same", " SAME ", ""], TopK: 3), CancellationToken.None);
+        _repository.Calls.ShouldBe(1);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(51)]
+    public async Task TopKOutOfRange_IsInvalid(int topK)
+    {
+        var result = await CreateHandler().HandleAsync(new SearchPassagesQuery(Guid.NewGuid(), ["q"], topK), CancellationToken.None);
+        result.Error!.Code.ShouldBe(KnowledgeErrors.InvalidSearch.Code);
+    }
+
+    [Fact]
+    public async Task EmptyJobId_IsInvalid()
+    {
+        var result = await CreateHandler().HandleAsync(new SearchPassagesQuery(Guid.Empty, ["q"], 3), CancellationToken.None);
+        result.Error!.Code.ShouldBe(KnowledgeErrors.InvalidSearch.Code);
+    }
+
+    private SearchPassagesHandler CreateHandler() => new(
+        _repository,
+        new HashingEmbeddingGenerator(),
+        new KnowledgeMetrics(TestMeters.Create()),
+        TestOptions.Of(new KnowledgeOptions()),
+        new FakeTimeProvider(),
+        NullLogger<SearchPassagesHandler>.Instance);
+
+    private static PassageMatch Match(Guid id, double score) => new(id, Guid.NewGuid(), "https://e.com", "t", "text", score);
+
+    private sealed class FakeRepository : IKnowledgeRepository
+    {
+        public Queue<IReadOnlyList<PassageMatch>> Results { get; } = new();
+
+        public int Calls { get; private set; }
+
+        public Task<IReadOnlyList<PassageMatch>> SearchAsync(Guid jobId, float[] embedding, string embeddingModel, int topK, CancellationToken cancellationToken)
+        {
+            Calls++;
+            return Task.FromResult(Results.Count > 0 ? Results.Dequeue() : (IReadOnlyList<PassageMatch>)[]);
+        }
+
+        public Task<StoredDocument?> FindDocumentAsync(string contentHash, string embeddingModel, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<(StoredDocument Document, bool Inserted)> InsertDocumentAsync(KnowledgeDocument document, IReadOnlyList<Passage> passages, ITransactionScope transaction, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task LinkAsync(JobDocumentLink link, ITransactionScope transaction, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+    }
+}
+
+public sealed class PrepareDocumentHandlerTests
+{
+    [Fact]
+    public async Task KnownContent_IsReusedWithoutReadingTheBlob()
+    {
+        var existing = new StoredDocument(Guid.NewGuid(), 7);
+        var store = new InMemoryDocumentStore();
+        var handler = Create(new LookupRepository(existing), store);
+
+        var result = await handler.HandleAsync(new PrepareDocumentCommand("https://e.com", "t", "pages/missing.txt", "hash"), CancellationToken.None);
+
+        result.Value!.Existing.ShouldBe(existing);
+        result.Value.NewDocument.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task MissingBlob_IsDocumentMissing()
+    {
+        var handler = Create(new LookupRepository(null), new InMemoryDocumentStore());
+        var result = await handler.HandleAsync(new PrepareDocumentCommand("https://e.com", "t", "pages/missing.txt", "hash"), CancellationToken.None);
+        result.Error!.Code.ShouldBe(KnowledgeErrors.DocumentMissing.Code);
+    }
+
+    [Fact]
+    public async Task NewContent_IsChunkedAndEmbedded()
+    {
+        var store = new InMemoryDocumentStore();
+        store.Blobs["pages/h.txt"] = string.Join("\n\n", Enumerable.Repeat("A paragraph of readable text about pgvector.", 80));
+        var handler = Create(new LookupRepository(null), store);
+
+        var result = await handler.HandleAsync(new PrepareDocumentCommand("https://e.com", "t", "pages/h.txt", "h"), CancellationToken.None);
+
+        var prepared = result.Value!;
+        prepared.NewDocument!.EmbeddingModel.ShouldBe(HashingEmbeddingGenerator.Model);
+        prepared.NewDocument.PassageCount.ShouldBe(prepared.Passages.Count);
+        prepared.Passages.Count.ShouldBeGreaterThan(1);
+        prepared.Passages.Select(static p => p.Ordinal).ShouldBe(Enumerable.Range(0, prepared.Passages.Count));
+        prepared.Passages.ShouldAllBe(static p => p.Embedding.Length == HashingEmbeddingGenerator.VectorDimensions);
+    }
+
+    private static PrepareDocumentHandler Create(IKnowledgeRepository repository, InMemoryDocumentStore store) => new(
+        repository,
+        store,
+        new HashingEmbeddingGenerator(),
+        TestOptions.Of(new KnowledgeOptions()),
+        new FakeTimeProvider(),
+        new FixedActor(),
+        NullLogger<PrepareDocumentHandler>.Instance);
+
+    private sealed class LookupRepository(StoredDocument? existing) : IKnowledgeRepository
+    {
+        public Task<StoredDocument?> FindDocumentAsync(string contentHash, string embeddingModel, CancellationToken cancellationToken) =>
+            Task.FromResult(existing);
+
+        public Task<(StoredDocument Document, bool Inserted)> InsertDocumentAsync(KnowledgeDocument document, IReadOnlyList<Passage> passages, ITransactionScope transaction, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task LinkAsync(JobDocumentLink link, ITransactionScope transaction, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<IReadOnlyList<PassageMatch>> SearchAsync(Guid jobId, float[] embedding, string embeddingModel, int topK, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+    }
+}

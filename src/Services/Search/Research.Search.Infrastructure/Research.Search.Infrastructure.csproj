@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Search Infrastructure: search provider decorators (Valkey cache-aside and concurrency rate limiting).
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Search.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Search.Application\Research.Search.Application.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
+  </ItemGroup>
+</Project>

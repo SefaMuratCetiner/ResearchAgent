@@ -2,7 +2,7 @@ using System.Xml.Linq;
 
 namespace Research.ArchitectureTests;
 
-/// <summary>One project file: its name, layer and what it references.</summary>
+/// <summary>One project file: its name, Clean Architecture layer and what it references.</summary>
 internal sealed record ProjectInfo(
     string Name,
     string Path,
@@ -11,22 +11,33 @@ internal sealed record ProjectInfo(
     IReadOnlyList<string> PackageReferences,
     IReadOnlyList<string> FrameworkReferences)
 {
-    public bool IsHost => Name.EndsWith(".Host", StringComparison.Ordinal);
+    public bool IsDomain => Name.EndsWith(".Domain", StringComparison.Ordinal);
+
+    public bool IsApplication => Name.EndsWith(".Application", StringComparison.Ordinal);
+
+    public bool IsInfrastructure => Name.EndsWith(".Infrastructure", StringComparison.Ordinal);
 
     public bool IsApi => Name.EndsWith(".Api", StringComparison.Ordinal);
 
-    public bool IsPostgresAdapter => Name.EndsWith(".Postgres", StringComparison.Ordinal) && !Name.StartsWith("Research.Providers.", StringComparison.Ordinal);
+    public bool IsBootstrap => Name.EndsWith(".Bootstrap", StringComparison.Ordinal);
+
+    public bool IsWorker => Name.EndsWith(".Worker", StringComparison.Ordinal);
+
+    public bool IsEntryPoint => IsBootstrap || IsWorker;
 
     public bool IsProvider => Name.StartsWith("Research.Providers.", StringComparison.Ordinal);
 
     public bool IsShared => Path.Contains($"{System.IO.Path.DirectorySeparatorChar}Shared{System.IO.Path.DirectorySeparatorChar}", StringComparison.Ordinal);
 
+    public bool IsServiceDefaults => Name == "Research.ServiceDefaults";
+
     public bool IsAppHost => Name == "Research.AppHost";
 
     public bool IsTool => Path.Contains($"{System.IO.Path.DirectorySeparatorChar}tools{System.IO.Path.DirectorySeparatorChar}", StringComparison.Ordinal);
 
-    /// <summary>A service module: <c>Research.&lt;Service&gt;</c> or a strategy library such as <c>Research.Search.AnthropicWebSearch</c>.</summary>
-    public bool IsModule => !IsHost && !IsApi && !IsPostgresAdapter && !IsProvider && !IsShared && !IsAppHost && !IsTool;
+    public bool IsServiceProject => IsDomain || IsApplication || IsInfrastructure || IsApi || IsBootstrap || IsWorker;
+
+    public string ServiceName => Name.Split('.')[1];
 }
 
 /// <summary>Finds the repository root and loads every project under <c>src/</c> and <c>tools/</c>.</summary>

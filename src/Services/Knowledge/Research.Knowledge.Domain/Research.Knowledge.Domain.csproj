@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Knowledge Domain: KnowledgeDocument, Passage, JobDocumentLink and PassageMatch entities/records.
+    Depends ONLY on Research.SharedKernel (zero NuGet packages, zero I/O).
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Knowledge.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

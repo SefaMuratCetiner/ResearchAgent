@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The public HTTP surface of Jobs (behind the gateway): create, read, report, cancel and the SSE event stream.
+    Pure presentation class library — hosted by Research.Jobs.Bootstrap.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Jobs.Api</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Jobs.Application\Research.Jobs.Application.csproj" />
+    <ProjectReference Include="..\..\..\Research.ServiceDefaults\Research.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Shared Infrastructure plumbing: concurrency limiter, LLM rate-limiting decorator and telemetry,
+    envelope serialization, consumer dispatch pipeline and outbox dispatcher loop.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Shared.Adapters</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.SharedKernel\Research.SharedKernel.csproj" />
+    <ProjectReference Include="..\Research.Shared.Core\Research.Shared.Core.csproj" />
+    <ProjectReference Include="..\Research.Contracts\Research.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+</Project>

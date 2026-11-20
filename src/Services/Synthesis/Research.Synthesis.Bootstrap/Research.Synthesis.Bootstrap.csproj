@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!--
+    Synthesis worker host: consumes SynthesisRequested, queries Knowledge over HTTP and writes cited reports via LLM.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Synthesis.Bootstrap</RootNamespace>
+    <UserSecretsId>research-synthesis-host</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Synthesis.Application\Research.Synthesis.Application.csproj" />
+    <ProjectReference Include="..\Research.Synthesis.Infrastructure\Research.Synthesis.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Research.ServiceDefaults\Research.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
+    <ProjectReference Include="..\..\..\Providers\Research.Providers.Anthropic\Research.Providers.Anthropic.csproj" />
+    <ProjectReference Include="..\..\..\Providers\Research.Providers.OpenAI\Research.Providers.OpenAI.csproj" />
+    <ProjectReference Include="..\..\..\Providers\Research.Providers.RabbitMq\Research.Providers.RabbitMq.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.RabbitMQ.Client" />
+  </ItemGroup>
+</Project>
