@@ -73,7 +73,7 @@ public sealed class OutboxRoutingTests
         var options = new MessagingOptions();
         var policy = new OutboxRetryPolicy(
             options.OutboxMaxAttempts,
-            TimeSpan.FromMilliseconds(options.OutboxPollIntervalMs),
+            TimeSpan.FromMilliseconds(options.OutboxRetryDelayMs),
             TimeSpan.FromSeconds(options.OutboxMaxRetryDelaySeconds));
 
         var total = Enumerable.Range(1, options.OutboxMaxAttempts - 1).Aggregate(TimeSpan.Zero, (sum, n) => sum + policy.DelayAfter(n));

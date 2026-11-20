@@ -100,6 +100,21 @@
           "YamlDotNet": "18.1.0"
         }
       },
+      "Aspire.Hosting.Elasticsearch": {
+        "type": "Direct",
+        "requested": "[13.3.0, )",
+        "resolved": "13.3.0",
+        "contentHash": "OqAbPGqrMSkpZHo3vos6+m/dXFnrXK3MVWjFBt/bjk/uOPMbHfSN3bcJ6HhsKtbmWe+FImQdbc4gJWXeuKBbew==",
+        "dependencies": {
+          "Aspire.Hosting": "13.3.0",
+          "Elastic.Clients.Elasticsearch": "8.19.4",
+          "Microsoft.Extensions.Configuration.Binder": "10.0.7",
+          "Microsoft.Extensions.Diagnostics.HealthChecks": "10.0.7",
+          "Microsoft.Extensions.Hosting": "10.0.7",
+          "Microsoft.Extensions.Hosting.Abstractions": "10.0.7",
+          "MinVer": "6.0.0"
+        }
+      },
       "Aspire.Hosting.Orchestration.linux-x64": {
         "type": "Direct",
         "requested": "[13.6.5, )",
@@ -500,6 +515,19 @@
           "Azure.Core": "1.55.0",
           "Azure.Storage.Common": "12.28.0"
         }
+      },
+      "Elastic.Clients.Elasticsearch": {
+        "type": "Transitive",
+        "resolved": "8.19.4",
+        "contentHash": "TIvXyAuTU4xcfDe32vESmVNaTvGWpsdCpqPuuMpvKiUk8OndqNXN2I2Akxy64EEChXsnXawIzhgAP+Ocn4I7cw==",
+        "dependencies": {
+          "Elastic.Transport": "0.10.1"
+        }
+      },
+      "Elastic.Transport": {
+        "type": "Transitive",
+        "resolved": "0.10.1",
+        "contentHash": "8qUyxd4LzMiR+wtNEzdHHnu+iEpbKfoA001NyYgZZT0YZaNE9fWmFeZMxcTz7HMcYUidZSeT6vvongjZh1j/hQ=="
       },
       "Fractions": {
         "type": "Transitive",
@@ -915,6 +943,11 @@
         "type": "Transitive",
         "resolved": "6.0.0",
         "contentHash": "hqTM5628jSsQiv+HGpiq3WKBl2c8v1KZfby2J6Pr7pEPlK9waPdgEO6b8A/+/xn/yZ9ulv8HuqK71ONy2tg67A=="
+      },
+      "MinVer": {
+        "type": "Transitive",
+        "resolved": "6.0.0",
+        "contentHash": "+/SsmiySsXJlvQLCGBqaZKNVt3s/Y/HbAdwtop7Km2CnuZbaScoqkWJEBQ5Cy9ebkn6kCYKrHsXgwrFdTgcb3g=="
       },
       "ModelContextProtocol": {
         "type": "Transitive",

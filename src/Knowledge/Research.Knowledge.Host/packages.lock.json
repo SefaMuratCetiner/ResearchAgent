@@ -103,6 +103,56 @@
           "System.IO.Hashing": "10.0.9"
         }
       },
+      "Elastic.Channels": {
+        "type": "Transitive",
+        "resolved": "0.14.0",
+        "contentHash": "8vRZXKUntTgsN6TbbOVnKkFbq7hy4vwEPm2GYqM1oXGpOprTOdIp/l0ie6LAb8hm+is9CPIywqNZdfOp7KU+YQ=="
+      },
+      "Elastic.CommonSchema": {
+        "type": "Transitive",
+        "resolved": "8.19.0",
+        "contentHash": "GBYtgYQsH/Woywy23/Eu5FeAjjauOZNkC4D+gD5prF8vl/B6pkTox+rL45Kt67ciryZyfiIHBSTZB7K51BXecw=="
+      },
+      "Elastic.CommonSchema.Serilog": {
+        "type": "Transitive",
+        "resolved": "8.19.0",
+        "contentHash": "mLTLS2sF2V7kF4PyBxZvQYhhyig38PChUULDr5cCHXoLXSoJs3swsu9GFUGXRHdn20LZ8yUC+qDmPjQAgt3mOg==",
+        "dependencies": {
+          "Elastic.CommonSchema": "8.19.0",
+          "Serilog": "4.3.0"
+        }
+      },
+      "Elastic.Ingest.Elasticsearch": {
+        "type": "Transitive",
+        "resolved": "0.14.0",
+        "contentHash": "+a1wTp7Z9ACzBlh1pt4r59HK3tpqimJGcbi5w4a/dMZ5/QlXJ6xj/yaSIQ6NgecQIUQVsibH0eFWGuwt2/rlTA==",
+        "dependencies": {
+          "Elastic.Ingest.Transport": "0.14.0"
+        }
+      },
+      "Elastic.Ingest.Elasticsearch.CommonSchema": {
+        "type": "Transitive",
+        "resolved": "8.19.0",
+        "contentHash": "nH32rDoGQ9CJ7fThO+zdg40EzPUDL5QaMNZkARQIPoCgQEQDJCiQcha9WTbGn+cVAVrCy3OMjvU95ef/5hq/dA==",
+        "dependencies": {
+          "Elastic.CommonSchema": "8.19.0",
+          "Elastic.Ingest.Elasticsearch": "0.14.0"
+        }
+      },
+      "Elastic.Ingest.Transport": {
+        "type": "Transitive",
+        "resolved": "0.14.0",
+        "contentHash": "XoBT9ub4imzF+KN14MWEVyS3O40teXQ4uPLkTL6XV6vZMbSjRvohg1/4B4YK0EBkDUu71xHLd6rupdwJXwYl8Q==",
+        "dependencies": {
+          "Elastic.Channels": "0.14.0",
+          "Elastic.Transport": "0.10.0"
+        }
+      },
+      "Elastic.Transport": {
+        "type": "Transitive",
+        "resolved": "0.10.0",
+        "contentHash": "xtEahhp8ZWj5T/uWbiHcodQrz3P/n1il/CFLzbpfk6ygKQTHn6RxDF16G4LiDqr3GrAleU6urOIdbWJ6+YDjpA=="
+      },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
         "resolved": "10.0.10",
@@ -274,8 +324,8 @@
       },
       "Serilog": {
         "type": "Transitive",
-        "resolved": "4.2.0",
-        "contentHash": "gmoWVOvKgbME8TYR+gwMf7osROiWAURterc6Rt2dQyX7wtjZYpqFiA/pY6ztjGQKKV62GGCyOcmtP1UKMHgSmA=="
+        "resolved": "4.3.0",
+        "contentHash": "+cDryFR0GRhsGOnZSKwaDzRRl4MupvJ42FhCE4zhQRVanX0Jpg6WuCBk59OVhVDPmab1bB+nRykAnykYELA9qQ=="
       },
       "System.ClientModel": {
         "type": "Transitive",
@@ -311,6 +361,7 @@
       "research.hosting": {
         "type": "Project",
         "dependencies": {
+          "Elastic.Serilog.Sinks": "[8.19.0, )",
           "Microsoft.Extensions.Http.Resilience": "[10.11.0, )",
           "Microsoft.Extensions.ServiceDiscovery": "[10.11.0, )",
           "OpenTelemetry.Exporter.OpenTelemetryProtocol": "[1.21.0, )",
@@ -417,6 +468,16 @@
         "requested": "[2.1.89, )",
         "resolved": "2.1.89",
         "contentHash": "1VjFE664wnxvuhlgP8kS4PeFFF4jqD3VkbIHW6Zlc52zuibgcz5ICnIHcQXlTp6pURpPNGLV0ZpNe5x9KePJnA=="
+      },
+      "Elastic.Serilog.Sinks": {
+        "type": "CentralTransitive",
+        "requested": "[8.19.0, )",
+        "resolved": "8.19.0",
+        "contentHash": "SpzHsWi6u2s0FKm16LCE+/IaAVBAO8/fjswtcbKAizTd4hUDwGAOd5z0R7TmHqGpSM4veDIBfx2ZQiCJDuNBdQ==",
+        "dependencies": {
+          "Elastic.CommonSchema.Serilog": "8.19.0",
+          "Elastic.Ingest.Elasticsearch.CommonSchema": "8.19.0"
+        }
       },
       "Microsoft.AspNetCore.OpenApi": {
         "type": "CentralTransitive",

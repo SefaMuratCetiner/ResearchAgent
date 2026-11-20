@@ -48,6 +48,7 @@ results, page text, reports, API bodies) **is** logged; see [observability.md](o
 | `bus` | RabbitMQ | all six services |
 | `cache` | Valkey | Planning, Search |
 | `blobs` | Azure Blob Storage (Azurite) | Fetching (write), Knowledge (read) |
+| `elasticsearch` | Elasticsearch (logs only; optional, the sink is off without it) | all six services |
 | `knowledge` (service discovery) | the Knowledge service | Synthesis (`https+http://knowledge`) |
 
 ## Shared sections
@@ -61,7 +62,8 @@ results, page text, reports, API bodies) **is** logged; see [observability.md](o
 | `RetryDelaysSeconds` | [10, 60, 300] | Delay queue per retry; the last repeats |
 | `Prefetch` | 8 | QoS and handler concurrency per replica |
 | `OutboxBatchSize` | 100 | Rows per outbox claim |
-| `OutboxPollIntervalMs` | 1000 | Poll interval when no NOTIFY arrives; also the first retry delay of a failed publish |
+| `OutboxPollIntervalMs` | 60000 | Poll interval when no NOTIFY arrives |
+| `OutboxRetryDelayMs` | 1000 | First retry delay of a failed publish, and first pause of the outbox loop after an error; both double |
 | `OutboxMaxAttempts` | 20 | Failed publishes of one outbox message before it is parked (about an hour) |
 | `OutboxMaxRetryDelaySeconds` | 300 | Upper bound of the doubling retry delay |
 | `MessageTimeoutSeconds` | 900 | Handler timeout |

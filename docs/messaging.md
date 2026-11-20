@@ -70,7 +70,7 @@ Outbox order is **best effort**. Jobs does not depend on reply order: each reply
 
 A message whose publish fails stays in `outbox_messages` with `attempts`, `last_error` and `next_attempt_at`. It is
 not claimed again before `next_attempt_at`, so it never holds back the messages behind it. The delay starts at
-`Messaging:OutboxPollIntervalMs` and doubles up to `Messaging:OutboxMaxRetryDelaySeconds` (1 s, 2 s, 4 s … 5 min).
+`Messaging:OutboxRetryDelayMs` and doubles up to `Messaging:OutboxMaxRetryDelaySeconds` (1 s, 2 s, 4 s … 5 min).
 After `Messaging:OutboxMaxAttempts` failures (about an hour with the defaults) the row is **parked**: `parked_at` is
 set, it is never tried again, and event 8202 is logged as an error. To send a parked message again, after fixing the
 cause:

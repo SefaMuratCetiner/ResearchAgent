@@ -21,8 +21,14 @@ public sealed class MessagingOptions
 
     public int OutboxBatchSize { get; set; } = 100;
 
-    /// <summary>Fallback poll when no NOTIFY arrives; also the first retry delay of a message whose publish failed.</summary>
-    public int OutboxPollIntervalMs { get; set; } = 1000;
+    /// <summary>Fallback poll when no NOTIFY arrives.</summary>
+    public int OutboxPollIntervalMs { get; set; } = 60_000;
+
+    /// <summary>
+    /// First retry delay of a message whose publish failed, and the first pause of the outbox loop after an error; both
+    /// double from here.
+    /// </summary>
+    public int OutboxRetryDelayMs { get; set; } = 1000;
 
     /// <summary>Failed publishes of one outbox message before it is parked (about an hour with the defaults).</summary>
     public int OutboxMaxAttempts { get; set; } = 20;
@@ -70,6 +76,11 @@ public sealed class MessagingOptionsValidator : IValidateOptions<MessagingOption
         if (options.OutboxPollIntervalMs < 50)
         {
             failures.Add("Messaging:OutboxPollIntervalMs must be at least 50.");
+        }
+
+        if (options.OutboxRetryDelayMs < 50)
+        {
+            failures.Add("Messaging:OutboxRetryDelayMs must be at least 50.");
         }
 
         if (options.OutboxMaxAttempts < 1)

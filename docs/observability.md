@@ -7,6 +7,10 @@ All three signals, traces, metrics and logs, go out over OTLP. Locally they go t
 
 - Serilog, as a provider of `Microsoft.Extensions.Logging` (`LoggingFeature`).
 - Output is compact JSON on stdout, plus the OpenTelemetry provider (`writeToProviders: true`).
+- When the `elasticsearch` connection string is set, every log also goes to the Elasticsearch data stream
+  `logs-dotnet-default` in ECS format, with `service.name`, the trace and span ids, and the event id as `event.code`.
+  Logs are sent in batches in the background. While Elasticsearch is unreachable the oldest buffered logs are
+  dropped; logging never blocks and the service keeps running. Kibana shows them (see the README).
 - Messages come from source-generated `[LoggerMessage]` definitions with fixed event ids.
 - Log scopes carry the correlation id (HTTP), the job id and the step key (messages).
 

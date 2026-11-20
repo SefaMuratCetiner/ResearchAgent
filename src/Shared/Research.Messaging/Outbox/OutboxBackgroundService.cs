@@ -8,10 +8,11 @@ namespace Research.Messaging.Outbox;
 /// <summary>
 /// Publishes committed outbox rows. Runs on every replica: the store claims rows with <c>SKIP LOCKED</c>, so replicas
 /// share the work without a leader. Wakes on the store's signal (NOTIFY) or the poll interval, and drains in full
-/// batches while there is a backlog. A message that fails is retried after one poll interval, then after twice as
-/// long each time up to <see cref="MessagingOptions.OutboxMaxRetryDelaySeconds"/>, and parked after
-/// <see cref="MessagingOptions.OutboxMaxAttempts"/>. The settings are read on every pass, so a reload applies from
-/// the next pass.
+/// batches while there is a backlog. A message that fails is retried after
+/// <see cref="MessagingOptions.OutboxRetryDelayMs"/>, then after twice as long each time up to
+/// <see cref="MessagingOptions.OutboxMaxRetryDelaySeconds"/>, and parked after
+/// <see cref="MessagingOptions.OutboxMaxAttempts"/>. After an error the loop pauses for the same first delay, doubling
+/// up to 30 s. The settings are read on every pass, so a reload applies from the next pass.
 /// </summary>
 public sealed partial class OutboxBackgroundService(
     IOutboxStore store,
@@ -25,22 +26,23 @@ public sealed partial class OutboxBackgroundService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var backoff = TimeSpan.FromMilliseconds(options.CurrentValue.OutboxPollIntervalMs);
+        var backoff = TimeSpan.FromMilliseconds(options.CurrentValue.OutboxRetryDelayMs);
 
         while (!stoppingToken.IsCancellationRequested)
         {
             var settings = options.CurrentValue;
             var pollInterval = TimeSpan.FromMilliseconds(settings.OutboxPollIntervalMs);
+            var retryDelay = TimeSpan.FromMilliseconds(settings.OutboxRetryDelayMs);
             try
             {
                 var retry = new OutboxRetryPolicy(
                     settings.OutboxMaxAttempts,
-                    pollInterval,
+                    retryDelay,
                     TimeSpan.FromSeconds(settings.OutboxMaxRetryDelaySeconds));
                 var published = await store.PublishPendingAsync(publisher.PublishAsync, settings.OutboxBatchSize, retry, stoppingToken)
                     .ConfigureAwait(false);
                 metrics.OutboxPublished(published);
-                backoff = pollInterval;
+                backoff = retryDelay;
 
                 if (published < settings.OutboxBatchSize)
                 {

@@ -38,8 +38,8 @@ The commands below are for Linux (bash). They work the same on macOS and in WSL;
 - **The .NET 10 SDK.** Install it from your distribution's packages or with Microsoft's install script; see
   [Install .NET on Linux](https://learn.microsoft.com/dotnet/core/install/linux). Aspire 13 needs no workload; the
   `aspire` CLI is optional. `global.json` accepts any 10.0.1xx SDK or later feature band.
-- **A container runtime.** Aspire runs Postgres (`pgvector/pgvector:pg17`), RabbitMQ, Valkey and Azurite in
-  containers.
+- **A container runtime.** Aspire runs Postgres (`pgvector/pgvector:pg17`), RabbitMQ, Valkey, Azurite,
+  Elasticsearch and Kibana in containers. Elasticsearch and Kibana need about 1.7 GB of RAM together.
   - **Docker:** your user must be able to reach the daemon without `sudo` (in the `docker` group, or rootless
     Docker). Check with `docker info`.
   - **Podman:** tell Aspire to use it, and expose the Podman socket for the Testcontainers-based tests:
@@ -136,10 +136,23 @@ curl -N "$JOBS/research/$ID/events"
 curl -s "$JOBS/research/$ID/report" | jq
 ```
 
+### Logs in Kibana
+
+Every service also sends its logs to Elasticsearch. To read them:
+
+1. Open the `kibana` endpoint shown in the dashboard. Kibana starts after Elasticsearch and `kibana-setup`, so it is
+   the last resource to come up (about a minute).
+2. Sign in as `elastic`. The password is the `elasticsearch-password` parameter: select it in the dashboard's resource
+   list to show its value, or run `dotnet user-secrets list --project src/Research.AppHost`. Elasticsearch keeps the
+   password it first started with; if you delete the user secrets, also remove its data volume.
+3. The first time only: open **Discover**, choose **Create data view**, enter `logs-*` as the index pattern and
+   `@timestamp` as the timestamp field, and save.
+4. Filter with KQL, for example `service.name : "jobs" and log.level : "Error"` or `event.code : "8202"`.
+
 ### Stop and reset
 
-Ctrl+C stops the AppHost and its containers. The Postgres, RabbitMQ, Valkey and Azurite data lives in named volumes
-and survives restarts. To start from an empty state, remove those volumes. List them with
+Ctrl+C stops the AppHost and its containers. The Postgres, RabbitMQ, Valkey, Azurite and Elasticsearch data lives in
+named volumes and survives restarts. To start from an empty state, remove those volumes. List them with
 `docker volume ls` (or `podman volume ls`), then remove the ones this AppHost created with `docker volume rm <name>`.
 
 ## Repository layout

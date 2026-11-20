@@ -1,6 +1,6 @@
 <Project Sdk="Aspire.AppHost.Sdk/13.6.5">
   <!--
-    The local orchestrator (D22): starts Postgres (pgvector), RabbitMQ, Valkey, Azurite, the schema scripts and every
+    The local orchestrator (D22): starts Postgres (pgvector), RabbitMQ, Valkey, Azurite, Elasticsearch and Kibana, the schema scripts and every
     service with its replicas. References Host projects and tools only (§5).
   -->
   <PropertyGroup>
@@ -24,5 +24,6 @@
     <PackageReference Include="Aspire.Hosting.RabbitMQ" />
     <PackageReference Include="Aspire.Hosting.Valkey" />
     <PackageReference Include="Aspire.Hosting.Azure.Storage" />
+    <PackageReference Include="Aspire.Hosting.Elasticsearch" />
   </ItemGroup>
 </Project>
