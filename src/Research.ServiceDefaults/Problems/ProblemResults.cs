@@ -37,7 +37,6 @@ public static class ProblemResults
             errors: errors,
             detail: "One or more fields are not valid.",
             instance: context.Request.Path.Value,
-            statusCode: ErrorStatus.From(error.Kind),
             title: error.Title,
             type: TypeBase + error.Code,
             extensions: Extensions(error.Code, context));

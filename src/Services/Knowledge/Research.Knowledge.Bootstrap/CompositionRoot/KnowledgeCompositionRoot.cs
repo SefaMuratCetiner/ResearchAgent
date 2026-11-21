@@ -51,6 +51,7 @@ public sealed partial class KnowledgeCompositionRoot
         new KnowledgeModuleFeature(),
 
         // HTTP API
+        new ProblemDetailsFeature(),
         new ApiFeature(),
     ];
 

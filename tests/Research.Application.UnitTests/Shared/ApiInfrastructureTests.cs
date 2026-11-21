@@ -44,11 +44,10 @@ public sealed class ApiInfrastructureTests
 
         var result = ProblemResults.Validation(fieldErrors, context);
 
-        var problem = result.ShouldBeOfType<ProblemHttpResult>();
+        var problem = result.ShouldBeOfType<ValidationProblem>();
         problem.StatusCode.ShouldBe(StatusCodes.Status400BadRequest);
-        var validation = problem.ProblemDetails.ShouldBeOfType<HttpValidationProblemDetails>();
-        validation.Errors["question"].ShouldBe(["The question is required."]);
-        validation.Extensions["code"].ShouldBe("research.validation_failed");
+        problem.ProblemDetails.Errors["question"].ShouldBe(["The question is required."]);
+        problem.ProblemDetails.Extensions["code"].ShouldBe("research.validation_failed");
     }
 
     [Fact]

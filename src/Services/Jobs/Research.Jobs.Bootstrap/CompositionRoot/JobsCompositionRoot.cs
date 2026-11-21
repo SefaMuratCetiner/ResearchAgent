@@ -49,6 +49,7 @@ public sealed partial class JobsCompositionRoot
         new JobsModuleFeature(),
 
         // HTTP API
+        new ProblemDetailsFeature(),
         new ApiFeature(),
     ];
 
