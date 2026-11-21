@@ -6,7 +6,7 @@ namespace Research.Fetching.Domain;
 /// A page fetched for a job. The text lives in the document store under <see cref="BlobKey"/>; the row keeps what is
 /// needed to find and deduplicate it. One row per (job, URL).
 /// </summary>
-public sealed record FetchedDocument : AuditableEntity
+public sealed class FetchedDocument : Entity
 {
     public required Guid JobId { get; init; }
 

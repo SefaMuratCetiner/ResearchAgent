@@ -1,4 +1,4 @@
-using Research.SharedKernel.Common;
+using Research.SharedKernel.Events;
 
 namespace Research.Shared.Core.Transactions;
 
@@ -16,7 +16,7 @@ public interface IUnitOfWork : IAsyncDisposable
     Task<IAsyncDisposable> BeginAsync(CancellationToken cancellationToken);
 
     /// <summary>Registers <paramref name="entity"/> so its uncommitted domain events are dispatched before commit.</summary>
-    void Track(BaseEntity entity);
+    void Track(IHasDomainEvents entity);
 
     /// <summary>Dispatches domain events of tracked entities inside the active transaction and commits.</summary>
     Task CommitAsync(CancellationToken cancellationToken);

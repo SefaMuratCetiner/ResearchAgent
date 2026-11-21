@@ -3,7 +3,7 @@ using Research.SharedKernel.Entities;
 namespace Research.Jobs.Domain;
 
 /// <summary>The finished report of a job. <see cref="Entity.Id"/> equals the job id (one report per job).</summary>
-public sealed record ResearchReport : AuditableEntity
+public sealed class ResearchReport : Entity
 {
     public required string Content { get; init; }
 

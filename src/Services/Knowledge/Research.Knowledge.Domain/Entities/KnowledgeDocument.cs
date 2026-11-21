@@ -6,7 +6,7 @@ namespace Research.Knowledge.Domain;
 /// One indexed text, stored once per (content hash, embedding model) and shared by every job that fetched the same
 /// text. Which job uses it, and under which URL, is a <see cref="JobDocumentLink"/>.
 /// </summary>
-public sealed record KnowledgeDocument : AuditableEntity
+public sealed class KnowledgeDocument : Entity
 {
     public required string ContentHash { get; init; }
 

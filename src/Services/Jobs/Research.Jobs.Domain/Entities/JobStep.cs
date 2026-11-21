@@ -26,7 +26,7 @@ public enum StepStatus
 /// One request Jobs is owed an answer for. The request itself is stored (<see cref="RequestType"/>,
 /// <see cref="RequestPayload"/>) so recovery can re-emit it when the lease expires without an answer.
 /// </summary>
-public sealed record JobStep : AuditableEntity
+public sealed class JobStep : Entity
 {
     public required Guid JobId { get; init; }
 

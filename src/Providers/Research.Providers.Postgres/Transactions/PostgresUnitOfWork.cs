@@ -2,7 +2,7 @@ using Npgsql;
 using Research.Shared.Core.Actors;
 using Research.Shared.Core.Events;
 using Research.Shared.Core.Transactions;
-using Research.SharedKernel.Common;
+using Research.SharedKernel.Events;
 
 namespace Research.Providers.Postgres.Transactions;
 
@@ -16,7 +16,7 @@ public sealed class PostgresUnitOfWork : IUnitOfWork
     private readonly IDomainEventDispatcher? _dispatcher;
     private readonly TimeProvider _timeProvider;
     private readonly ICurrentActor? _actor;
-    private readonly List<BaseEntity> _tracked = [];
+    private readonly List<IHasDomainEvents> _tracked = [];
     private NpgsqlConnection? _connection;
     private NpgsqlTransaction? _transaction;
     private bool _committed;
@@ -70,7 +70,7 @@ public sealed class PostgresUnitOfWork : IUnitOfWork
         }
     }
 
-    public void Track(BaseEntity entity)
+    public void Track(IHasDomainEvents entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
         if (!_tracked.Contains(entity))

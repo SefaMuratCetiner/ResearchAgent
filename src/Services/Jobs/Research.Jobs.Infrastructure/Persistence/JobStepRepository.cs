@@ -44,8 +44,12 @@ public sealed class JobStepRepository(PostgresUnitOfWork unitOfWork) : IJobStepR
     public async Task<bool> InsertAsync(JobStep step, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(step);
-        var createdAt = step.CreatedAt == default ? unitOfWork.Now : step.CreatedAt;
-        var createdBy = string.IsNullOrWhiteSpace(step.CreatedBy) ? unitOfWork.ActorId : step.CreatedBy;
+        if (step.CreatedAt == default || string.IsNullOrWhiteSpace(step.CreatedBy))
+        {
+            step.StampCreated(
+                step.CreatedAt == default ? unitOfWork.Now : step.CreatedAt,
+                string.IsNullOrWhiteSpace(step.CreatedBy) ? unitOfWork.ActorId : step.CreatedBy);
+        }
 
         var inserted = await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             InsertSql,
@@ -61,8 +65,8 @@ public sealed class JobStepRepository(PostgresUnitOfWork unitOfWork) : IJobStepR
                 step.TraceId,
                 step.RequestType,
                 step.RequestPayload,
-                CreatedAt = createdAt,
-                CreatedBy = createdBy,
+                step.CreatedAt,
+                step.CreatedBy,
             },
             unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
@@ -185,23 +189,24 @@ public sealed class JobStepRepository(PostgresUnitOfWork unitOfWork) : IJobStepR
 
         public string? UpdatedBy { get; set; }
 
-        public JobStep ToDomain() => new()
+        public JobStep ToDomain()
         {
-            Id = Id,
-            JobId = JobId,
-            Kind = Enum.Parse<StepKind>(Kind),
-            StepKey = StepKey,
-            Status = Enum.Parse<StepStatus>(Status),
-            Attempts = Attempts,
-            LeaseUntil = LeaseUntil,
-            LastErrorCode = LastErrorCode,
-            TraceId = TraceId,
-            RequestType = RequestType,
-            RequestPayload = RequestPayload,
-            CreatedAt = CreatedAt,
-            CreatedBy = CreatedBy,
-            UpdatedAt = UpdatedAt,
-            UpdatedBy = UpdatedBy,
-        };
+            var step = new JobStep
+            {
+                Id = Id,
+                JobId = JobId,
+                Kind = Enum.Parse<StepKind>(Kind),
+                StepKey = StepKey,
+                Status = Enum.Parse<StepStatus>(Status),
+                Attempts = Attempts,
+                LeaseUntil = LeaseUntil,
+                LastErrorCode = LastErrorCode,
+                TraceId = TraceId,
+                RequestType = RequestType,
+                RequestPayload = RequestPayload,
+            };
+            step.RestoreAudit(CreatedAt, CreatedBy, UpdatedAt, UpdatedBy);
+            return step;
+        }
     }
 }

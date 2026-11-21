@@ -29,8 +29,12 @@ public sealed class FetchedDocumentRepository(PostgresUnitOfWork unitOfWork) : I
     public async Task<Guid> UpsertAsync(FetchedDocument document, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(document);
-        var createdAt = document.CreatedAt == default ? unitOfWork.Now : document.CreatedAt;
-        var createdBy = string.IsNullOrWhiteSpace(document.CreatedBy) ? unitOfWork.ActorId : document.CreatedBy;
+        if (document.CreatedAt == default || string.IsNullOrWhiteSpace(document.CreatedBy))
+        {
+            document.StampCreated(
+                document.CreatedAt == default ? unitOfWork.Now : document.CreatedAt,
+                string.IsNullOrWhiteSpace(document.CreatedBy) ? unitOfWork.ActorId : document.CreatedBy);
+        }
 
         return await unitOfWork.ActiveConnection.ExecuteScalarAsync<Guid>(new CommandDefinition(
             UpsertSql,
@@ -47,8 +51,8 @@ public sealed class FetchedDocumentRepository(PostgresUnitOfWork unitOfWork) : I
                 document.SizeBytes,
                 document.CharacterCount,
                 document.BlobKey,
-                CreatedAt = createdAt,
-                CreatedBy = createdBy,
+                document.CreatedAt,
+                document.CreatedBy,
             },
             unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);

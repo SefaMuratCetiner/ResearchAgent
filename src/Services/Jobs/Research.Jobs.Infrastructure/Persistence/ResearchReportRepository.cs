@@ -25,8 +25,12 @@ public sealed class ResearchReportRepository(PostgresUnitOfWork unitOfWork) : IR
     public async Task InsertAsync(ResearchReport report, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(report);
-        var createdAt = report.CreatedAt == default ? unitOfWork.Now : report.CreatedAt;
-        var createdBy = string.IsNullOrWhiteSpace(report.CreatedBy) ? unitOfWork.ActorId : report.CreatedBy;
+        if (report.CreatedAt == default || string.IsNullOrWhiteSpace(report.CreatedBy))
+        {
+            report.StampCreated(
+                report.CreatedAt == default ? unitOfWork.Now : report.CreatedAt,
+                string.IsNullOrWhiteSpace(report.CreatedBy) ? unitOfWork.ActorId : report.CreatedBy);
+        }
 
         await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             InsertSql,
@@ -37,8 +41,8 @@ public sealed class ResearchReportRepository(PostgresUnitOfWork unitOfWork) : IR
                 Citations = JsonSerializer.Serialize(report.Citations, Json),
                 report.Model,
                 report.Truncated,
-                CreatedAt = createdAt,
-                CreatedBy = createdBy,
+                report.CreatedAt,
+                report.CreatedBy,
             },
             unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
@@ -74,17 +78,18 @@ public sealed class ResearchReportRepository(PostgresUnitOfWork unitOfWork) : IR
 
         public string? UpdatedBy { get; set; }
 
-        public ResearchReport ToDomain() => new()
+        public ResearchReport ToDomain()
         {
-            Id = JobId,
-            Content = Content,
-            Citations = JsonSerializer.Deserialize<List<ReportSource>>(Citations, Json) ?? [],
-            Model = Model,
-            Truncated = Truncated,
-            CreatedAt = CreatedAt,
-            CreatedBy = CreatedBy,
-            UpdatedAt = UpdatedAt,
-            UpdatedBy = UpdatedBy,
-        };
+            var report = new ResearchReport
+            {
+                Id = JobId,
+                Content = Content,
+                Citations = JsonSerializer.Deserialize<List<ReportSource>>(Citations, Json) ?? [],
+                Model = Model,
+                Truncated = Truncated,
+            };
+            report.RestoreAudit(CreatedAt, CreatedBy, UpdatedAt, UpdatedBy);
+            return report;
+        }
     }
 }

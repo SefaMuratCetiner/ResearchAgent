@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Research.Shared.Core.Events;
-using Research.SharedKernel.Common;
+using Research.SharedKernel.Events;
 
 namespace Research.Shared.Adapters.Events;
 

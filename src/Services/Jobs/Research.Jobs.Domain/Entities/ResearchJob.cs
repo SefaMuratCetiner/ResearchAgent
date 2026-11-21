@@ -1,5 +1,5 @@
 using Research.Jobs.Domain.Events;
-using Research.SharedKernel.Common;
+using Research.SharedKernel.Entities;
 using Research.SharedKernel.Results;
 
 namespace Research.Jobs.Domain;
@@ -9,7 +9,7 @@ namespace Research.Jobs.Domain;
 /// domain events on every lifecycle transition. Persisted via compare-and-set on <see cref="PersistedVersion"/> and
 /// <see cref="GetAllowedSourceStatuses"/>.
 /// </summary>
-public sealed class ResearchJob : BaseAuditableEntity
+public sealed class ResearchJob : AggregateRoot
 {
     private ResearchJob()
     {
@@ -92,7 +92,7 @@ public sealed class ResearchJob : BaseAuditableEntity
             job.StampCreated(now, createdBy);
         }
 
-        job.AddDomainEvent(new JobCreatedDomainEvent(id, question, now));
+        job.Raise(new JobCreatedDomainEvent(id, question, now));
         return job;
     }
 
@@ -176,7 +176,7 @@ public sealed class ResearchJob : BaseAuditableEntity
 
         Status = JobStatus.Gathering;
         Plan = [.. subQuestions];
-        AddDomainEvent(new JobGatheringStartedDomainEvent(Id, Plan, now));
+        Raise(new JobGatheringStartedDomainEvent(Id, Plan, now));
         return true;
     }
 
@@ -200,7 +200,7 @@ public sealed class ResearchJob : BaseAuditableEntity
         }
 
         Status = JobStatus.Synthesizing;
-        AddDomainEvent(new JobSynthesisStartedDomainEvent(Id, Question, Plan, now));
+        Raise(new JobSynthesisStartedDomainEvent(Id, Question, Plan, now));
         return true;
     }
 
@@ -225,7 +225,7 @@ public sealed class ResearchJob : BaseAuditableEntity
         ErrorCode = null;
         Warnings = [];
         CompletedAt = now;
-        AddDomainEvent(new JobCancelledDomainEvent(Id, CreatedAt, now));
+        Raise(new JobCancelledDomainEvent(Id, CreatedAt, now));
         return Result.Success();
     }
 
@@ -242,7 +242,7 @@ public sealed class ResearchJob : BaseAuditableEntity
         ErrorCode = null;
         Warnings = warnings;
         CompletedAt = now;
-        AddDomainEvent(new JobCompletedDomainEvent(Id, status, warnings, CreatedAt, now));
+        Raise(new JobCompletedDomainEvent(Id, status, warnings, CreatedAt, now));
         return true;
     }
 
@@ -259,7 +259,7 @@ public sealed class ResearchJob : BaseAuditableEntity
         ErrorCode = errorCode;
         Warnings = [];
         CompletedAt = now;
-        AddDomainEvent(new JobFailedDomainEvent(Id, errorCode, CreatedAt, now));
+        Raise(new JobFailedDomainEvent(Id, errorCode, CreatedAt, now));
         return true;
     }
 
@@ -275,7 +275,7 @@ public sealed class ResearchJob : BaseAuditableEntity
         ErrorCode = JobsErrors.DeadlineExceeded.Code;
         Warnings = [];
         CompletedAt = now;
-        AddDomainEvent(new JobExpiredDomainEvent(Id, CreatedAt, now));
+        Raise(new JobExpiredDomainEvent(Id, CreatedAt, now));
         return true;
     }
 

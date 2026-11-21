@@ -1,4 +1,4 @@
-using Research.SharedKernel.Common;
+using Research.SharedKernel.Events;
 
 namespace Research.Jobs.Domain.Events;
 

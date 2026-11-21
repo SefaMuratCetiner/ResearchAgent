@@ -62,8 +62,12 @@ public sealed class KnowledgeRepository(PostgresUnitOfWork unitOfWork) : IKnowle
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(passages);
 
-        var createdAt = document.CreatedAt == default ? unitOfWork.Now : document.CreatedAt;
-        var createdBy = string.IsNullOrWhiteSpace(document.CreatedBy) ? unitOfWork.ActorId : document.CreatedBy;
+        if (document.CreatedAt == default || string.IsNullOrWhiteSpace(document.CreatedBy))
+        {
+            document.StampCreated(
+                document.CreatedAt == default ? unitOfWork.Now : document.CreatedAt,
+                string.IsNullOrWhiteSpace(document.CreatedBy) ? unitOfWork.ActorId : document.CreatedBy);
+        }
 
         var inserted = await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             InsertDocumentSql,
@@ -76,8 +80,8 @@ public sealed class KnowledgeRepository(PostgresUnitOfWork unitOfWork) : IKnowle
                 document.Title,
                 document.CharacterCount,
                 document.PassageCount,
-                CreatedAt = createdAt,
-                CreatedBy = createdBy,
+                document.CreatedAt,
+                document.CreatedBy,
             },
             unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
