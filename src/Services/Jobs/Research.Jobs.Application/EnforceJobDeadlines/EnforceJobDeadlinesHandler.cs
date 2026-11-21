@@ -50,7 +50,7 @@ public sealed class EnforceJobDeadlinesHandler(
     private async Task<int> WithLockedJobAsync(
         Guid jobId,
         Func<ResearchJob, bool> skip,
-        Func<ResearchJob, ITransactionScope, Task<ResearchJob?>> change,
+        Func<ResearchJob, ITransactionScope, Task<bool>> change,
         CancellationToken cancellationToken)
     {
         await using var transaction = await transactions.BeginAsync(cancellationToken).ConfigureAwait(false);
@@ -60,8 +60,8 @@ public sealed class EnforceJobDeadlinesHandler(
             return 0;
         }
 
-        var result = await change(job, transaction).ConfigureAwait(false);
+        var changed = await change(job, transaction).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        return result is null ? 0 : 1;
+        return changed ? 1 : 0;
     }
 }

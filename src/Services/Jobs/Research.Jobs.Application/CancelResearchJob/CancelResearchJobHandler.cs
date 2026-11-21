@@ -1,15 +1,13 @@
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Domain;
 using Research.Jobs.Lifecycle;
-using Research.SharedKernel.Results;
 using Research.Shared.Core.Transactions;
+using Research.SharedKernel.Results;
 
 namespace Research.Jobs.CancelResearchJob;
 
 /// <summary>
-/// Cancels an active job under its row lock, so it races safely with replies and the deadline worker (§10.1):
-/// cancelling twice succeeds, a completed job answers <c>jobs.job_already_completed</c>, and a failed or expired one
-/// <c>jobs.job_not_cancellable</c>.
+/// Cancels an active job under its row lock, delegating all cancellation invariants to <see cref="ResearchJob.Cancel"/>.
 /// </summary>
 public sealed class CancelResearchJobHandler(
     ITransactionFactory transactions,
@@ -27,19 +25,13 @@ public sealed class CancelResearchJobHandler(
             return Result<ResearchJob>.Failure(JobsErrors.JobNotFound);
         }
 
-        switch (job.Status)
+        var result = await lifecycle.CancelAsync(job, transaction, cancellationToken).ConfigureAwait(false);
+        if (!result.IsSuccess)
         {
-            case JobStatus.Cancelled:
-                return Result<ResearchJob>.Success(job);
-            case JobStatus.Completed or JobStatus.CompletedWithWarnings:
-                return Result<ResearchJob>.Failure(JobsErrors.JobAlreadyCompleted);
-            case JobStatus.Failed or JobStatus.Expired:
-                return Result<ResearchJob>.Failure(JobsErrors.JobNotCancellable);
+            return result;
         }
 
-        var cancelled = await lifecycle.CancelAsync(job, transaction, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException("The cancel transition failed although the job row is locked.");
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        return Result<ResearchJob>.Success(cancelled);
+        return result;
     }
 }

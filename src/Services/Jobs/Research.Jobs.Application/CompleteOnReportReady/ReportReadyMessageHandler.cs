@@ -38,9 +38,8 @@ public sealed class ReportReadyMessageHandler(
                     return;
                 }
 
-                var current = await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, transaction, cancellationToken)
-                    .ConfigureAwait(false);
-                if (current is null)
+                if (!await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, transaction, cancellationToken)
+                        .ConfigureAwait(false))
                 {
                     return;
                 }
@@ -65,7 +64,7 @@ public sealed class ReportReadyMessageHandler(
                     CreatedBy = actor.Id,
                 };
                 await reports.InsertAsync(report, transaction, cancellationToken).ConfigureAwait(false);
-                await lifecycle.CompleteAsync(current, report.Truncated, transaction, cancellationToken).ConfigureAwait(false);
+                await lifecycle.CompleteAsync(job, report.Truncated, transaction, cancellationToken).ConfigureAwait(false);
             },
             cancellationToken);
     }

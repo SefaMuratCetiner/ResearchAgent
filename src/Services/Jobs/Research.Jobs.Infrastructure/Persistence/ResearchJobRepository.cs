@@ -214,26 +214,24 @@ public sealed class ResearchJobRepository(NpgsqlDataSource dataSource) : IResear
 
         public string? UpdatedBy { get; set; }
 
-        public ResearchJob ToDomain() => new()
-        {
-            Id = Id,
-            Question = Question,
-            Status = Enum.Parse<JobStatus>(Status),
-            Plan = Plan,
-            IdempotencyKey = IdempotencyKey,
-            SynthesisCutoffAt = SynthesisCutoffAt,
-            DeadlineAt = DeadlineAt,
-            TokenBudget = TokenBudget,
-            TokensUsed = TokensUsed,
-            ErrorCode = ErrorCode,
-            Warnings = Warnings,
-            GatheringEndReason = GatheringEndReason is null ? null : Enum.Parse<GatheringEndReason>(GatheringEndReason),
-            CompletedAt = CompletedAt,
-            Version = Version,
-            CreatedAt = CreatedAt,
-            CreatedBy = CreatedBy,
-            UpdatedAt = UpdatedAt,
-            UpdatedBy = UpdatedBy,
-        };
+        public ResearchJob ToDomain() => ResearchJob.Rehydrate(
+            Id,
+            Question,
+            Enum.Parse<JobStatus>(Status),
+            Plan,
+            IdempotencyKey,
+            SynthesisCutoffAt,
+            DeadlineAt,
+            TokenBudget,
+            TokensUsed,
+            ErrorCode,
+            Warnings,
+            GatheringEndReason is null ? null : Enum.Parse<GatheringEndReason>(GatheringEndReason),
+            CompletedAt,
+            Version,
+            CreatedAt,
+            CreatedBy,
+            UpdatedAt,
+            UpdatedBy);
     }
 }

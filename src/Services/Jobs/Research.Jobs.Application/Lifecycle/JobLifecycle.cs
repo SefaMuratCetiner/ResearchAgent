@@ -2,19 +2,19 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Contracts.Jobs;
 using Research.Contracts.Synthesis;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Domain;
 using Research.Jobs.Observability;
 using Research.Shared.Core.Actors;
 using Research.Shared.Core.Messaging;
 using Research.Shared.Core.Transactions;
+using Research.SharedKernel.Results;
 
 namespace Research.Jobs.Lifecycle;
 
 /// <summary>
-/// The transitions every slice shares, each a compare-and-set save plus its outgoing messages in the caller's
-/// transaction. Callers hold the job's row lock (<see cref="IResearchJobRepository.GetForUpdateAsync"/>), so the CAS
-/// only fails when the caller's copy is stale, which these methods report as <c>null</c> (nothing changed).
+/// Persists <see cref="ResearchJob"/> aggregate transitions with compare-and-set updates and enqueues outgoing
+/// integration messages in the caller's transaction. Domain invariants live on <see cref="ResearchJob"/> itself.
 /// </summary>
 public sealed partial class JobLifecycle(
     IResearchJobRepository jobs,
@@ -30,47 +30,42 @@ public sealed partial class JobLifecycle(
 {
     private const string JobStepKey = "job";
 
-    /// <summary>Saves <paramref name="updated"/> if <paramref name="current"/> is still what the database holds.</summary>
-    public async Task<ResearchJob?> SaveAsync(ResearchJob current, ResearchJob updated, ITransactionScope transaction, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(current);
-        ArgumentNullException.ThrowIfNull(updated);
-
-        IReadOnlyList<JobStatus> allowedFrom = current.Status == updated.Status
-            ? [current.Status]
-            : JobStateMachine.AllowedFrom(updated.Status);
-        var stamped = updated with
-        {
-            Version = current.Version + 1,
-            UpdatedAt = timeProvider.GetUtcNow(),
-            UpdatedBy = actor.Id,
-        };
-
-        var saved = await jobs.UpdateAsync(stamped, current.Version, allowedFrom, transaction, cancellationToken).ConfigureAwait(false);
-        if (!saved)
-        {
-            LogTransitionLost(logger, current.Id, current.Status, updated.Status);
-            return null;
-        }
-
-        return stamped;
-    }
-
-    /// <summary>Adds an answer's tokens to the job.</summary>
-    public Task<ResearchJob?> AddTokensAsync(ResearchJob job, long tokens, ITransactionScope transaction, CancellationToken cancellationToken)
+    /// <summary>Saves pending mutations on <paramref name="job"/> if the database row still matches its persisted state.</summary>
+    public async Task<bool> SaveAsync(ResearchJob job, ITransactionScope transaction, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
-        return tokens <= 0
-            ? Task.FromResult<ResearchJob?>(job)
-            : SaveAsync(job, job with { TokensUsed = job.TokensUsed + tokens }, transaction, cancellationToken);
+
+        var expectedVersion = job.PersistedVersion;
+        var fromStatus = job.PersistedStatus;
+        var allowedFrom = job.GetAllowedSourceStatuses();
+        job.PrepareForUpdate(timeProvider.GetUtcNow(), actor.Id);
+
+        var saved = await jobs.UpdateAsync(job, expectedVersion, allowedFrom, transaction, cancellationToken).ConfigureAwait(false);
+        if (!saved)
+        {
+            LogTransitionLost(logger, job.Id, fromStatus, job.Status);
+            return false;
+        }
+
+        job.AcceptPersistedState();
+        return true;
+    }
+
+    /// <summary>Records billed tokens on <paramref name="job"/> and saves it.</summary>
+    public Task<bool> AddTokensAsync(ResearchJob job, long tokens, ITransactionScope transaction, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        return !job.RecordTokens(tokens)
+            ? Task.FromResult(true)
+            : SaveAsync(job, transaction, cancellationToken);
     }
 
     /// <summary>
     /// Ends gathering when it is over (§10.1): every search and fetch step finished, or <paramref name="forcedReason"/>
-    /// (cutoff, budget). Then either fails the job for too few sources or moves it to synthesis, publishing
-    /// <c>SynthesisRequested</c> exactly once. Does nothing while gathering continues.
+    /// (cutoff, budget). Delegates the decision to <see cref="ResearchJob.EndGathering"/> and emits
+    /// <c>SynthesisRequested</c> or <c>JobFailed</c> in the caller's transaction.
     /// </summary>
-    public async Task<ResearchJob?> EvaluateGatheringAsync(
+    public async Task<bool> EvaluateGatheringAsync(
         ResearchJob job,
         GatheringEndReason? forcedReason,
         ITransactionScope transaction,
@@ -79,7 +74,7 @@ public sealed partial class JobLifecycle(
         ArgumentNullException.ThrowIfNull(job);
         if (job.Status != JobStatus.Gathering)
         {
-            return job;
+            return false;
         }
 
         var counts = await steps.CountAsync(job.Id, transaction, cancellationToken).ConfigureAwait(false);
@@ -96,116 +91,119 @@ public sealed partial class JobLifecycle(
 
         if (reason is null)
         {
-            return job;
+            return false;
         }
 
         metrics.GatheringEnded(counts.FetchSucceeded);
         LogGatheringEnded(logger, job.Id, reason.Value, counts.FetchSucceeded, counts.GatheringFailed);
 
-        var failure = JobOutcomePolicy.EvaluateSources(counts.FetchSucceeded, options.Value.MinSources);
-        if (failure is not null)
+        var now = timeProvider.GetUtcNow();
+        if (!job.EndGathering(reason.Value, counts.FetchSucceeded, options.Value.MinSources, now))
         {
-            return await FailAsync(job with { GatheringEndReason = reason }, failure.Code, transaction, cancellationToken).ConfigureAwait(false);
+            return false;
         }
 
-        var synthesizing = await SaveAsync(
-            job,
-            job with { Status = JobStatus.Synthesizing, GatheringEndReason = reason },
-            transaction,
-            cancellationToken).ConfigureAwait(false);
-        if (synthesizing is null)
+        if (!await SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false))
         {
-            return null;
+            return false;
+        }
+
+        if (job.Status == JobStatus.Failed)
+        {
+            RecordFinished(job, now);
+            await outbox.EnqueueAsync(envelopes.Create(new JobFailed(job.Id, JobStepKey, job.ErrorCode!)), transaction, cancellationToken)
+                .ConfigureAwait(false);
+            return true;
         }
 
         await emitter.EmitAsync(
             new SynthesisRequested(job.Id, JobStepKeys.Synthesize, job.Question, job.Plan, options.Value.SynthesisTopK),
             transaction,
             cancellationToken).ConfigureAwait(false);
-        return synthesizing;
+        return true;
     }
 
-    public async Task<ResearchJob?> FailAsync(ResearchJob job, string errorCode, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<bool> FailAsync(ResearchJob job, string errorCode, ITransactionScope transaction, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
-        var failed = await FinishAsync(job, JobStatus.Failed, errorCode, [], transaction, cancellationToken).ConfigureAwait(false);
-        if (failed is not null)
+        var now = timeProvider.GetUtcNow();
+        if (!job.Fail(errorCode, now) || !await SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false))
         {
-            await outbox.EnqueueAsync(envelopes.Create(new JobFailed(job.Id, JobStepKey, errorCode)), transaction, cancellationToken)
-                .ConfigureAwait(false);
+            return false;
         }
 
-        return failed;
-    }
-
-    public async Task<ResearchJob?> ExpireAsync(ResearchJob job, ITransactionScope transaction, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(job);
-        var expired = await FinishAsync(job, JobStatus.Expired, JobsErrors.DeadlineExceeded.Code, [], transaction, cancellationToken)
+        RecordFinished(job, now);
+        await outbox.EnqueueAsync(envelopes.Create(new JobFailed(job.Id, JobStepKey, errorCode)), transaction, cancellationToken)
             .ConfigureAwait(false);
-        if (expired is not null)
-        {
-            await outbox.EnqueueAsync(envelopes.Create(new JobExpired(job.Id, JobStepKey)), transaction, cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-        return expired;
+        return true;
     }
 
-    public async Task<ResearchJob?> CancelAsync(ResearchJob job, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<bool> ExpireAsync(ResearchJob job, ITransactionScope transaction, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
-        var cancelled = await FinishAsync(job, JobStatus.Cancelled, null, [], transaction, cancellationToken).ConfigureAwait(false);
-        if (cancelled is not null)
+        var now = timeProvider.GetUtcNow();
+        if (!job.Expire(now) || !await SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false))
         {
-            await outbox.EnqueueAsync(envelopes.Create(new JobCancelled(job.Id, JobStepKey)), transaction, cancellationToken)
-                .ConfigureAwait(false);
+            return false;
         }
 
-        return cancelled;
+        RecordFinished(job, now);
+        await outbox.EnqueueAsync(envelopes.Create(new JobExpired(job.Id, JobStepKey)), transaction, cancellationToken)
+            .ConfigureAwait(false);
+        return true;
+    }
+
+    public async Task<Result<ResearchJob>> CancelAsync(ResearchJob job, ITransactionScope transaction, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        var wasCancelled = job.Status == JobStatus.Cancelled;
+        var now = timeProvider.GetUtcNow();
+        var decision = job.Cancel(now);
+        if (!decision.IsSuccess)
+        {
+            return Result<ResearchJob>.Failure(decision.Error);
+        }
+
+        if (wasCancelled)
+        {
+            return Result<ResearchJob>.Success(job);
+        }
+
+        if (!await SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false))
+        {
+            throw new InvalidOperationException("The cancel transition failed although the job row is locked.");
+        }
+
+        RecordFinished(job, now);
+        await outbox.EnqueueAsync(envelopes.Create(new JobCancelled(job.Id, JobStepKey)), transaction, cancellationToken)
+            .ConfigureAwait(false);
+        return Result<ResearchJob>.Success(job);
     }
 
     /// <summary>Moves a synthesizing job to its final state once the report is stored.</summary>
-    public async Task<ResearchJob?> CompleteAsync(ResearchJob job, bool reportTruncated, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<bool> CompleteAsync(ResearchJob job, bool reportTruncated, ITransactionScope transaction, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
         var counts = await steps.CountAsync(job.Id, transaction, cancellationToken).ConfigureAwait(false);
-        var (status, warnings) = JobOutcomePolicy.Complete(job.GatheringEndReason, counts.GatheringFailed, reportTruncated);
-
-        var completed = await FinishAsync(job, status, null, warnings, transaction, cancellationToken).ConfigureAwait(false);
-        if (completed is not null)
+        var now = timeProvider.GetUtcNow();
+        if (!job.Complete(counts.GatheringFailed, reportTruncated, now)
+            || !await SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false))
         {
-            await outbox.EnqueueAsync(
-                envelopes.Create(new JobCompleted(job.Id, JobStepKey, status.ToString(), warnings)),
-                transaction,
-                cancellationToken).ConfigureAwait(false);
+            return false;
         }
 
-        return completed;
-    }
-
-    private async Task<ResearchJob?> FinishAsync(
-        ResearchJob job,
-        JobStatus status,
-        string? errorCode,
-        IReadOnlyList<string> warnings,
-        ITransactionScope transaction,
-        CancellationToken cancellationToken)
-    {
-        var now = timeProvider.GetUtcNow();
-        var finished = await SaveAsync(
-            job,
-            job with { Status = status, ErrorCode = errorCode, Warnings = warnings, CompletedAt = now },
+        RecordFinished(job, now);
+        await outbox.EnqueueAsync(
+            envelopes.Create(new JobCompleted(job.Id, JobStepKey, job.Status.ToString(), job.Warnings)),
             transaction,
             cancellationToken).ConfigureAwait(false);
+        return true;
+    }
 
-        if (finished is not null)
-        {
-            metrics.Finished(status, errorCode, now - job.CreatedAt);
-            LogJobFinished(logger, job.Id, status, errorCode);
-        }
-
-        return finished;
+    private void RecordFinished(ResearchJob job, DateTimeOffset now)
+    {
+        metrics.Finished(job.Status, job.ErrorCode, now - job.CreatedAt);
+        LogJobFinished(logger, job.Id, job.Status, job.ErrorCode);
     }
 
     [LoggerMessage(EventId = 2000, Level = LogLevel.Information, Message = "Job {JobId} transition {From} -> {To} lost a race; nothing changed")]

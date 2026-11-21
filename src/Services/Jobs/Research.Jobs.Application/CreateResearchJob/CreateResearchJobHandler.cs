@@ -55,18 +55,15 @@ public sealed partial class CreateResearchJobHandler(
         }
 
         var now = timeProvider.GetUtcNow();
-        var job = new ResearchJob
-        {
-            Id = Guid.CreateVersion7(now),
-            Question = question,
-            Status = JobStatus.Planning,
-            IdempotencyKey = command.IdempotencyKey,
-            SynthesisCutoffAt = now + settings.MaxDuration - settings.SynthesisReserve,
-            DeadlineAt = now + settings.MaxDuration,
-            TokenBudget = settings.TokenBudget,
-            CreatedAt = now,
-            CreatedBy = actor.Id,
-        };
+        var job = ResearchJob.Create(
+            Guid.CreateVersion7(now),
+            question,
+            command.IdempotencyKey,
+            settings.MaxDuration,
+            settings.SynthesisReserve,
+            settings.TokenBudget,
+            now,
+            actor.Id);
 
         await using (var transaction = await transactions.BeginAsync(cancellationToken).ConfigureAwait(false))
         {

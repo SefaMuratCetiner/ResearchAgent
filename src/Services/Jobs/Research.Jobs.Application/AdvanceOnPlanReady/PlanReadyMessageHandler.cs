@@ -9,13 +9,15 @@ using Research.Shared.Core.Security;
 namespace Research.Jobs.AdvanceOnPlanReady;
 
 /// <summary>
-/// The plan arrived: record its tokens and sub-questions, move the job to <see cref="JobStatus.Gathering"/>, and start
-/// one search step per sub-question. An empty plan fails the job with <c>jobs.plan_empty</c>.
+/// The plan arrived: record its tokens and sub-questions on <see cref="ResearchJob"/>, move the job to
+/// <see cref="JobStatus.Gathering"/>, and start one search step per sub-question. An empty plan fails the job with
+/// <c>jobs.plan_empty</c>.
 /// </summary>
 public sealed class PlanReadyMessageHandler(
     JobReplyGate gate,
     JobLifecycle lifecycle,
     StepEmitter emitter,
+    TimeProvider timeProvider,
     IOptionsSnapshot<JobsOptions> options) : IMessageHandler<PlanReady>
 {
     public Task HandleAsync(PlanReady message, MessageContext context, CancellationToken cancellationToken)
@@ -29,9 +31,9 @@ public sealed class PlanReadyMessageHandler(
             context,
             async (job, transaction) =>
             {
-                var current = await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, transaction, cancellationToken)
-                    .ConfigureAwait(false);
-                if (current is null || current.Status != JobStatus.Planning)
+                if (!await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, transaction, cancellationToken)
+                        .ConfigureAwait(false)
+                    || job.Status != JobStatus.Planning)
                 {
                     return;
                 }
@@ -40,16 +42,12 @@ public sealed class PlanReadyMessageHandler(
                 var subQuestions = Normalize(message.SubQuestions, settings.MaxSubQuestions, settings.MaxSubQuestionLength);
                 if (subQuestions.Count == 0)
                 {
-                    await lifecycle.FailAsync(current, JobsErrors.PlanEmpty.Code, transaction, cancellationToken).ConfigureAwait(false);
+                    await lifecycle.FailAsync(job, JobsErrors.PlanEmpty.Code, transaction, cancellationToken).ConfigureAwait(false);
                     return;
                 }
 
-                var gathering = await lifecycle.SaveAsync(
-                    current,
-                    current with { Status = JobStatus.Gathering, Plan = subQuestions },
-                    transaction,
-                    cancellationToken).ConfigureAwait(false);
-                if (gathering is null)
+                if (!job.StartGathering(subQuestions, timeProvider.GetUtcNow())
+                    || !await lifecycle.SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false))
                 {
                     return;
                 }

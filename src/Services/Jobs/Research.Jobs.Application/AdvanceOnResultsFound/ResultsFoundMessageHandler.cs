@@ -31,14 +31,14 @@ public sealed class ResultsFoundMessageHandler(
             context,
             async (job, transaction) =>
             {
-                var current = await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, transaction, cancellationToken)
-                    .ConfigureAwait(false);
-                if (current is null || current.Status != JobStatus.Gathering)
+                if (!await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, transaction, cancellationToken)
+                        .ConfigureAwait(false)
+                    || job.Status != JobStatus.Gathering)
                 {
                     return;
                 }
 
-                if (!current.BudgetExhausted)
+                if (!job.BudgetExhausted)
                 {
                     var counts = await steps.CountAsync(job.Id, transaction, cancellationToken).ConfigureAwait(false);
                     var room = options.Value.MaxSources - counts.FetchTotal;
@@ -66,7 +66,7 @@ public sealed class ResultsFoundMessageHandler(
                     }
                 }
 
-                await lifecycle.EvaluateGatheringAsync(current, forcedReason: null, transaction, cancellationToken).ConfigureAwait(false);
+                await lifecycle.EvaluateGatheringAsync(job, forcedReason: null, transaction, cancellationToken).ConfigureAwait(false);
             },
             cancellationToken);
     }
