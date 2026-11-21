@@ -220,7 +220,7 @@ public sealed class ResearchJob : BaseAuditableEntity
         ErrorCode = null;
         Warnings = [];
         CompletedAt = now;
-        AddDomainEvent(new JobCancelledDomainEvent(Id, now));
+        AddDomainEvent(new JobCancelledDomainEvent(Id, CreatedAt, now));
         return Result.Success();
     }
 
@@ -237,7 +237,7 @@ public sealed class ResearchJob : BaseAuditableEntity
         ErrorCode = null;
         Warnings = warnings;
         CompletedAt = now;
-        AddDomainEvent(new JobCompletedDomainEvent(Id, status, warnings, now));
+        AddDomainEvent(new JobCompletedDomainEvent(Id, status, warnings, CreatedAt, now));
         return true;
     }
 
@@ -254,7 +254,7 @@ public sealed class ResearchJob : BaseAuditableEntity
         ErrorCode = errorCode;
         Warnings = [];
         CompletedAt = now;
-        AddDomainEvent(new JobFailedDomainEvent(Id, errorCode, now));
+        AddDomainEvent(new JobFailedDomainEvent(Id, errorCode, CreatedAt, now));
         return true;
     }
 
@@ -270,7 +270,7 @@ public sealed class ResearchJob : BaseAuditableEntity
         ErrorCode = JobsErrors.DeadlineExceeded.Code;
         Warnings = [];
         CompletedAt = now;
-        AddDomainEvent(new JobExpiredDomainEvent(Id, now));
+        AddDomainEvent(new JobExpiredDomainEvent(Id, CreatedAt, now));
         return true;
     }
 

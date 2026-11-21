@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Options;
 using Research.Contracts.Planning;
-using Research.Contracts.Search;
 using Research.Jobs.Domain;
 using Research.Jobs.Lifecycle;
 using Research.Shared.Core.Messaging;
@@ -9,14 +8,12 @@ using Research.Shared.Core.Security;
 namespace Research.Jobs.AdvanceOnPlanReady;
 
 /// <summary>
-/// The plan arrived: record its tokens and sub-questions on <see cref="ResearchJob"/>, move the job to
-/// <see cref="JobStatus.Gathering"/>, and start one search step per sub-question. An empty plan fails the job with
-/// <c>jobs.plan_empty</c>.
+/// The plan arrived: record its tokens and sub-questions on <see cref="ResearchJob"/>. On commit, domain event
+/// handlers emit one <c>SearchRequested</c> step per sub-question (or enqueue <c>JobFailed</c> for an empty plan).
 /// </summary>
 public sealed class PlanReadyMessageHandler(
     JobReplyGate gate,
     JobLifecycle lifecycle,
-    StepEmitter emitter,
     TimeProvider timeProvider,
     IOptionsSnapshot<JobsOptions> options) : IMessageHandler<PlanReady>
 {
@@ -40,25 +37,8 @@ public sealed class PlanReadyMessageHandler(
 
                 var settings = options.Value;
                 var subQuestions = Normalize(message.SubQuestions, settings.MaxSubQuestions, settings.MaxSubQuestionLength);
-                if (subQuestions.Count == 0)
-                {
-                    await lifecycle.FailAsync(job, JobsErrors.PlanEmpty.Code, transaction, cancellationToken).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!job.StartGathering(subQuestions, timeProvider.GetUtcNow())
-                    || !await lifecycle.SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false))
-                {
-                    return;
-                }
-
-                for (var i = 0; i < subQuestions.Count; i++)
-                {
-                    await emitter.EmitAsync(
-                        new SearchRequested(job.Id, JobStepKeys.Search(i), subQuestions[i], settings.ResultsPerSearch),
-                        transaction,
-                        cancellationToken).ConfigureAwait(false);
-                }
+                job.StartGathering(subQuestions, timeProvider.GetUtcNow());
+                await lifecycle.SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false);
             },
             cancellationToken);
     }

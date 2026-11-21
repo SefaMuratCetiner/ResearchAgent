@@ -1,30 +1,22 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Research.Contracts.Jobs;
-using Research.Contracts.Planning;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
-using Research.Jobs.Lifecycle;
-using Research.Jobs.Observability;
+using Research.Jobs.Domain;
 using Research.Shared.Core.Actors;
-using Research.Shared.Core.Messaging;
-using Research.SharedKernel.Results;
 using Research.Shared.Core.Security;
 using Research.Shared.Core.Transactions;
+using Research.SharedKernel.Results;
 
 namespace Research.Jobs.CreateResearchJob;
 
 /// <summary>
-/// Creates the job in <see cref="JobStatus.Planning"/> with both clocks set, and in the same transaction starts the
-/// plan step (<c>PlanRequested</c>) and announces <c>JobCreated</c>. When this returns, nothing can be lost (§16.1).
+/// Creates the job in <see cref="JobStatus.Planning"/> with both clocks set. On commit,
+/// <c>JobCreatedDomainEventHandler</c> starts the plan step (<c>PlanRequested</c>) and enqueues <c>JobCreated</c>
+/// inside the same transaction (§16.1).
 /// </summary>
 public sealed partial class CreateResearchJobHandler(
     ITransactionFactory transactions,
     IResearchJobRepository jobs,
-    StepEmitter emitter,
-    IOutbox outbox,
-    IEnvelopeFactory envelopes,
-    JobsMetrics metrics,
     IOptionsSnapshot<JobsOptions> options,
     TimeProvider timeProvider,
     ICurrentActor actor,
@@ -75,17 +67,9 @@ public sealed partial class CreateResearchJobHandler(
                 return Replay(winner, question);
             }
 
-            await emitter.EmitAsync(
-                new PlanRequested(job.Id, JobStepKeys.Plan, question, settings.MaxSubQuestions),
-                transaction,
-                cancellationToken).ConfigureAwait(false);
-            await outbox.EnqueueAsync(envelopes.Create(new JobCreated(job.Id, "job", question)), transaction, cancellationToken)
-                .ConfigureAwait(false);
-
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        metrics.Created();
         LogJobCreated(logger, job.Id, job.DeadlineAt);
         return Result<CreateResearchJobResult>.Success(new CreateResearchJobResult(job, Created: true));
     }

@@ -57,7 +57,13 @@ public sealed class ResearchJobRepository(NpgsqlDataSource dataSource) : IResear
             },
             scope.Transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
-        return inserted == 1;
+        if (inserted == 1)
+        {
+            transaction.Track(job);
+            return true;
+        }
+
+        return false;
     }
 
     public async Task<ResearchJob?> GetAsync(Guid id, CancellationToken cancellationToken)
@@ -116,7 +122,13 @@ public sealed class ResearchJobRepository(NpgsqlDataSource dataSource) : IResear
             },
             scope.Transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
-        return updated == 1;
+        if (updated == 1)
+        {
+            transaction.Track(job);
+            return true;
+        }
+
+        return false;
     }
 
     public Task<IReadOnlyList<Guid>> ListPastCutoffAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken) =>
