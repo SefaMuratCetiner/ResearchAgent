@@ -1,12 +1,13 @@
 using Research.Knowledge.Api.Endpoints;
+using Research.Knowledge.Application;
 using Research.Knowledge.Bootstrap.Features;
-using Research.ServiceDefaults.Composition;
-using Research.ServiceDefaults.Endpoints;
-using Research.ServiceDefaults.Features;
-using Research.ServiceDefaults.Problems;
+using Research.ServiceDefaults;
+using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
 using Research.Shared.Core.Messaging;
+using Research.Shared.Web.Endpoints;
+using Research.Shared.Web.Problems;
 
 namespace Research.Knowledge.Bootstrap.CompositionRoot;
 
@@ -30,13 +31,6 @@ public sealed partial class KnowledgeCompositionRoot
     /// <summary>Every feature, in registration order, grouped by concern.</summary>
     internal IReadOnlyList<IResearchFeature> Features { get; } =
     [
-        // Observability
-        new LoggingFeature(),
-        new TelemetryFeature(
-            sources: [MessagingTracing.SourceName],
-            meters: [MessagingMetrics.MeterName, KnowledgeMetrics.MeterName]),
-        new HealthChecksFeature(),
-
         // Platform
         new ActorsFeature(),
         new ErrorsFeature(new ProblemErrorCatalog(), new MessagingErrorCatalog(), new KnowledgeErrorCatalog()),
@@ -51,12 +45,15 @@ public sealed partial class KnowledgeCompositionRoot
         new KnowledgeModuleFeature(),
 
         // HTTP API
-        new ProblemDetailsFeature(),
         new ApiFeature(),
     ];
 
     public void ComposeServices()
     {
+        _builder.AddServiceDefaults(
+            activitySources: [MessagingTracing.SourceName],
+            meters: [MessagingMetrics.MeterName, KnowledgeMetrics.MeterName],
+            configureHttpClientDefaults: false);
         _builder.Services.AddSingleton(TimeProvider.System);
 
         var app = new ResearchBuilder(_builder);
@@ -75,6 +72,6 @@ public sealed partial class KnowledgeCompositionRoot
             app.MapOpenApi();
         }
 
-        HealthEndpoints.Map(app);
+        app.MapDefaultEndpoints();
     }
 }

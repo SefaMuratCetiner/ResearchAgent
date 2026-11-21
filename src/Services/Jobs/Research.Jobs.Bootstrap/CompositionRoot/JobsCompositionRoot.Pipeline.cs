@@ -1,4 +1,4 @@
-using Research.ServiceDefaults.Middleware;
+using Research.Shared.Web.Middleware;
 
 namespace Research.Jobs.Bootstrap.CompositionRoot;
 

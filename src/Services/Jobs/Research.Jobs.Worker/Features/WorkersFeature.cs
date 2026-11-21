@@ -1,4 +1,4 @@
-using Research.ServiceDefaults.Composition;
+using Research.Shared.Adapters.Composition;
 using Research.Jobs.Worker.Workers;
 
 namespace Research.Jobs.Worker.Features;

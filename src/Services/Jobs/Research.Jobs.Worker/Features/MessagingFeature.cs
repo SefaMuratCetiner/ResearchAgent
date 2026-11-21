@@ -3,12 +3,12 @@ using Research.Contracts.Planning;
 using Research.Contracts.Search;
 using Research.Contracts.Steps;
 using Research.Contracts.Synthesis;
-using Research.ServiceDefaults.Composition;
-using Research.Jobs.AdvanceOnDocumentIndexed;
-using Research.Jobs.AdvanceOnPlanReady;
-using Research.Jobs.AdvanceOnResultsFound;
-using Research.Jobs.CompleteOnReportReady;
-using Research.Jobs.HandleStepFailure;
+using Research.Shared.Adapters.Composition;
+using Research.Jobs.Application.AdvanceOnDocumentIndexed;
+using Research.Jobs.Application.AdvanceOnPlanReady;
+using Research.Jobs.Application.AdvanceOnResultsFound;
+using Research.Jobs.Application.CompleteOnReportReady;
+using Research.Jobs.Application.HandleStepFailure;
 using Research.Shared.Adapters.Messaging.Outbox;
 using Research.Providers.RabbitMq;
 

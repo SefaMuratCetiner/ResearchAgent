@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
-using Research.Knowledge.SearchPassages;
-using Research.ServiceDefaults.Middleware;
-using Research.ServiceDefaults.Problems;
+using Research.Knowledge.Application;
+using Research.Knowledge.Application.SearchPassages;
+using Research.Shared.Web.Problems;
 
 namespace Research.Knowledge.Api.Endpoints;
 

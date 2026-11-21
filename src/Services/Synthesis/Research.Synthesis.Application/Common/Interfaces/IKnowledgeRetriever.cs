@@ -1,4 +1,4 @@
-namespace Research.Synthesis.Retrieval;
+namespace Research.Synthesis.Application.Common.Interfaces;
 
 /// <summary>
 /// The passages of one job most similar to the queries, best first. Implemented over the Knowledge API; transport

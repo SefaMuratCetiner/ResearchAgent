@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Research.Application.UnitTests.TestSupport;
-using Research.Knowledge;
+using Research.Knowledge.Application;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Domain;
-using Research.Knowledge.IndexDocument;
-using Research.Knowledge.SearchPassages;
+using Research.Knowledge.Application.IndexDocument;
+using Research.Knowledge.Application.SearchPassages;
 
 namespace Research.Application.UnitTests.Knowledge;
 

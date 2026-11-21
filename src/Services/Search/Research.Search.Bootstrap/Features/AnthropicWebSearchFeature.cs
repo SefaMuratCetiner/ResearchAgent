@@ -1,4 +1,4 @@
-using Research.ServiceDefaults.Composition;
+using Research.Shared.Adapters.Composition;
 using Research.Providers.AnthropicWebSearch;
 using Research.Search.Infrastructure.Decorators;
 using Research.Shared.Core.Search;

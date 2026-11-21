@@ -13,6 +13,7 @@
     <ProjectReference Include="..\Research.Knowledge.Api\Research.Knowledge.Api.csproj" />
     <ProjectReference Include="..\..\..\Research.ServiceDefaults\Research.ServiceDefaults.csproj" />
     <ProjectReference Include="..\..\..\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Web\Research.Shared.Web.csproj" />
     <ProjectReference Include="..\..\..\Providers\Research.Providers.Postgres\Research.Providers.Postgres.csproj" />
     <ProjectReference Include="..\..\..\Providers\Research.Providers.RabbitMq\Research.Providers.RabbitMq.csproj" />
     <ProjectReference Include="..\..\..\Providers\Research.Providers.BlobStorage\Research.Providers.BlobStorage.csproj" />

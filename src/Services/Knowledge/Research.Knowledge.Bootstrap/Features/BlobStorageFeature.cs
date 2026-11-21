@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Research.ServiceDefaults.Composition;
+using Research.Shared.Adapters.Composition;
 using Research.Providers.BlobStorage;
 using Research.Shared.Core.Documents;
 

@@ -1,8 +1,8 @@
 using Research.Contracts.Synthesis;
-using Research.ServiceDefaults.Composition;
+using Research.Shared.Adapters.Composition;
 using Research.Shared.Core.Messaging;
 using Research.Providers.RabbitMq;
-using Research.Synthesis.WriteReport;
+using Research.Synthesis.Application.WriteReport;
 
 namespace Research.Synthesis.Bootstrap.Features;
 

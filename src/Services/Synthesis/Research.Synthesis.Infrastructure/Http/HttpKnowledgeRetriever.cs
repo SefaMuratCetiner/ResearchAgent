@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using Research.Synthesis.Retrieval;
+using Research.Synthesis.Application.Common.Interfaces;
 
 namespace Research.Synthesis.Infrastructure.Http;
 

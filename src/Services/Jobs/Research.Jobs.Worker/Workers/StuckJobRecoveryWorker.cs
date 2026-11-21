@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
-using Research.Jobs.RecoverStuckJobs;
+using Research.Jobs.Application;
+using Research.Jobs.Application.RecoverStuckJobs;
 
 namespace Research.Jobs.Worker.Workers;
 

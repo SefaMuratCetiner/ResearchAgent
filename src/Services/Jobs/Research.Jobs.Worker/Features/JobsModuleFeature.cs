@@ -1,12 +1,12 @@
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Domain.Events;
-using Research.Jobs.DomainEventHandlers;
-using Research.Jobs.EnforceJobDeadlines;
+using Research.Jobs.Application.DomainEventHandlers;
+using Research.Jobs.Application.EnforceJobDeadlines;
 using Research.Jobs.Infrastructure.Persistence;
-using Research.Jobs.Lifecycle;
-using Research.Jobs.Observability;
-using Research.Jobs.RecoverStuckJobs;
-using Research.ServiceDefaults.Composition;
+using Research.Jobs.Application.Lifecycle;
+using Research.Jobs.Application.Observability;
+using Research.Jobs.Application.RecoverStuckJobs;
+using Research.Shared.Adapters.Composition;
 using Research.Shared.Core.Events;
 
 namespace Research.Jobs.Worker.Features;

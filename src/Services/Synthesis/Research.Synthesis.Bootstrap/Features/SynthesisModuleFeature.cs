@@ -1,5 +1,5 @@
-using Research.ServiceDefaults.Composition;
-using Research.Synthesis.WriteReport;
+using Research.Shared.Adapters.Composition;
+using Research.Synthesis.Application.WriteReport;
 
 namespace Research.Synthesis.Bootstrap.Features;
 

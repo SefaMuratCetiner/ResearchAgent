@@ -1,11 +1,12 @@
 using System.Net;
 using Microsoft.Extensions.Options;
+using Research.Fetching.Application;
 using Research.Fetching.Application.Common.Interfaces;
-using Research.Fetching.FetchPage;
+using Research.Fetching.Application.FetchPage;
 using Research.Fetching.Infrastructure.Download;
 using Research.Fetching.Infrastructure.Extraction;
 using Research.Fetching.Infrastructure.Persistence;
-using Research.ServiceDefaults.Composition;
+using Research.Shared.Adapters.Composition;
 
 namespace Research.Fetching.Bootstrap.Features;
 

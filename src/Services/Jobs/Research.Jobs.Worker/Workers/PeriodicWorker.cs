@@ -1,4 +1,4 @@
-using Research.Jobs.Observability;
+using Research.Jobs.Application.Observability;
 using Research.Shared.Core.Actors;
 
 namespace Research.Jobs.Worker.Workers;

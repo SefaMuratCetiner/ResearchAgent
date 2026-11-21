@@ -1,6 +1,6 @@
 using Research.Jobs.Domain;
-using Research.Jobs.GetResearchJob;
-using Research.Jobs.GetResearchReport;
+using Research.Jobs.Application.GetResearchJob;
+using Research.Jobs.Application.GetResearchReport;
 
 namespace Research.Jobs.Api.Endpoints;
 

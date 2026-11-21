@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace Research.Jobs;
+namespace Research.Jobs.Application;
 
 /// <summary>Bound from the <c>Jobs</c> section. Limits and clocks of every research job (§10.1).</summary>
 public sealed class JobsOptions

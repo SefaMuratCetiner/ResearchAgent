@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace Research.Knowledge;
+namespace Research.Knowledge.Application;
 
 /// <summary>Bound from the <c>Knowledge</c> section.</summary>
 public sealed class KnowledgeOptions

@@ -14,6 +14,7 @@
     <ProjectReference Include="..\Research.Jobs.Api\Research.Jobs.Api.csproj" />
     <ProjectReference Include="..\..\..\Research.ServiceDefaults\Research.ServiceDefaults.csproj" />
     <ProjectReference Include="..\..\..\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Web\Research.Shared.Web.csproj" />
     <ProjectReference Include="..\..\..\Providers\Research.Providers.Postgres\Research.Providers.Postgres.csproj" />
   </ItemGroup>
 

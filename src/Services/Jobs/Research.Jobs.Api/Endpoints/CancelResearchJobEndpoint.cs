@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Http;
-using Research.Jobs.CancelResearchJob;
-using Research.ServiceDefaults.Middleware;
-using Research.ServiceDefaults.Problems;
+using Research.Jobs.Application.CancelResearchJob;
+using Research.Shared.Web.Problems;
 
 namespace Research.Jobs.Api.Endpoints;
 

@@ -1,4 +1,4 @@
-using Research.Fetching;
+using Research.Fetching.Application;
 
 namespace Research.Application.UnitTests.Fetching;
 

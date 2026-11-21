@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace Research.Fetching;
+namespace Research.Fetching.Application;
 
 /// <summary>Bound from the <c>Fetching</c> section.</summary>
 public sealed class FetchingOptions

@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Logging;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Domain;
-using Research.Jobs.Observability;
+using Research.Jobs.Application.Observability;
 using Research.Shared.Core.Messaging;
 using Research.Shared.Core.Transactions;
 
-namespace Research.Jobs.Lifecycle;
+namespace Research.Jobs.Application.Lifecycle;
 
 /// <summary>
 /// The frame of every reply Jobs consumes: one transaction holding the inbox record, the job's row lock and the

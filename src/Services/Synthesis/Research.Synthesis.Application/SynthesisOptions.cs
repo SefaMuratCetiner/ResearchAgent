@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
 using Research.Shared.Core.Llm;
 
-namespace Research.Synthesis;
+namespace Research.Synthesis.Application;
 
 /// <summary>Bound from the <c>Synthesis</c> section.</summary>
 public sealed class SynthesisOptions

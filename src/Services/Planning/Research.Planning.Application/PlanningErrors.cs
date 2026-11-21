@@ -1,7 +1,7 @@
 using Research.Shared.Core.Errors;
 using Research.SharedKernel.Results;
 
-namespace Research.Planning;
+namespace Research.Planning.Application;
 
 /// <summary>Every error code the Planning service owns. They reach Jobs as <c>StepFailed.ErrorCode</c>.</summary>
 public static class PlanningErrors

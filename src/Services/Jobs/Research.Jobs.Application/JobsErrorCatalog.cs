@@ -2,7 +2,7 @@ using Research.Jobs.Domain;
 using Research.Shared.Core.Errors;
 using Research.SharedKernel.Results;
 
-namespace Research.Jobs;
+namespace Research.Jobs.Application;
 
 /// <summary>Adds <see cref="JobsErrors"/> to the error catalog.</summary>
 public sealed class JobsErrorCatalog : IErrorCatalogContributor

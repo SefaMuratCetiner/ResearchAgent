@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Research.Jobs.CreateResearchJob;
-using Research.ServiceDefaults.Middleware;
-using Research.ServiceDefaults.Problems;
+using Research.Jobs.Application.CreateResearchJob;
+using Research.Shared.Web.Problems;
 
 namespace Research.Jobs.Api.Endpoints;
 

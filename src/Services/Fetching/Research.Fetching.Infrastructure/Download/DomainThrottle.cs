@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Options;
+using Research.Fetching.Application;
 using Research.Fetching.Application.Common.Interfaces;
 
 namespace Research.Fetching.Infrastructure.Download;

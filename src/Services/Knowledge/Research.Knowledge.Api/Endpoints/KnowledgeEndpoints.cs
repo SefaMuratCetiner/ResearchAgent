@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Research.ServiceDefaults.Endpoints;
+using Research.Shared.Web.Endpoints;
 
 namespace Research.Knowledge.Api.Endpoints;
 

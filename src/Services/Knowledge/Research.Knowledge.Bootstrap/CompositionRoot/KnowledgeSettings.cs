@@ -1,6 +1,7 @@
-using Research.ServiceDefaults.Composition;
-using Research.Shared.Adapters.Messaging;
+using Research.Knowledge.Application;
 using Research.Providers.RabbitMq;
+using Research.Shared.Adapters.Composition;
+using Research.Shared.Adapters.Messaging;
 using Research.Shared.Core.Logging;
 
 namespace Research.Knowledge.Bootstrap.CompositionRoot;

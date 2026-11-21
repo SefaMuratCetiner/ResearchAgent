@@ -1,4 +1,4 @@
-using Research.ServiceDefaults.Composition;
+using Research.Shared.Adapters.Composition;
 using Research.Providers.MockEmbeddings;
 using Research.Shared.Core.Embeddings;
 

@@ -2,10 +2,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Domain;
-using Research.Jobs.Observability;
+using Research.Jobs.Application.Observability;
 using Research.SharedKernel.Results;
 
-namespace Research.Jobs.Lifecycle;
+namespace Research.Jobs.Application.Lifecycle;
 
 /// <summary>
 /// Persists <see cref="ResearchJob"/> aggregate transitions with compare-and-set updates. Outgoing integration

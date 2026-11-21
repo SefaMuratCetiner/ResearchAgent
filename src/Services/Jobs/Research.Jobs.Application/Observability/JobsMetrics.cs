@@ -1,7 +1,7 @@
 using System.Diagnostics.Metrics;
 using Research.Jobs.Domain;
 
-namespace Research.Jobs.Observability;
+namespace Research.Jobs.Application.Observability;
 
 /// <summary>Business instruments of Jobs (§15.4). Never tagged with job ids or question text.</summary>
 public sealed class JobsMetrics

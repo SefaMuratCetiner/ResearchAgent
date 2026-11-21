@@ -2,7 +2,7 @@ using Research.Fetching.Domain;
 using Research.Shared.Core.Errors;
 using Research.SharedKernel.Results;
 
-namespace Research.Fetching;
+namespace Research.Fetching.Application;
 
 /// <summary>Adds <see cref="FetchingErrors"/> to the error catalog.</summary>
 public sealed class FetchingErrorCatalog : IErrorCatalogContributor

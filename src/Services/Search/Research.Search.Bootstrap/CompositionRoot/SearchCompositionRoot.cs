@@ -1,9 +1,10 @@
-using Research.Shared.Core.Messaging;
-using Research.ServiceDefaults.Composition;
-using Research.ServiceDefaults.Features;
+using Research.Search.Application;
+using Research.Search.Bootstrap.Features;
+using Research.ServiceDefaults;
+using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
-using Research.Search.Bootstrap.Features;
+using Research.Shared.Core.Messaging;
 
 namespace Research.Search.Bootstrap.CompositionRoot;
 
@@ -24,16 +25,8 @@ public sealed class SearchCompositionRoot
     /// <summary>Every feature, in registration order. The search provider must be registered before its decorators.</summary>
     internal IReadOnlyList<IResearchFeature> Features { get; } =
     [
-        // Observability
-        new LoggingFeature(),
-        new TelemetryFeature(
-            sources: [MessagingTracing.SourceName],
-            meters: [MessagingMetrics.MeterName, SearchMetrics.MeterName]),
-        new HealthChecksFeature(),
-
         // Platform
         new ActorsFeature(),
-        new HttpClientsFeature(),
         new ErrorsFeature(new MessagingErrorCatalog(), new SearchErrorCatalog()),
 
         // Infrastructure
@@ -47,6 +40,9 @@ public sealed class SearchCompositionRoot
 
     public void ComposeServices()
     {
+        _builder.AddServiceDefaults(
+            activitySources: [MessagingTracing.SourceName],
+            meters: [MessagingMetrics.MeterName, SearchMetrics.MeterName]);
         _builder.Services.AddSingleton(TimeProvider.System);
 
         var app = new ResearchBuilder(_builder);
@@ -57,5 +53,5 @@ public sealed class SearchCompositionRoot
     }
 
     /// <summary>Health endpoints only.</summary>
-    public void ComposeEndpoints(WebApplication app) => HealthEndpoints.Map(app);
+    public void ComposeEndpoints(WebApplication app) => app.MapDefaultEndpoints();
 }

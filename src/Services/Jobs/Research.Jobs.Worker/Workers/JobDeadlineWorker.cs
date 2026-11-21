@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
-using Research.Jobs.EnforceJobDeadlines;
+using Research.Jobs.Application;
+using Research.Jobs.Application.EnforceJobDeadlines;
 
 namespace Research.Jobs.Worker.Workers;
 

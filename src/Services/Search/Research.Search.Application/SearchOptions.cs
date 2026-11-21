@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace Research.Search;
+namespace Research.Search.Application;
 
 /// <summary>Bound from the <c>Search</c> section.</summary>
 public sealed class SearchOptions

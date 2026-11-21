@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Fast, containerless unit tests for Infrastructure, Providers, Shared.Adapters and ServiceDefaults. -->
+  <!-- Fast, containerless unit tests for Infrastructure, Providers, Shared.Adapters, Shared.Web and ServiceDefaults. -->
   <PropertyGroup>
     <RootNamespace>Research.Infrastructure.UnitTests</RootNamespace>
   </PropertyGroup>
@@ -14,6 +14,7 @@
     <ProjectReference Include="..\..\src\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
     <ProjectReference Include="..\..\src\Shared\Research.Contracts\Research.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
+    <ProjectReference Include="..\..\src\Shared\Research.Shared.Web\Research.Shared.Web.csproj" />
     <ProjectReference Include="..\..\src\Providers\Research.Providers.AnthropicWebSearch\Research.Providers.AnthropicWebSearch.csproj" />
     <ProjectReference Include="..\..\src\Providers\Research.Providers.MockEmbeddings\Research.Providers.MockEmbeddings.csproj" />
     <ProjectReference Include="..\..\src\Providers\Research.Providers.OpenAI\Research.Providers.OpenAI.csproj" />

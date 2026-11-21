@@ -1,8 +1,8 @@
 using Research.Contracts.Search;
-using Research.ServiceDefaults.Composition;
+using Research.Shared.Adapters.Composition;
 using Research.Shared.Core.Messaging;
 using Research.Providers.RabbitMq;
-using Research.Search.RunSearch;
+using Research.Search.Application.RunSearch;
 
 namespace Research.Search.Bootstrap.Features;
 

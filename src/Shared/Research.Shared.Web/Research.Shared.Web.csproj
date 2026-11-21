@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Shared HTTP presentation primitives: Minimal API endpoint groups, RFC 9457 ProblemDetails mapping,
+    global exception handling, request correlation and HTTP content logging. Referenced only by HTTP hosts and APIs.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Shared.Web</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.SharedKernel\Research.SharedKernel.csproj" />
+    <ProjectReference Include="..\Research.Shared.Core\Research.Shared.Core.csproj" />
+  </ItemGroup>
+</Project>

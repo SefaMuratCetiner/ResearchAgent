@@ -2,10 +2,10 @@ using System.Text;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Research.Application.UnitTests.TestSupport;
-using Research.Fetching;
+using Research.Fetching.Application;
 using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Domain;
-using Research.Fetching.FetchPage;
+using Research.Fetching.Application.FetchPage;
 using Research.Shared.Core.Logging;
 using Research.SharedKernel.Results;
 

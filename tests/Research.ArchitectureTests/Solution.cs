@@ -31,6 +31,10 @@ internal sealed record ProjectInfo(
 
     public bool IsServiceDefaults => Name == "Research.ServiceDefaults";
 
+    public bool IsSharedWeb => Name == "Research.Shared.Web";
+
+    public bool IsHttpHost => IsEntryPoint && ProjectReferences.Any(static r => r.EndsWith(".Api", StringComparison.Ordinal));
+
     public bool IsAppHost => Name == "Research.AppHost";
 
     public bool IsTool => Path.Contains($"{System.IO.Path.DirectorySeparatorChar}tools{System.IO.Path.DirectorySeparatorChar}", StringComparison.Ordinal);

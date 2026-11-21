@@ -1,14 +1,13 @@
-using Research.Fetching;
-using Research.Jobs;
-using Research.Knowledge;
-using Research.Planning;
-using Research.Search;
-using Research.ServiceDefaults.Errors;
-using Research.ServiceDefaults.Problems;
+using Research.Fetching.Application;
+using Research.Jobs.Application;
+using Research.Knowledge.Application;
+using Research.Planning.Application;
+using Research.Search.Application;
 using Research.Shared.Core.Errors;
 using Research.Shared.Core.Messaging;
+using Research.Shared.Web.Problems;
 using Research.SharedKernel.Results;
-using Research.Synthesis;
+using Research.Synthesis.Application;
 
 namespace Research.Infrastructure.UnitTests.ServiceDefaults;
 

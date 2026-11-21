@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Research.Jobs.Observability;
+namespace Research.Jobs.Application.Observability;
 
 /// <summary>Spans of Jobs' own work (worker runs). Message handling spans come from Research.Messaging.</summary>
 public static class JobsTracing

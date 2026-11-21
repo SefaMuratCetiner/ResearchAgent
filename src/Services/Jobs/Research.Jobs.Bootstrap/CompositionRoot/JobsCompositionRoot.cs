@@ -1,11 +1,12 @@
 using Research.Jobs.Api.Endpoints;
+using Research.Jobs.Application;
+using Research.Jobs.Application.Observability;
 using Research.Jobs.Bootstrap.Features;
-using Research.Jobs.Observability;
-using Research.ServiceDefaults.Composition;
-using Research.ServiceDefaults.Endpoints;
-using Research.ServiceDefaults.Features;
-using Research.ServiceDefaults.Problems;
+using Research.ServiceDefaults;
+using Research.Shared.Adapters.Composition;
 using Research.Shared.Core.Messaging;
+using Research.Shared.Web.Endpoints;
+using Research.Shared.Web.Problems;
 
 namespace Research.Jobs.Bootstrap.CompositionRoot;
 
@@ -30,16 +31,8 @@ public sealed partial class JobsCompositionRoot
     /// <summary>Every feature, in registration order, grouped by concern.</summary>
     internal IReadOnlyList<IResearchFeature> Features { get; } =
     [
-        // Observability
-        new LoggingFeature(),
-        new TelemetryFeature(
-            sources: [JobsTracing.SourceName],
-            meters: [JobsMetrics.MeterName]),
-        new HealthChecksFeature(),
-
         // Platform
         new ActorsFeature(),
-        new HttpClientsFeature(),
         new ErrorsFeature(new ProblemErrorCatalog(), new MessagingErrorCatalog(), new JobsErrorCatalog()),
 
         // Infrastructure
@@ -49,13 +42,15 @@ public sealed partial class JobsCompositionRoot
         new JobsModuleFeature(),
 
         // HTTP API
-        new ProblemDetailsFeature(),
         new ApiFeature(),
     ];
 
-    /// <summary>Registers every service: shared infrastructure, then each feature in order.</summary>
+    /// <summary>Registers Aspire service defaults, then each feature in order.</summary>
     public void ComposeServices()
     {
+        _builder.AddServiceDefaults(
+            activitySources: [JobsTracing.SourceName],
+            meters: [JobsMetrics.MeterName]);
         _builder.Services.AddSingleton(TimeProvider.System);
 
         var app = new ResearchBuilder(_builder);
@@ -74,6 +69,6 @@ public sealed partial class JobsCompositionRoot
             app.MapOpenApi();
         }
 
-        HealthEndpoints.Map(app);
+        app.MapDefaultEndpoints();
     }
 }

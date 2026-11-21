@@ -1,9 +1,10 @@
-using Research.ServiceDefaults.Composition;
+using Research.Knowledge.Application;
 using Research.Knowledge.Application.Common.Interfaces;
+using Research.Knowledge.Application.IndexDocument;
+using Research.Knowledge.Application.SearchPassages;
 using Research.Knowledge.Domain;
-using Research.Knowledge.IndexDocument;
 using Research.Knowledge.Infrastructure.Persistence;
-using Research.Knowledge.SearchPassages;
+using Research.Shared.Adapters.Composition;
 
 namespace Research.Knowledge.Bootstrap.Features;
 

@@ -1,19 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
-    Shared service defaults: logging, OpenTelemetry, health checks, service discovery, HTTP resilience,
-    request correlation, content logging, problem details and composition helpers.
+    Standard .NET Aspire service defaults: structured logging (Serilog + OTel + Elasticsearch),
+    OpenTelemetry tracing and metrics, health checks, service discovery and default HTTP client resilience.
   -->
   <PropertyGroup>
     <RootNamespace>Research.ServiceDefaults</RootNamespace>
+    <IsAspireSharedProject>true</IsAspireSharedProject>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
-    <ProjectReference Include="..\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

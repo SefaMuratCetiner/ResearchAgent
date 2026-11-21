@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
 using Research.Shared.Core.Llm;
 
-namespace Research.Planning;
+namespace Research.Planning.Application;
 
 /// <summary>Bound from the <c>Planning</c> section.</summary>
 public sealed class PlanningOptions

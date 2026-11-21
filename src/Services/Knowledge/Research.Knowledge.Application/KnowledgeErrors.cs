@@ -1,7 +1,7 @@
 using Research.Shared.Core.Errors;
 using Research.SharedKernel.Results;
 
-namespace Research.Knowledge;
+namespace Research.Knowledge.Application;
 
 /// <summary>Every error code the Knowledge service owns.</summary>
 public static class KnowledgeErrors

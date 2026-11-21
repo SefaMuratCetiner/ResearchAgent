@@ -2,7 +2,7 @@ using Research.Shared.Core.Errors;
 using Research.Shared.Core.Search;
 using Research.SharedKernel.Results;
 
-namespace Research.Search;
+namespace Research.Search.Application;
 
 /// <summary>Adds <see cref="SearchErrors"/> to the error catalog.</summary>
 public sealed class SearchErrorCatalog : IErrorCatalogContributor

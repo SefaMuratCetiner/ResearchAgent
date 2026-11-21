@@ -1,5 +1,5 @@
-using Research.Jobs;
-using Research.Jobs.AdvanceOnPlanReady;
+using Research.Jobs.Application;
+using Research.Jobs.Application.AdvanceOnPlanReady;
 
 namespace Research.Application.UnitTests.Jobs;
 

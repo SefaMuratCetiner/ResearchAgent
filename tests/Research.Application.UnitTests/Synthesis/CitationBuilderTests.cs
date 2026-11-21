@@ -1,6 +1,6 @@
 using Research.Shared.Core.Security;
-using Research.Synthesis.Retrieval;
-using Research.Synthesis.WriteReport;
+using Research.Synthesis.Application.Common.Interfaces;
+using Research.Synthesis.Application.WriteReport;
 
 namespace Research.Application.UnitTests.Synthesis;
 

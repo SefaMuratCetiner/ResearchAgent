@@ -5,7 +5,7 @@ using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Messaging;
 
-namespace Research.Jobs.Lifecycle;
+namespace Research.Jobs.Application.Lifecycle;
 
 /// <summary>
 /// Starts a step: inserts its row (with the request, for re-emission, and a lease) and enqueues the request in the

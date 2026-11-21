@@ -1,5 +1,5 @@
-using Research.ServiceDefaults.Composition;
-using Research.Planning.CreatePlan;
+using Research.Shared.Adapters.Composition;
+using Research.Planning.Application.CreatePlan;
 
 namespace Research.Planning.Bootstrap.Features;
 

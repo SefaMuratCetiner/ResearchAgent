@@ -1,4 +1,5 @@
-using Research.ServiceDefaults.Composition;
+using Research.Jobs.Application;
+using Research.Shared.Adapters.Composition;
 using Research.Shared.Core.Logging;
 
 namespace Research.Jobs.Bootstrap.CompositionRoot;

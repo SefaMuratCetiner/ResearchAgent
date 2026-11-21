@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Research.ServiceDefaults.Endpoints;
-using Research.ServiceDefaults.Exceptions;
-using Research.ServiceDefaults.Problems;
+using Research.Shared.Web.Endpoints;
+using Research.Shared.Web.Exceptions;
+using Research.Shared.Web.Problems;
 using Research.SharedKernel.Results;
 
 namespace Research.Infrastructure.UnitTests.ServiceDefaults;

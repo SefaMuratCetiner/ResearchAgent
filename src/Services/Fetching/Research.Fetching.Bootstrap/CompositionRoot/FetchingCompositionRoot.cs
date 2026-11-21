@@ -1,16 +1,17 @@
-using Research.Shared.Core.Messaging;
+using Research.Fetching.Application;
 using Research.Fetching.Bootstrap.Features;
-using Research.ServiceDefaults.Composition;
-using Research.ServiceDefaults.Features;
+using Research.ServiceDefaults;
+using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
+using Research.Shared.Core.Messaging;
 
 namespace Research.Fetching.Bootstrap.CompositionRoot;
 
 /// <summary>
-/// The composition root of the Fetching service. It has no API: the HTTP surface is health only. It leaves out
-/// <see cref="HttpClientsFeature"/>: the only outbound client goes to arbitrary sites, needs no service discovery and
-/// is retried at the message level, so <see cref="FetchingModuleFeature"/> configures its own handler.
+/// The composition root of the Fetching service. It has no API: the HTTP surface is health only. It disables default
+/// HTTP client resilience/service discovery: the only outbound client goes to arbitrary sites and is retried at the
+/// message level, so <see cref="FetchingModuleFeature"/> configures its own handler.
 /// </summary>
 public sealed class FetchingCompositionRoot
 {
@@ -28,13 +29,6 @@ public sealed class FetchingCompositionRoot
     /// <summary>Every feature, in registration order, grouped by concern.</summary>
     internal IReadOnlyList<IResearchFeature> Features { get; } =
     [
-        // Observability
-        new LoggingFeature(),
-        new TelemetryFeature(
-            sources: [MessagingTracing.SourceName],
-            meters: [MessagingMetrics.MeterName, FetchingMetrics.MeterName]),
-        new HealthChecksFeature(),
-
         // Platform
         new ActorsFeature(),
         new ErrorsFeature(new MessagingErrorCatalog(), new FetchingErrorCatalog()),
@@ -50,6 +44,10 @@ public sealed class FetchingCompositionRoot
 
     public void ComposeServices()
     {
+        _builder.AddServiceDefaults(
+            activitySources: [MessagingTracing.SourceName],
+            meters: [MessagingMetrics.MeterName, FetchingMetrics.MeterName],
+            configureHttpClientDefaults: false);
         _builder.Services.AddSingleton(TimeProvider.System);
 
         var app = new ResearchBuilder(_builder);
@@ -60,5 +58,5 @@ public sealed class FetchingCompositionRoot
     }
 
     /// <summary>Health endpoints only.</summary>
-    public void ComposeEndpoints(WebApplication app) => HealthEndpoints.Map(app);
+    public void ComposeEndpoints(WebApplication app) => app.MapDefaultEndpoints();
 }

@@ -1,5 +1,6 @@
+using Research.Jobs.Application;
 using Research.Providers.RabbitMq;
-using Research.ServiceDefaults.Composition;
+using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Core.Logging;
 

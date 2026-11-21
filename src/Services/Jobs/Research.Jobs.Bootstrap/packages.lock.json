@@ -245,7 +245,7 @@
         "dependencies": {
           "Microsoft.AspNetCore.OpenApi": "[10.0.15, )",
           "Research.Jobs.Application": "[1.0.0, )",
-          "Research.ServiceDefaults": "[1.0.0, )"
+          "Research.Shared.Web": "[1.0.0, )"
         }
       },
       "research.jobs.application": {
@@ -290,8 +290,6 @@
           "OpenTelemetry.Extensions.Hosting": "[1.21.0, )",
           "OpenTelemetry.Instrumentation.AspNetCore": "[1.21.0, )",
           "OpenTelemetry.Instrumentation.Http": "[1.21.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.SharedKernel": "[1.0.0, )",
           "Serilog.Extensions.Hosting": "[9.0.0, )",
           "Serilog.Formatting.Compact": "[3.0.0, )",
           "Serilog.Settings.Configuration": "[9.0.0, )",
@@ -310,6 +308,13 @@
         "type": "Project",
         "dependencies": {
           "Research.Contracts": "[1.0.0, )",
+          "Research.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "research.shared.web": {
+        "type": "Project",
+        "dependencies": {
+          "Research.Shared.Core": "[1.0.0, )",
           "Research.SharedKernel": "[1.0.0, )"
         }
       },

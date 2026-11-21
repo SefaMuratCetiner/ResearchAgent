@@ -95,14 +95,14 @@ public sealed class ReferenceRuleTests
 
     [Theory]
     [MemberData(nameof(Apis))]
-    public void Api_DependsOnlyOnOwnApplicationAndServiceDefaults(string name)
+    public void Api_DependsOnlyOnOwnApplicationAndSharedWeb(string name)
     {
         var project = Solution.Get(name);
         var ownApp = $"Research.{project.ServiceName}.Application";
 
         foreach (var reference in project.ProjectReferences)
         {
-            var allowed = reference == ownApp || reference == "Research.ServiceDefaults";
+            var allowed = reference == ownApp || reference == "Research.Shared.Web";
             allowed.ShouldBeTrue($"{name} must not reference {reference}");
         }
     }
@@ -168,12 +168,30 @@ public sealed class ReferenceRuleTests
     }
 
     [Fact]
-    public void ServiceDefaultsProject_ExistsAndIsOnlyReferencedByEntryPointsAndApis()
+    public void ServiceDefaultsProject_ExistsHasNoProjectReferencesAndIsOnlyReferencedByEntryPoints()
     {
-        Solution.Projects.ShouldContain(static p => p.IsServiceDefaults);
-        foreach (var project in Solution.Projects.Where(static p => !p.IsEntryPoint && !p.IsApi))
+        var serviceDefaults = Solution.Get("Research.ServiceDefaults");
+        serviceDefaults.ProjectReferences.ShouldBeEmpty("Research.ServiceDefaults must remain strictly Aspire defaults with no project references");
+
+        foreach (var project in Solution.Projects.Where(static p => !p.IsEntryPoint))
         {
             project.ProjectReferences.ShouldNotContain("Research.ServiceDefaults", $"{project.Name} must not reference Research.ServiceDefaults");
+        }
+    }
+
+    [Fact]
+    public void SharedWebProject_ExistsAndIsOnlyReferencedByHttpHostsAndApis()
+    {
+        var sharedWeb = Solution.Get("Research.Shared.Web");
+        foreach (var reference in sharedWeb.ProjectReferences)
+        {
+            (reference is "Research.SharedKernel" or "Research.Shared.Core")
+                .ShouldBeTrue($"Research.Shared.Web must not reference {reference}");
+        }
+
+        foreach (var project in Solution.Projects.Where(static p => !p.IsHttpHost && !p.IsApi))
+        {
+            project.ProjectReferences.ShouldNotContain("Research.Shared.Web", $"{project.Name} must not reference Research.Shared.Web");
         }
     }
 

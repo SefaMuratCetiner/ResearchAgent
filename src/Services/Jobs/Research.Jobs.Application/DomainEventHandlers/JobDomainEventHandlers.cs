@@ -6,12 +6,12 @@ using Research.Contracts.Search;
 using Research.Contracts.Synthesis;
 using Research.Jobs.Domain;
 using Research.Jobs.Domain.Events;
-using Research.Jobs.Lifecycle;
-using Research.Jobs.Observability;
+using Research.Jobs.Application.Lifecycle;
+using Research.Jobs.Application.Observability;
 using Research.Shared.Core.Events;
 using Research.Shared.Core.Messaging;
 
-namespace Research.Jobs.DomainEventHandlers;
+namespace Research.Jobs.Application.DomainEventHandlers;
 
 /// <summary>Emits the initial <c>PlanRequested</c> step and enqueues <c>JobCreated</c> when a job is created.</summary>
 public sealed class JobCreatedDomainEventHandler(

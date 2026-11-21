@@ -1,7 +1,7 @@
 using Research.Shared.Core.Errors;
 using Research.SharedKernel.Results;
 
-namespace Research.Synthesis;
+namespace Research.Synthesis.Application;
 
 /// <summary>Every error code the Synthesis service owns.</summary>
 public static class SynthesisErrors

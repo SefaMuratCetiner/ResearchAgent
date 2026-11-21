@@ -6,13 +6,13 @@ using Research.Contracts.Jobs;
 using Research.Contracts.Planning;
 using Research.Contracts.Search;
 using Research.Contracts.Synthesis;
-using Research.Jobs;
+using Research.Jobs.Application;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Domain;
 using Research.Jobs.Domain.Events;
-using Research.Jobs.DomainEventHandlers;
-using Research.Jobs.Lifecycle;
-using Research.Jobs.Observability;
+using Research.Jobs.Application.DomainEventHandlers;
+using Research.Jobs.Application.Lifecycle;
+using Research.Jobs.Application.Observability;
 using Research.Shared.Core.Messaging;
 
 namespace Research.Application.UnitTests.Jobs;

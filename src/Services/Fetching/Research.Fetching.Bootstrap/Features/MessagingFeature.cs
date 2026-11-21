@@ -1,6 +1,6 @@
 using Research.Contracts.Fetching;
-using Research.Fetching.FetchPage;
-using Research.ServiceDefaults.Composition;
+using Research.Fetching.Application.FetchPage;
+using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Messaging.Outbox;
 using Research.Providers.RabbitMq;
 

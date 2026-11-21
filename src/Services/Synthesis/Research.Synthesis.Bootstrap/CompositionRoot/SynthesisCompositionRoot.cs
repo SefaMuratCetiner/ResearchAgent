@@ -1,10 +1,11 @@
-using Research.Shared.Core.Messaging;
-using Research.ServiceDefaults.Composition;
-using Research.ServiceDefaults.Features;
+using Research.ServiceDefaults;
+using Research.Shared.Adapters.Composition;
+using Research.Shared.Adapters.Llm;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
-using Research.Shared.Adapters.Llm;
 using Research.Shared.Core.Llm;
+using Research.Shared.Core.Messaging;
+using Research.Synthesis.Application;
 using Research.Synthesis.Bootstrap.Features;
 
 namespace Research.Synthesis.Bootstrap.CompositionRoot;
@@ -21,16 +22,8 @@ public sealed class SynthesisCompositionRoot
         Settings = new SynthesisSettings(builder.Services, builder.Configuration);
         Features =
         [
-            // Observability
-            new LoggingFeature(),
-            new TelemetryFeature(
-                sources: [MessagingTracing.SourceName, LlmTracing.SourceName],
-                meters: [MessagingMetrics.MeterName, LlmMetrics.MeterName]),
-            new HealthChecksFeature(),
-
             // Platform
             new ActorsFeature(),
-            new HttpClientsFeature(),
             new ErrorsFeature(new MessagingErrorCatalog(), new SynthesisErrorCatalog()),
 
             // Infrastructure
@@ -50,6 +43,9 @@ public sealed class SynthesisCompositionRoot
 
     public void ComposeServices()
     {
+        _builder.AddServiceDefaults(
+            activitySources: [MessagingTracing.SourceName, LlmTracing.SourceName],
+            meters: [MessagingMetrics.MeterName, LlmMetrics.MeterName]);
         _builder.Services.AddSingleton(TimeProvider.System);
 
         var app = new ResearchBuilder(_builder);
@@ -60,7 +56,7 @@ public sealed class SynthesisCompositionRoot
     }
 
     /// <summary>Health endpoints only.</summary>
-    public void ComposeEndpoints(WebApplication app) => HealthEndpoints.Map(app);
+    public void ComposeEndpoints(WebApplication app) => app.MapDefaultEndpoints();
 
     /// <summary>The LLM provider selected by <c>Llm:Provider</c>.</summary>
     private static IResearchFeature LlmFeature(LlmProvider provider) =>

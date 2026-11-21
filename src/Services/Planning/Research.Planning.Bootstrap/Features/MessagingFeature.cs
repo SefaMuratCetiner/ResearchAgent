@@ -1,7 +1,7 @@
 using Research.Contracts.Planning;
-using Research.ServiceDefaults.Composition;
+using Research.Shared.Adapters.Composition;
 using Research.Shared.Core.Messaging;
-using Research.Planning.CreatePlan;
+using Research.Planning.Application.CreatePlan;
 using Research.Providers.RabbitMq;
 
 namespace Research.Planning.Bootstrap.Features;

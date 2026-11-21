@@ -1,7 +1,8 @@
-using Research.Jobs.Observability;
+using Research.Jobs.Application;
+using Research.Jobs.Application.Observability;
 using Research.Jobs.Worker.Features;
-using Research.ServiceDefaults.Composition;
-using Research.ServiceDefaults.Features;
+using Research.ServiceDefaults;
+using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
 using Research.Shared.Core.Messaging;
@@ -28,16 +29,8 @@ public sealed class JobsWorkerCompositionRoot
     /// <summary>Every feature, in registration order, grouped by concern.</summary>
     internal IReadOnlyList<IResearchFeature> Features { get; } =
     [
-        // Observability
-        new LoggingFeature(),
-        new TelemetryFeature(
-            sources: [MessagingTracing.SourceName, JobsTracing.SourceName],
-            meters: [MessagingMetrics.MeterName, JobsMetrics.MeterName]),
-        new HealthChecksFeature(),
-
         // Platform
         new ActorsFeature(),
-        new HttpClientsFeature(),
         new ErrorsFeature(new MessagingErrorCatalog(), new JobsErrorCatalog()),
 
         // Infrastructure
@@ -49,9 +42,12 @@ public sealed class JobsWorkerCompositionRoot
         new WorkersFeature(),
     ];
 
-    /// <summary>Registers every service: shared infrastructure, then each feature in order.</summary>
+    /// <summary>Registers Aspire service defaults, then each feature in order.</summary>
     public void ComposeServices()
     {
+        _builder.AddServiceDefaults(
+            activitySources: [MessagingTracing.SourceName, JobsTracing.SourceName],
+            meters: [MessagingMetrics.MeterName, JobsMetrics.MeterName]);
         _builder.Services.AddSingleton(TimeProvider.System);
 
         var app = new ResearchBuilder(_builder);
@@ -62,5 +58,5 @@ public sealed class JobsWorkerCompositionRoot
     }
 
     /// <summary>Health endpoints only.</summary>
-    public void ComposeEndpoints(WebApplication app) => HealthEndpoints.Map(app);
+    public void ComposeEndpoints(WebApplication app) => app.MapDefaultEndpoints();
 }

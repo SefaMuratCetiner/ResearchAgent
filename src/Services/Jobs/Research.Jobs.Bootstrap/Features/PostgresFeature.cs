@@ -2,7 +2,7 @@ using Research.Providers.Postgres.Dapper;
 using Research.Providers.Postgres.Health;
 using Research.Providers.Postgres.Messaging;
 using Research.Providers.Postgres.Transactions;
-using Research.ServiceDefaults.Composition;
+using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Events;
 using Research.Shared.Core.Events;
 using Research.Shared.Core.Messaging;

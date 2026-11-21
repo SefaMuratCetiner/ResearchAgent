@@ -2,10 +2,10 @@ using System.Net.ServerSentEvents;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using Research.Jobs.Application;
+using Research.Jobs.Application.GetResearchJob;
 using Research.Jobs.Domain;
-using Research.Jobs.GetResearchJob;
-using Research.ServiceDefaults.Middleware;
-using Research.ServiceDefaults.Problems;
+using Research.Shared.Web.Problems;
 
 namespace Research.Jobs.Api.Endpoints;
 

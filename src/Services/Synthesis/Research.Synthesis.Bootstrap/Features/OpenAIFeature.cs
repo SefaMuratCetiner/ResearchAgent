@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Options;
-using Research.ServiceDefaults.Composition;
+using Research.Shared.Adapters.Composition;
 using Research.Providers.OpenAI;
 using Research.Shared.Adapters.Llm;
 using Research.Shared.Core.Llm;

@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Research.Jobs.Application\Research.Jobs.Application.csproj" />
-    <ProjectReference Include="..\..\..\Research.ServiceDefaults\Research.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Web\Research.Shared.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>
