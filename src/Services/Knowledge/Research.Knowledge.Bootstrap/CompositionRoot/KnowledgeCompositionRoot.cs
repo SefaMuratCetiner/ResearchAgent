@@ -1,12 +1,12 @@
-using Research.Shared.Core.Messaging;
-using Research.ServiceDefaults.Composition;
-using Research.ServiceDefaults.Features;
-using Research.Knowledge.Api;
+using Research.Knowledge.Api.Endpoints;
 using Research.Knowledge.Bootstrap.Features;
+using Research.ServiceDefaults.Composition;
+using Research.ServiceDefaults.Endpoints;
+using Research.ServiceDefaults.Features;
+using Research.ServiceDefaults.Problems;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
-using Research.ServiceDefaults.Middleware;
-using Research.ServiceDefaults.Problems;
+using Research.Shared.Core.Messaging;
 
 namespace Research.Knowledge.Bootstrap.CompositionRoot;
 
@@ -65,10 +65,15 @@ public sealed partial class KnowledgeCompositionRoot
         }
     }
 
-    /// <summary>Maps the passage search API, the OpenAPI document and the health endpoints.</summary>
+    /// <summary>Maps the passage search API via <see cref="IEndpointGroup"/> discovery, OpenAPI and health endpoints.</summary>
     public void ComposeEndpoints(WebApplication app)
     {
-        KnowledgeApi.Map(app);
+        app.MapEndpoints<KnowledgeEndpoints>();
+        if (!app.Environment.IsProduction())
+        {
+            app.MapOpenApi();
+        }
+
         HealthEndpoints.Map(app);
     }
 }

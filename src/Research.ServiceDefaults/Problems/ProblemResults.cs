@@ -4,40 +4,48 @@ using Research.SharedKernel.Results;
 
 namespace Research.ServiceDefaults.Problems;
 
-/// <summary>Builds problem responses from errors. Endpoints return <see cref="From"/> for every failed <c>Result</c>.</summary>
+/// <summary>
+/// Builds standard ASP.NET Core RFC 9457 <c>ProblemDetails</c> / <c>HttpValidationProblemDetails</c> responses
+/// from domain and application <see cref="Error"/> values.
+/// </summary>
 public static class ProblemResults
 {
+    /// <summary>The documentation base every problem <c>type</c> URI points into.</summary>
+    public const string TypeBase = "https://docs.research.local/errors/";
+
     public static IResult From(Error error, HttpContext context, string? detail = null)
     {
         ArgumentNullException.ThrowIfNull(error);
         ArgumentNullException.ThrowIfNull(context);
-        var problem = Create(error, context, detail, errors: null);
-        return Results.Json(problem, statusCode: problem.Status, contentType: ResearchProblem.ContentType);
+
+        return TypedResults.Problem(
+            detail: detail,
+            instance: context.Request.Path.Value,
+            statusCode: ErrorStatus.From(error.Kind),
+            title: error.Title,
+            type: TypeBase + error.Code,
+            extensions: Extensions(error.Code, context));
     }
 
     public static IResult Validation(IReadOnlyDictionary<string, string[]> errors, HttpContext context)
     {
+        ArgumentNullException.ThrowIfNull(errors);
         ArgumentNullException.ThrowIfNull(context);
-        var problem = Create(ProblemErrors.ValidationFailed, context, "One or more fields are not valid.", errors);
-        return Results.Json(problem, statusCode: problem.Status, contentType: ResearchProblem.ContentType);
+
+        var error = ProblemErrors.ValidationFailed;
+        return TypedResults.ValidationProblem(
+            errors: errors,
+            detail: "One or more fields are not valid.",
+            instance: context.Request.Path.Value,
+            statusCode: ErrorStatus.From(error.Kind),
+            title: error.Title,
+            type: TypeBase + error.Code,
+            extensions: Extensions(error.Code, context));
     }
 
-    public static ResearchProblem Create(
-        Error error,
-        HttpContext context,
-        string? detail,
-        IReadOnlyDictionary<string, string[]>? errors)
+    private static Dictionary<string, object?> Extensions(string code, HttpContext context) => new(StringComparer.Ordinal)
     {
-        ArgumentNullException.ThrowIfNull(error);
-        ArgumentNullException.ThrowIfNull(context);
-        return new ResearchProblem(
-            ResearchProblem.TypeBase + error.Code,
-            error.Title,
-            ErrorStatus.From(error.Kind),
-            detail,
-            context.Request.Path.Value,
-            error.Code,
-            Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier,
-            errors);
-    }
+        ["code"] = code,
+        ["traceId"] = Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier,
+    };
 }

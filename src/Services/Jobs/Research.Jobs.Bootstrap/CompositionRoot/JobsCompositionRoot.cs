@@ -1,7 +1,8 @@
-using Research.Jobs.Api;
+using Research.Jobs.Api.Endpoints;
 using Research.Jobs.Bootstrap.Features;
 using Research.Jobs.Observability;
 using Research.ServiceDefaults.Composition;
+using Research.ServiceDefaults.Endpoints;
 using Research.ServiceDefaults.Features;
 using Research.ServiceDefaults.Problems;
 using Research.Shared.Core.Messaging;
@@ -63,10 +64,15 @@ public sealed partial class JobsCompositionRoot
         }
     }
 
-    /// <summary>Maps the HTTP surface: the research API, the OpenAPI document and the health endpoints.</summary>
+    /// <summary>Maps the HTTP surface via <see cref="IEndpointGroup"/> discovery, OpenAPI and health endpoints.</summary>
     public void ComposeEndpoints(WebApplication app)
     {
-        JobsApi.Map(app);
+        app.MapEndpoints<JobsEndpoints>();
+        if (!app.Environment.IsProduction())
+        {
+            app.MapOpenApi();
+        }
+
         HealthEndpoints.Map(app);
     }
 }

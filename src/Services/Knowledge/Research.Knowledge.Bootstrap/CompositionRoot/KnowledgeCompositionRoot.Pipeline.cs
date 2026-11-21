@@ -1,7 +1,4 @@
 using Research.ServiceDefaults.Middleware;
-using Research.ServiceDefaults.Middleware;
-using Research.ServiceDefaults.Middleware;
-using Research.ServiceDefaults.Problems;
 
 namespace Research.Knowledge.Bootstrap.CompositionRoot;
 
@@ -20,7 +17,7 @@ public sealed partial class KnowledgeCompositionRoot
         // 2. Content log of request and response bodies (queries and returned passages).
         app.UseMiddleware<HttpContentLoggingMiddleware>();
 
-        // 3. Last resort: unhandled exceptions become 500 research.unexpected.
-        app.UseMiddleware<UnhandledExceptionMiddleware>();
+        // 3. Last resort: ASP.NET Core IExceptionHandler (CustomExceptionHandler) turns unhandled exceptions into 500 ProblemDetails.
+        app.UseExceptionHandler();
     }
 }
