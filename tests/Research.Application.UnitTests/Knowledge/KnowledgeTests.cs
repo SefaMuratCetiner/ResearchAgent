@@ -1,14 +1,12 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
+using Research.Application.UnitTests.TestSupport;
 using Research.Knowledge;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Domain;
 using Research.Knowledge.IndexDocument;
-using Research.Knowledge.Infrastructure.Persistence;
 using Research.Knowledge.SearchPassages;
-using Research.Providers.MockEmbeddings;
 using Research.Shared.Core.Transactions;
-using Research.Application.UnitTests.TestSupport;
 
 namespace Research.Application.UnitTests.Knowledge;
 
@@ -55,39 +53,6 @@ public sealed class TextChunkerTests
         TextChunker.Split(string.Join("\n\n", Enumerable.Repeat(new string('a', 300), 50)), 400, 0, 3).Count.ShouldBe(3);
 }
 
-public sealed class HashingEmbeddingGeneratorTests
-{
-    [Fact]
-    public void Vectors_AreNormalizedAndDeterministic()
-    {
-        var a = HashingEmbeddingGenerator.Embed("pgvector hnsw index");
-        var b = HashingEmbeddingGenerator.Embed("pgvector hnsw index");
-
-        a.Length.ShouldBe(HashingEmbeddingGenerator.VectorDimensions);
-        a.ShouldBe(b);
-        Math.Sqrt(a.Sum(static v => (double)v * v)).ShouldBe(1.0, 1e-5);
-    }
-
-    [Fact]
-    public void SimilarTexts_AreCloserThanUnrelatedTexts()
-    {
-        var query = HashingEmbeddingGenerator.Embed("how does the hnsw index in pgvector work");
-        var related = HashingEmbeddingGenerator.Embed("the pgvector hnsw index builds a layered graph");
-        var unrelated = HashingEmbeddingGenerator.Embed("baking sourdough bread at home");
-
-        Cosine(query, related).ShouldBeGreaterThan(Cosine(query, unrelated));
-    }
-
-    private static double Cosine(float[] a, float[] b) => a.Zip(b, static (x, y) => (double)x * y).Sum();
-}
-
-public sealed class VectorLiteralTests
-{
-    [Fact]
-    public void ToVectorLiteral_IsInvariantPgvectorText() =>
-        KnowledgeRepository.ToVectorLiteral([0.5f, -1.25f, 0f]).ShouldBe("[0.5,-1.25,0]");
-}
-
 public sealed class SearchPassagesHandlerTests
 {
     private readonly FakeRepository _repository = new();
@@ -132,7 +97,7 @@ public sealed class SearchPassagesHandlerTests
 
     private SearchPassagesHandler CreateHandler() => new(
         _repository,
-        new HashingEmbeddingGenerator(),
+        new FakeEmbeddingGenerator(),
         new KnowledgeMetrics(TestMeters.Create()),
         TestOptions.Of(new KnowledgeOptions()),
         new FakeTimeProvider(),
@@ -191,26 +156,30 @@ public sealed class PrepareDocumentHandlerTests
     {
         var store = new InMemoryDocumentStore();
         store.Blobs["pages/h.txt"] = string.Join("\n\n", Enumerable.Repeat("A paragraph of readable text about pgvector.", 80));
-        var handler = Create(new LookupRepository(null), store);
+        var embeddings = new FakeEmbeddingGenerator();
+        var handler = Create(new LookupRepository(null), store, embeddings);
 
         var result = await handler.HandleAsync(new PrepareDocumentCommand("https://e.com", "t", "pages/h.txt", "h"), CancellationToken.None);
 
         var prepared = result.Value!;
-        prepared.NewDocument!.EmbeddingModel.ShouldBe(HashingEmbeddingGenerator.Model);
+        prepared.NewDocument!.EmbeddingModel.ShouldBe(embeddings.ModelId);
         prepared.NewDocument.PassageCount.ShouldBe(prepared.Passages.Count);
         prepared.Passages.Count.ShouldBeGreaterThan(1);
         prepared.Passages.Select(static p => p.Ordinal).ShouldBe(Enumerable.Range(0, prepared.Passages.Count));
-        prepared.Passages.ShouldAllBe(static p => p.Embedding.Length == HashingEmbeddingGenerator.VectorDimensions);
+        prepared.Passages.ShouldAllBe(p => p.Embedding.Length == embeddings.Dimensions);
     }
 
-    private static PrepareDocumentHandler Create(IKnowledgeRepository repository, InMemoryDocumentStore store) => new(
-        repository,
-        store,
-        new HashingEmbeddingGenerator(),
-        TestOptions.Of(new KnowledgeOptions()),
-        new FakeTimeProvider(),
-        new FixedActor(),
-        NullLogger<PrepareDocumentHandler>.Instance);
+    private static PrepareDocumentHandler Create(
+        IKnowledgeRepository repository,
+        InMemoryDocumentStore store,
+        FakeEmbeddingGenerator? embeddings = null) => new(
+            repository,
+            store,
+            embeddings ?? new FakeEmbeddingGenerator(),
+            TestOptions.Of(new KnowledgeOptions()),
+            new FakeTimeProvider(),
+            new FixedActor(),
+            NullLogger<PrepareDocumentHandler>.Instance);
 
     private sealed class LookupRepository(StoredDocument? existing) : IKnowledgeRepository
     {

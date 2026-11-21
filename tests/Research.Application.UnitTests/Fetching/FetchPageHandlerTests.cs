@@ -1,90 +1,81 @@
-using System.Net;
 using System.Text;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
+using Research.Application.UnitTests.TestSupport;
 using Research.Fetching;
 using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Domain;
 using Research.Fetching.FetchPage;
-using Research.Fetching.Infrastructure.Download;
-using Research.Fetching.Infrastructure.Extraction;
 using Research.Shared.Core.Logging;
-using Research.Application.UnitTests.TestSupport;
+using Research.SharedKernel.Results;
 
 namespace Research.Application.UnitTests.Fetching;
 
+/// <summary>Pure Application tests for <see cref="FetchPageHandler"/> using fakes of every I/O port.</summary>
 public sealed class FetchPageHandlerTests
 {
     private static readonly string LongParagraph = string.Join(' ', Enumerable.Repeat("Readable sentence about the topic.", 30));
 
     [Fact]
-    public async Task Html_IsStoredUnderContentHashKey()
+    public async Task ValidPage_IsExtractedAndStoredUnderContentHashKey()
     {
-        var site = new FakeSite();
-        site.Pages["/article"] = Html($"<title>T</title><p>{LongParagraph}</p>");
-        var (handler, store) = Create(site);
+        var store = new InMemoryDocumentStore();
+        var handler = Create(store, extracted: new ExtractedContent("Page Title", LongParagraph));
 
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/article", "Search title"), CancellationToken.None);
+        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/article", "Fallback"), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
-        result.Value!.Title.ShouldBe("T");
+        result.Value!.Title.ShouldBe("Page Title");
         result.Value.BlobKey.ShouldBe($"pages/{result.Value.ContentHash}.txt");
-        result.Value.ContentHash.ShouldBe(FetchPageHandler.Sha256Hex(store.Blobs[result.Value.BlobKey]));
-        result.Value.CharacterCount.ShouldBe(LongParagraph.Length);
+        store.Blobs[result.Value.BlobKey].ShouldBe(LongParagraph);
     }
 
     [Fact]
     public async Task RobotsDisallow_FailsWithoutDownloading()
     {
-        var site = new FakeSite { Robots = "User-agent: *\nDisallow: /\n" };
-        site.Pages["/article"] = Html($"<p>{LongParagraph}</p>");
-        var (handler, _) = Create(site);
+        var downloader = new FakePageDownloader(Result<DownloadedPage>.Success(SamplePage()));
+        var handler = Create(new InMemoryDocumentStore(), robotsAllowed: false, downloader: downloader);
 
         var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/article", null), CancellationToken.None);
 
         result.Error!.Code.ShouldBe(FetchingErrors.FetchDisallowed.Code);
-        site.Requests.ShouldNotContain("/article");
+        downloader.Calls.ShouldBe(0);
     }
 
     [Fact]
-    public async Task NotFound_IsPermanentHttpError()
+    public async Task BlockedDomain_FailsBeforeCheckingRobots()
     {
-        var (handler, _) = Create(new FakeSite());
+        var downloader = new FakePageDownloader(Result<DownloadedPage>.Success(SamplePage()));
+        var handler = Create(
+            new InMemoryDocumentStore(),
+            options: new FetchingOptions { BlockedDomains = ["blocked.example"] },
+            downloader: downloader);
+
+        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://sub.blocked.example/page", null), CancellationToken.None);
+
+        result.Error!.Code.ShouldBe(FetchingErrors.BlockedDomain.Code);
+        downloader.Calls.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task DownloadFailure_PropagatesError()
+    {
+        var downloader = new FakePageDownloader(Result<DownloadedPage>.Failure(FetchingErrors.HttpError));
+        var handler = Create(new InMemoryDocumentStore(), downloader: downloader);
+
         var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/missing", null), CancellationToken.None);
+
         result.Error!.Code.ShouldBe(FetchingErrors.HttpError.Code);
     }
 
     [Fact]
-    public async Task ServerError_Throws_SoTheMessageIsRetried()
+    public async Task ShortExtractedText_IsContentTooShort()
     {
-        var site = new FakeSite();
-        site.Status["/flaky"] = HttpStatusCode.ServiceUnavailable;
-        var (handler, _) = Create(site);
-
-        await Should.ThrowAsync<HttpRequestException>(() =>
-            handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/flaky", null), CancellationToken.None));
-    }
-
-    [Fact]
-    public async Task ShortPage_IsContentTooShort()
-    {
-        var site = new FakeSite();
-        site.Pages["/short"] = Html("<p>Too short.</p>");
-        var (handler, _) = Create(site);
+        var handler = Create(new InMemoryDocumentStore(), extracted: new ExtractedContent("T", "Too short."));
 
         var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/short", null), CancellationToken.None);
+
         result.Error!.Code.ShouldBe(FetchingErrors.ContentTooShort.Code);
-    }
-
-    [Fact]
-    public async Task Pdf_IsUnsupported()
-    {
-        var site = new FakeSite();
-        site.Pages["/doc.pdf"] = new ByteArrayContent([1, 2, 3]) { Headers = { ContentType = new("application/pdf") } };
-        var (handler, _) = Create(site);
-
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/doc.pdf", null), CancellationToken.None);
-        result.Error!.Code.ShouldBe(FetchingErrors.UnsupportedContent.Code);
     }
 
     [Theory]
@@ -93,68 +84,64 @@ public sealed class FetchPageHandlerTests
     [InlineData("/relative")]
     public async Task InvalidUrl_IsRejected(string url)
     {
-        var (handler, _) = Create(new FakeSite());
+        var handler = Create(new InMemoryDocumentStore());
         var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), url, null), CancellationToken.None);
         result.Error!.Code.ShouldBe(FetchingErrors.InvalidUrl.Code);
     }
 
-    private static StringContent Html(string body) => new($"<html><body>{body}</body></html>", Encoding.UTF8, "text/html");
+    private static DownloadedPage SamplePage(string url = "https://example.com/article") =>
+        new(new Uri(url), "text/html", "utf-8", Encoding.UTF8.GetBytes("<p>body</p>"));
 
-    private static (FetchPageHandler Handler, InMemoryDocumentStore Store) Create(FakeSite site)
-    {
-        var options = TestOptions.Of(new FetchingOptions { MinContentChars = 200 });
-        var clients = new FakeHttpClientFactory(site);
-        var time = new FakeTimeProvider();
-        var store = new InMemoryDocumentStore();
-        var handler = new FetchPageHandler(
-            new RobotsPolicy(clients, options, time),
-            new DomainThrottle(options),
-            new PageDownloader(clients, options),
-            new ContentExtractor(),
+    private static FetchPageHandler Create(
+        InMemoryDocumentStore store,
+        bool robotsAllowed = true,
+        FakePageDownloader? downloader = null,
+        ExtractedContent? extracted = null,
+        FetchingOptions? options = null) => new(
+            new FakeRobotsPolicy(robotsAllowed),
+            new FakeDomainThrottle(),
+            downloader ?? new FakePageDownloader(Result<DownloadedPage>.Success(SamplePage())),
+            new FakeContentExtractor(extracted ?? new ExtractedContent("Title", LongParagraph)),
             store,
             new FetchingMetrics(TestMeters.Create()),
-            options,
+            TestOptions.Of(options ?? new FetchingOptions { MinContentChars = 200 }),
             TestOptions.Of(new ContentLoggingOptions()),
-            time,
+            new FakeTimeProvider(),
             NullLoggerFactory.Instance);
-        return (handler, store);
+
+    private sealed class FakeRobotsPolicy(bool allowed) : IRobotsPolicy
+    {
+        public Task<bool> IsAllowedAsync(Uri url, CancellationToken cancellationToken) => Task.FromResult(allowed);
     }
 
-    private sealed class FakeSite : HttpMessageHandler
+    private sealed class FakeDomainThrottle : IDomainThrottle
     {
-        public Dictionary<string, HttpContent> Pages { get; } = new(StringComparer.Ordinal);
+        public Task<IDisposable> AcquireAsync(string host, CancellationToken cancellationToken) =>
+            Task.FromResult<IDisposable>(NoOpDisposable.Instance);
 
-        public Dictionary<string, HttpStatusCode> Status { get; } = new(StringComparer.Ordinal);
-
-        public List<string> Requests { get; } = [];
-
-        public string? Robots { get; init; }
-
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        private sealed class NoOpDisposable : IDisposable
         {
-            var path = request.RequestUri!.AbsolutePath;
-            Requests.Add(path);
+            public static readonly NoOpDisposable Instance = new();
 
-            if (path == "/robots.txt")
+            public void Dispose()
             {
-                return Task.FromResult(Robots is null
-                    ? new HttpResponseMessage(HttpStatusCode.NotFound)
-                    : new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(Robots), RequestMessage = request });
             }
-
-            if (Status.TryGetValue(path, out var status))
-            {
-                return Task.FromResult(new HttpResponseMessage(status) { RequestMessage = request });
-            }
-
-            return Task.FromResult(Pages.TryGetValue(path, out var content)
-                ? new HttpResponseMessage(HttpStatusCode.OK) { Content = content, RequestMessage = request }
-                : new HttpResponseMessage(HttpStatusCode.NotFound) { RequestMessage = request });
         }
     }
 
-    private sealed class FakeHttpClientFactory(HttpMessageHandler handler) : IHttpClientFactory
+    private sealed class FakePageDownloader(Result<DownloadedPage> result) : IPageDownloader
     {
-        public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);
+        public int Calls { get; private set; }
+
+        public Task<Result<DownloadedPage>> DownloadAsync(Uri url, CancellationToken cancellationToken)
+        {
+            Calls++;
+            return Task.FromResult(result);
+        }
+    }
+
+    private sealed class FakeContentExtractor(ExtractedContent content) : IContentExtractor
+    {
+        public ExtractedContent Extract(byte[] body, string mediaType, string? charset, string fallbackTitle) => content;
     }
 }

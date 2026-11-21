@@ -9,7 +9,7 @@ using Research.ServiceDefaults.Exceptions;
 using Research.ServiceDefaults.Problems;
 using Research.SharedKernel.Results;
 
-namespace Research.Application.UnitTests.Shared;
+namespace Research.Infrastructure.UnitTests.ServiceDefaults;
 
 public sealed class ApiInfrastructureTests
 {

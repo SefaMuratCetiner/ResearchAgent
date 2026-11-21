@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Research.Shared.Core.Actors;
 using Research.Shared.Core.Documents;
+using Research.Shared.Core.Embeddings;
 using Research.Shared.Core.Messaging;
 
 namespace Research.Application.UnitTests.TestSupport;
@@ -46,6 +47,25 @@ internal sealed class InMemoryDocumentStore : IDocumentStore
 
     public Task<string?> ReadTextAsync(string key, CancellationToken cancellationToken) =>
         Task.FromResult(Blobs.TryGetValue(key, out var text) ? text : null);
+}
+
+/// <summary>Pure in-memory embedding fake for Application unit tests (no provider dependency).</summary>
+internal sealed class FakeEmbeddingGenerator(string model = "fake-embed-v1", int dimensions = 4) : IEmbeddingGenerator
+{
+    public string ModelId => model;
+
+    public int Dimensions => dimensions;
+
+    public Task<IReadOnlyList<float[]>> GenerateAsync(IReadOnlyList<string> texts, CancellationToken cancellationToken)
+    {
+        IReadOnlyList<float[]> vectors = texts.Select(t =>
+        {
+            var vector = new float[dimensions];
+            vector[0] = t.Length;
+            return vector;
+        }).ToList();
+        return Task.FromResult(vectors);
+    }
 }
 
 internal sealed class FixedActor(string id = "test") : ICurrentActor

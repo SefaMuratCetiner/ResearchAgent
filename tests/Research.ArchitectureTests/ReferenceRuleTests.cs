@@ -176,4 +176,44 @@ public sealed class ReferenceRuleTests
             project.ProjectReferences.ShouldNotContain("Research.ServiceDefaults", $"{project.Name} must not reference Research.ServiceDefaults");
         }
     }
+
+    [Theory]
+    [MemberData(nameof(Apis))]
+    public void Api_ExposesAnIEndpointGroup(string name)
+    {
+        var directory = Path.GetDirectoryName(Solution.Get(name).Path)!;
+        var hasGroup = Directory.EnumerateFiles(directory, "*.cs", SearchOption.AllDirectories)
+            .Where(static f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
+                && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+            .Any(static f => File.ReadAllText(f).Contains(": IEndpointGroup", StringComparison.Ordinal));
+
+        hasGroup.ShouldBeTrue($"{name} must define at least one IEndpointGroup");
+    }
+
+    [Fact]
+    public void DomainUnitTests_DependOnlyOnDomainAndSharedKernel()
+    {
+        var project = Solution.GetTest("Research.Domain.UnitTests");
+        project.FrameworkReferences.ShouldNotContain("Microsoft.AspNetCore.App", "Domain tests must not depend on ASP.NET Core");
+
+        foreach (var reference in project.ProjectReferences)
+        {
+            var allowed = reference == "Research.SharedKernel" || reference.EndsWith(".Domain", StringComparison.Ordinal);
+            allowed.ShouldBeTrue($"Research.Domain.UnitTests must not reference {reference}");
+        }
+    }
+
+    [Fact]
+    public void ApplicationUnitTests_DependOnlyOnInnerLayers()
+    {
+        var project = Solution.GetTest("Research.Application.UnitTests");
+
+        foreach (var reference in project.ProjectReferences)
+        {
+            var allowed = reference is "Research.SharedKernel" or "Research.Shared.Core" or "Research.Contracts"
+                || reference.EndsWith(".Domain", StringComparison.Ordinal)
+                || reference.EndsWith(".Application", StringComparison.Ordinal);
+            allowed.ShouldBeTrue($"Research.Application.UnitTests must not reference outer-layer project {reference}");
+        }
+    }
 }

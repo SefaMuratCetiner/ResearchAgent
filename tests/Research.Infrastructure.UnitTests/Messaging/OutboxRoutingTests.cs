@@ -4,7 +4,7 @@ using Research.Contracts.Planning;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Core.Messaging;
 
-namespace Research.Application.UnitTests.Messaging;
+namespace Research.Infrastructure.UnitTests.Messaging;
 
 /// <summary>Which messages must reach a consumer (PLAN §11), and how the outbox retries the ones that fail.</summary>
 public sealed class OutboxRoutingTests

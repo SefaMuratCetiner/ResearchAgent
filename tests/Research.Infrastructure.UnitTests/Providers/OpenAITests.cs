@@ -6,7 +6,7 @@ using Research.Shared.Core.Llm;
 // ChatReasoningEffortLevel is marked evaluation-only by the SDK (see Research.Providers.OpenAI.csproj).
 #pragma warning disable OPENAI001
 
-namespace Research.Application.UnitTests.Providers;
+namespace Research.Infrastructure.UnitTests.Providers;
 
 public sealed class OpenAIStopReasonTests
 {

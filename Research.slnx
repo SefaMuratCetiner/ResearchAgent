@@ -85,6 +85,7 @@
     <File Path="tests/Directory.Build.props" />
     <Project Path="tests/Research.Domain.UnitTests/Research.Domain.UnitTests.csproj" />
     <Project Path="tests/Research.Application.UnitTests/Research.Application.UnitTests.csproj" />
+    <Project Path="tests/Research.Infrastructure.UnitTests/Research.Infrastructure.UnitTests.csproj" />
     <Project Path="tests/Research.ArchitectureTests/Research.ArchitectureTests.csproj" />
     <Project Path="tests/Research.Infrastructure.IntegrationTests/Research.Infrastructure.IntegrationTests.csproj" />
     <Project Path="tests/Research.EndToEndTests/Research.EndToEndTests.csproj" />

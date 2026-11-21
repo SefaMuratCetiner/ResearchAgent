@@ -38,6 +38,7 @@
   <ItemGroup Condition="!$(MSBuildProjectName.EndsWith('Tests'))">
     <InternalsVisibleTo Include="Research.Domain.UnitTests" />
     <InternalsVisibleTo Include="Research.Application.UnitTests" />
+    <InternalsVisibleTo Include="Research.Infrastructure.UnitTests" />
     <InternalsVisibleTo Include="Research.Infrastructure.IntegrationTests" />
   </ItemGroup>
 

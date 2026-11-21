@@ -9,9 +9,9 @@ using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Consuming;
 using Research.Shared.Core.Actors;
 using Research.Shared.Core.Messaging;
-using Research.Application.UnitTests.TestSupport;
+using Research.Infrastructure.UnitTests.TestSupport;
 
-namespace Research.Application.UnitTests.Messaging;
+namespace Research.Infrastructure.UnitTests.Messaging;
 
 public sealed class MessageDispatcherTests
 {

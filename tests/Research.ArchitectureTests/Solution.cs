@@ -40,16 +40,21 @@ internal sealed record ProjectInfo(
     public string ServiceName => Name.Split('.')[1];
 }
 
-/// <summary>Finds the repository root and loads every project under <c>src/</c> and <c>tools/</c>.</summary>
+/// <summary>Finds the repository root and loads every project under <c>src/</c>, <c>tools/</c> and <c>tests/</c>.</summary>
 internal static class Solution
 {
-    private static readonly Lazy<IReadOnlyList<ProjectInfo>> LazyProjects = new(Load);
+    private static readonly Lazy<IReadOnlyList<ProjectInfo>> LazyProjects = new(() => Load("src", "tools"));
+    private static readonly Lazy<IReadOnlyList<ProjectInfo>> LazyTestProjects = new(() => Load("tests"));
 
     public static string Root { get; } = FindRoot();
 
     public static IReadOnlyList<ProjectInfo> Projects => LazyProjects.Value;
 
+    public static IReadOnlyList<ProjectInfo> TestProjects => LazyTestProjects.Value;
+
     public static ProjectInfo Get(string name) => Projects.Single(p => p.Name == name);
+
+    public static ProjectInfo GetTest(string name) => TestProjects.Single(p => p.Name == name);
 
     private static string FindRoot()
     {
@@ -62,8 +67,8 @@ internal static class Solution
         return directory?.FullName ?? throw new InvalidOperationException("Research.slnx not found above " + AppContext.BaseDirectory);
     }
 
-    private static List<ProjectInfo> Load() =>
-        new[] { "src", "tools" }
+    private static List<ProjectInfo> Load(params string[] folders) =>
+        folders
             .SelectMany(folder => Directory.EnumerateFiles(System.IO.Path.Combine(Root, folder), "*.csproj", SearchOption.AllDirectories))
             .Select(Read)
             .ToList();
