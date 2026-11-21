@@ -1,14 +1,12 @@
 using Dapper;
-using Npgsql;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Domain;
 using Research.Providers.Postgres.Transactions;
-using Research.Shared.Core.Transactions;
 
 namespace Research.Jobs.Infrastructure.Persistence;
 
 /// <summary>Dapper repository over <c>research_jobs</c>. Enums are stored as their names.</summary>
-public sealed class ResearchJobRepository(NpgsqlDataSource dataSource) : IResearchJobRepository
+public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IResearchJobRepository
 {
     private const string Columns = """
         id, question, status, plan, idempotency_key, synthesis_cutoff_at, deadline_at, token_budget, tokens_used,
@@ -33,11 +31,17 @@ public sealed class ResearchJobRepository(NpgsqlDataSource dataSource) : IResear
 
     private const string ActiveStatuses = "('Planning', 'Gathering', 'Synthesizing')";
 
-    public async Task<bool> InsertAsync(ResearchJob job, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<bool> InsertAsync(ResearchJob job, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
-        var scope = PostgresTransactionScope.From(transaction);
-        var inserted = await scope.Connection.ExecuteAsync(new CommandDefinition(
+        if (job.CreatedAt == default || string.IsNullOrWhiteSpace(job.CreatedBy))
+        {
+            job.StampCreated(
+                job.CreatedAt == default ? unitOfWork.Now : job.CreatedAt,
+                string.IsNullOrWhiteSpace(job.CreatedBy) ? unitOfWork.ActorId : job.CreatedBy);
+        }
+
+        var inserted = await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             InsertSql,
             new
             {
@@ -55,11 +59,11 @@ public sealed class ResearchJobRepository(NpgsqlDataSource dataSource) : IResear
                 job.CreatedAt,
                 job.CreatedBy,
             },
-            scope.Transaction,
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         if (inserted == 1)
         {
-            transaction.Track(job);
+            unitOfWork.Track(job);
             return true;
         }
 
@@ -68,7 +72,7 @@ public sealed class ResearchJobRepository(NpgsqlDataSource dataSource) : IResear
 
     public async Task<ResearchJob?> GetAsync(Guid id, CancellationToken cancellationToken)
     {
-        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         var row = await connection.QuerySingleOrDefaultAsync<JobRow>(new CommandDefinition(
             $"SELECT {Columns} FROM research_jobs WHERE id = @Id",
             new { Id = id },
@@ -78,7 +82,7 @@ public sealed class ResearchJobRepository(NpgsqlDataSource dataSource) : IResear
 
     public async Task<ResearchJob?> FindByIdempotencyKeyAsync(string idempotencyKey, CancellationToken cancellationToken)
     {
-        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         var row = await connection.QuerySingleOrDefaultAsync<JobRow>(new CommandDefinition(
             $"SELECT {Columns} FROM research_jobs WHERE idempotency_key = @Key",
             new { Key = idempotencyKey },
@@ -86,23 +90,22 @@ public sealed class ResearchJobRepository(NpgsqlDataSource dataSource) : IResear
         return row?.ToDomain();
     }
 
-    public Task<ResearchJob?> GetForUpdateAsync(Guid id, ITransactionScope transaction, CancellationToken cancellationToken) =>
-        LockAsync(id, "FOR UPDATE", transaction, cancellationToken);
+    public Task<ResearchJob?> GetForUpdateAsync(Guid id, CancellationToken cancellationToken) =>
+        LockAsync(id, "FOR UPDATE", cancellationToken);
 
-    public Task<ResearchJob?> TryLockAsync(Guid id, ITransactionScope transaction, CancellationToken cancellationToken) =>
-        LockAsync(id, "FOR UPDATE SKIP LOCKED", transaction, cancellationToken);
+    public Task<ResearchJob?> TryLockAsync(Guid id, CancellationToken cancellationToken) =>
+        LockAsync(id, "FOR UPDATE SKIP LOCKED", cancellationToken);
 
-    public async Task<bool> UpdateAsync(
-        ResearchJob job,
-        int expectedVersion,
-        IReadOnlyList<JobStatus> allowedFrom,
-        ITransactionScope transaction,
-        CancellationToken cancellationToken)
+    public async Task<bool> UpdateAsync(ResearchJob job, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
-        ArgumentNullException.ThrowIfNull(allowedFrom);
-        var scope = PostgresTransactionScope.From(transaction);
-        var updated = await scope.Connection.ExecuteAsync(new CommandDefinition(
+        var now = unitOfWork.Now;
+        var actor = unitOfWork.ActorId;
+        var expectedVersion = job.PersistedVersion;
+        var nextVersion = expectedVersion + 1;
+        var allowedFrom = job.GetAllowedSourceStatuses();
+
+        var updated = await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             UpdateSql,
             new
             {
@@ -114,17 +117,19 @@ public sealed class ResearchJobRepository(NpgsqlDataSource dataSource) : IResear
                 Warnings = job.Warnings.ToArray(),
                 GatheringEndReason = job.GatheringEndReason?.ToString(),
                 job.CompletedAt,
-                job.Version,
-                job.UpdatedAt,
-                job.UpdatedBy,
+                Version = nextVersion,
+                UpdatedAt = now,
+                UpdatedBy = actor,
                 ExpectedVersion = expectedVersion,
                 AllowedFrom = allowedFrom.Select(static s => s.ToString()).ToArray(),
             },
-            scope.Transaction,
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         if (updated == 1)
         {
-            transaction.Track(job);
+            job.PrepareForUpdate(now, actor);
+            job.AcceptPersistedState();
+            unitOfWork.Track(job);
             return true;
         }
 
@@ -160,27 +165,26 @@ public sealed class ResearchJobRepository(NpgsqlDataSource dataSource) : IResear
     public async Task<int> CountActiveAsync(int limit, CancellationToken cancellationToken)
     {
         // Counting a LIMITed subquery stops early, so the check stays cheap however many jobs are active.
-        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         return await connection.ExecuteScalarAsync<int>(new CommandDefinition(
             $"SELECT count(*)::int FROM (SELECT 1 FROM research_jobs WHERE status IN {ActiveStatuses} LIMIT @Limit) active",
             new { Limit = limit },
             cancellationToken: cancellationToken)).ConfigureAwait(false);
     }
 
-    private async Task<ResearchJob?> LockAsync(Guid id, string lockClause, ITransactionScope transaction, CancellationToken cancellationToken)
+    private async Task<ResearchJob?> LockAsync(Guid id, string lockClause, CancellationToken cancellationToken)
     {
-        var scope = PostgresTransactionScope.From(transaction);
-        var row = await scope.Connection.QuerySingleOrDefaultAsync<JobRow>(new CommandDefinition(
+        var row = await unitOfWork.ActiveConnection.QuerySingleOrDefaultAsync<JobRow>(new CommandDefinition(
             $"SELECT {Columns} FROM research_jobs WHERE id = @Id {lockClause}",
             new { Id = id },
-            scope.Transaction,
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return row?.ToDomain();
     }
 
     private async Task<IReadOnlyList<Guid>> ListIdsAsync(string sql, DateTimeOffset now, int limit, CancellationToken cancellationToken)
     {
-        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         var ids = await connection.QueryAsync<Guid>(new CommandDefinition(
             sql,
             new { Now = now, Limit = limit },

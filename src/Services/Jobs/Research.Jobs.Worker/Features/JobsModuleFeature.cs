@@ -18,14 +18,15 @@ internal sealed class JobsModuleFeature : IResearchFeature
     {
         app.Services.AddSingleton<JobsMetrics>();
 
-        app.Services.AddSingleton<IResearchJobRepository, ResearchJobRepository>();
-        app.Services.AddSingleton<IJobStepRepository, JobStepRepository>();
-        app.Services.AddSingleton<IResearchReportRepository, ResearchReportRepository>();
+        app.Services.AddScoped<IResearchJobRepository, ResearchJobRepository>();
+        app.Services.AddScoped<IJobStepRepository, JobStepRepository>();
+        app.Services.AddScoped<IResearchReportRepository, ResearchReportRepository>();
 
         app.Services.AddScoped<StepEmitter>();
         app.Services.AddScoped<JobLifecycle>();
         app.Services.AddScoped<JobReplyGate>();
 
+        app.Services.AddScoped<IDomainEventHandler<JobCreatedDomainEvent>, JobCreatedDomainEventHandler>();
         app.Services.AddScoped<IDomainEventHandler<JobGatheringStartedDomainEvent>, JobGatheringStartedDomainEventHandler>();
         app.Services.AddScoped<IDomainEventHandler<JobSynthesisStartedDomainEvent>, JobSynthesisStartedDomainEventHandler>();
         app.Services.AddScoped<IDomainEventHandler<JobCompletedDomainEvent>, JobCompletedDomainEventHandler>();

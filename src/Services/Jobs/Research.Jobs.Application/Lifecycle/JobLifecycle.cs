@@ -3,8 +3,6 @@ using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Domain;
 using Research.Jobs.Observability;
-using Research.Shared.Core.Actors;
-using Research.Shared.Core.Transactions;
 using Research.SharedKernel.Results;
 
 namespace Research.Jobs.Lifecycle;
@@ -19,37 +17,31 @@ public sealed partial class JobLifecycle(
     JobsMetrics metrics,
     IOptionsSnapshot<JobsOptions> options,
     TimeProvider timeProvider,
-    ICurrentActor actor,
     ILogger<JobLifecycle> logger)
 {
     /// <summary>Saves pending mutations on <paramref name="job"/> if the database row still matches its persisted state.</summary>
-    public async Task<bool> SaveAsync(ResearchJob job, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<bool> SaveAsync(ResearchJob job, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
 
-        var expectedVersion = job.PersistedVersion;
         var fromStatus = job.PersistedStatus;
-        var allowedFrom = job.GetAllowedSourceStatuses();
-        job.PrepareForUpdate(timeProvider.GetUtcNow(), actor.Id);
-
-        var saved = await jobs.UpdateAsync(job, expectedVersion, allowedFrom, transaction, cancellationToken).ConfigureAwait(false);
+        var saved = await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false);
         if (!saved)
         {
             LogTransitionLost(logger, job.Id, fromStatus, job.Status);
             return false;
         }
 
-        job.AcceptPersistedState();
         return true;
     }
 
     /// <summary>Records billed tokens on <paramref name="job"/> and saves it.</summary>
-    public Task<bool> AddTokensAsync(ResearchJob job, long tokens, ITransactionScope transaction, CancellationToken cancellationToken)
+    public Task<bool> AddTokensAsync(ResearchJob job, long tokens, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
         return !job.RecordTokens(tokens)
             ? Task.FromResult(true)
-            : SaveAsync(job, transaction, cancellationToken);
+            : SaveAsync(job, cancellationToken);
     }
 
     /// <summary>
@@ -60,7 +52,6 @@ public sealed partial class JobLifecycle(
     public async Task<bool> EvaluateGatheringAsync(
         ResearchJob job,
         GatheringEndReason? forcedReason,
-        ITransactionScope transaction,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
@@ -69,7 +60,7 @@ public sealed partial class JobLifecycle(
             return false;
         }
 
-        var counts = await steps.CountAsync(job.Id, transaction, cancellationToken).ConfigureAwait(false);
+        var counts = await steps.CountAsync(job.Id, cancellationToken).ConfigureAwait(false);
         GatheringEndReason? reason = forcedReason;
         if (reason is null && job.BudgetExhausted)
         {
@@ -90,24 +81,24 @@ public sealed partial class JobLifecycle(
         LogGatheringEnded(logger, job.Id, reason.Value, counts.FetchSucceeded, counts.GatheringFailed);
 
         return job.EndGathering(reason.Value, counts.FetchSucceeded, options.Value.MinSources, timeProvider.GetUtcNow())
-            && await SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false);
+            && await SaveAsync(job, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<bool> FailAsync(ResearchJob job, string errorCode, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<bool> FailAsync(ResearchJob job, string errorCode, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
         return job.Fail(errorCode, timeProvider.GetUtcNow())
-            && await SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false);
+            && await SaveAsync(job, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<bool> ExpireAsync(ResearchJob job, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<bool> ExpireAsync(ResearchJob job, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
         return job.Expire(timeProvider.GetUtcNow())
-            && await SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false);
+            && await SaveAsync(job, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<Result<ResearchJob>> CancelAsync(ResearchJob job, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<Result<ResearchJob>> CancelAsync(ResearchJob job, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
         var wasCancelled = job.Status == JobStatus.Cancelled;
@@ -122,7 +113,7 @@ public sealed partial class JobLifecycle(
             return Result<ResearchJob>.Success(job);
         }
 
-        if (!await SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false))
+        if (!await SaveAsync(job, cancellationToken).ConfigureAwait(false))
         {
             throw new InvalidOperationException("The cancel transition failed although the job row is locked.");
         }
@@ -131,12 +122,12 @@ public sealed partial class JobLifecycle(
     }
 
     /// <summary>Moves a synthesizing job to its final state once the report is stored.</summary>
-    public async Task<bool> CompleteAsync(ResearchJob job, bool reportTruncated, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<bool> CompleteAsync(ResearchJob job, bool reportTruncated, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
-        var counts = await steps.CountAsync(job.Id, transaction, cancellationToken).ConfigureAwait(false);
+        var counts = await steps.CountAsync(job.Id, cancellationToken).ConfigureAwait(false);
         return job.Complete(counts.GatheringFailed, reportTruncated, timeProvider.GetUtcNow())
-            && await SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false);
+            && await SaveAsync(job, cancellationToken).ConfigureAwait(false);
     }
 
     [LoggerMessage(EventId = 2000, Level = LogLevel.Information, Message = "Job {JobId} transition {From} -> {To} lost a race; nothing changed")]

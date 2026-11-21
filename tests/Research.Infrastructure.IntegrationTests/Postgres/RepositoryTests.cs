@@ -12,23 +12,23 @@ public sealed class FetchedDocumentRepositoryTests(PostgresFixture postgres)
     [Fact]
     public async Task Upsert_SameJobAndUrl_KeepsTheFirstId()
     {
-        var transactions = new PostgresTransactionFactory(postgres.Fetching);
-        var repository = new FetchedDocumentRepository();
+        await using var unitOfWork = new PostgresUnitOfWork(postgres.Fetching);
+        var repository = new FetchedDocumentRepository(unitOfWork);
         var jobId = Guid.NewGuid();
 
-        var first = await UpsertAsync(transactions, repository, Document(jobId, "hash-1"));
-        var second = await UpsertAsync(transactions, repository, Document(jobId, "hash-2"));
-        var otherJob = await UpsertAsync(transactions, repository, Document(Guid.NewGuid(), "hash-1"));
+        var first = await UpsertAsync(unitOfWork, repository, Document(jobId, "hash-1"));
+        var second = await UpsertAsync(unitOfWork, repository, Document(jobId, "hash-2"));
+        var otherJob = await UpsertAsync(unitOfWork, repository, Document(Guid.NewGuid(), "hash-1"));
 
         second.ShouldBe(first);
         otherJob.ShouldNotBe(first);
     }
 
-    private static async Task<Guid> UpsertAsync(PostgresTransactionFactory transactions, FetchedDocumentRepository repository, FetchedDocument document)
+    private static async Task<Guid> UpsertAsync(PostgresUnitOfWork unitOfWork, FetchedDocumentRepository repository, FetchedDocument document)
     {
-        await using var transaction = await transactions.BeginAsync(CancellationToken.None);
-        var id = await repository.UpsertAsync(document, transaction, CancellationToken.None);
-        await transaction.CommitAsync(CancellationToken.None);
+        await using var _ = await unitOfWork.BeginAsync(CancellationToken.None);
+        var id = await repository.UpsertAsync(document, CancellationToken.None);
+        await unitOfWork.CommitAsync(CancellationToken.None);
         return id;
     }
 
@@ -45,8 +45,6 @@ public sealed class FetchedDocumentRepositoryTests(PostgresFixture postgres)
         SizeBytes = 1000,
         CharacterCount = 900,
         BlobKey = $"pages/{contentHash}.txt",
-        CreatedAt = DateTimeOffset.UtcNow,
-        CreatedBy = "test",
     };
 }
 
@@ -55,14 +53,14 @@ public sealed class KnowledgeRepositoryTests(PostgresFixture postgres)
     [Fact]
     public async Task Search_IsScopedToTheJob_AndRankedBySimilarity()
     {
-        var repository = new KnowledgeRepository(postgres.Knowledge);
-        var transactions = new PostgresTransactionFactory(postgres.Knowledge);
+        await using var unitOfWork = new PostgresUnitOfWork(postgres.Knowledge);
+        var repository = new KnowledgeRepository(unitOfWork);
         var jobA = Guid.NewGuid();
         var jobB = Guid.NewGuid();
 
         var document = await StoreAsync(
             repository,
-            transactions,
+            unitOfWork,
             jobA,
             ["The HNSW index in pgvector builds a layered proximity graph.", "Sourdough bread needs a long fermentation."]);
 
@@ -80,41 +78,41 @@ public sealed class KnowledgeRepositoryTests(PostgresFixture postgres)
     [Fact]
     public async Task SameContent_IsStoredOnce_AndCanBeLinkedToAnotherJob()
     {
-        var repository = new KnowledgeRepository(postgres.Knowledge);
-        var transactions = new PostgresTransactionFactory(postgres.Knowledge);
+        await using var unitOfWork = new PostgresUnitOfWork(postgres.Knowledge);
+        var repository = new KnowledgeRepository(unitOfWork);
         var hash = Guid.NewGuid().ToString("N").PadRight(64, '0');
 
-        var first = await StoreAsync(repository, transactions, Guid.NewGuid(), ["text one"], hash);
+        var first = await StoreAsync(repository, unitOfWork, Guid.NewGuid(), ["text one"], hash);
         (await repository.FindDocumentAsync(hash, HashingEmbeddingGenerator.Model, CancellationToken.None)).ShouldBe(first);
 
-        await using var transaction = await transactions.BeginAsync(CancellationToken.None);
-        var (again, inserted) = await repository.InsertDocumentAsync(Document(hash, 1), [NewPassage(0, "text one")], transaction, CancellationToken.None);
-        await transaction.CommitAsync(CancellationToken.None);
+        await using (await unitOfWork.BeginAsync(CancellationToken.None))
+        {
+            var (again, inserted) = await repository.InsertDocumentAsync(Document(hash, 1), [NewPassage(0, "text one")], CancellationToken.None);
+            await unitOfWork.CommitAsync(CancellationToken.None);
 
-        inserted.ShouldBeFalse();
-        again.ShouldBe(first);
+            inserted.ShouldBeFalse();
+            again.ShouldBe(first);
+        }
     }
 
     private static async Task<StoredDocument> StoreAsync(
         KnowledgeRepository repository,
-        PostgresTransactionFactory transactions,
+        PostgresUnitOfWork unitOfWork,
         Guid jobId,
         IReadOnlyList<string> texts,
         string? contentHash = null)
     {
         var hash = contentHash ?? Guid.NewGuid().ToString("N").PadRight(64, '0');
-        await using var transaction = await transactions.BeginAsync(CancellationToken.None);
+        await using var _ = await unitOfWork.BeginAsync(CancellationToken.None);
         var (stored, inserted) = await repository.InsertDocumentAsync(
             Document(hash, texts.Count),
             texts.Select((t, i) => NewPassage(i, t)).ToList(),
-            transaction,
             CancellationToken.None);
         inserted.ShouldBeTrue();
         await repository.LinkAsync(
-            new JobDocumentLink(jobId, stored.Id, "https://example.com/doc", "Doc", DateTimeOffset.UtcNow, "test"),
-            transaction,
+            new JobDocumentLink(jobId, stored.Id, "https://example.com/doc", "Doc"),
             CancellationToken.None);
-        await transaction.CommitAsync(CancellationToken.None);
+        await unitOfWork.CommitAsync(CancellationToken.None);
         stored.PassageCount.ShouldBe(texts.Count);
         return stored;
     }
@@ -128,8 +126,6 @@ public sealed class KnowledgeRepositoryTests(PostgresFixture postgres)
         Title = "Doc",
         CharacterCount = 100,
         PassageCount = passages,
-        CreatedAt = DateTimeOffset.UtcNow,
-        CreatedBy = "test",
     };
 
     private static Passage NewPassage(int ordinal, string text) =>

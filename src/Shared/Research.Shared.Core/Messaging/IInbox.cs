@@ -1,16 +1,13 @@
-using Research.Shared.Core.Transactions;
-
 namespace Research.Shared.Core.Messaging;
 
 /// <summary>
-/// The idempotent-consumer record: one row per (message id, consumer). Recording it in the same transaction as the
-/// handler's state change makes redelivered messages harmless.
+/// Idempotent-consumer inbox. Records every processed (message id, consumer) pair inside the active
+/// <see cref="Transactions.IUnitOfWork"/> transaction so redeliveries never take effect twice.
 /// </summary>
 public interface IInbox
 {
-    /// <summary>Records the message as processed; false when it already was (the caller then skips its work).</summary>
-    Task<bool> TryRecordAsync(Guid messageId, string consumer, ITransactionScope transaction, CancellationToken cancellationToken);
-
-    /// <summary>A cheap pre-check before expensive, non-transactional work (an LLM call, a download).</summary>
     Task<bool> HasProcessedAsync(Guid messageId, string consumer, CancellationToken cancellationToken);
+
+    /// <returns>True when the message was recorded for the first time; false when it was already processed.</returns>
+    Task<bool> TryRecordAsync(Guid messageId, string consumer, CancellationToken cancellationToken);
 }

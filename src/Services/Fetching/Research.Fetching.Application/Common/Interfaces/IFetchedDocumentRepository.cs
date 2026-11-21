@@ -1,5 +1,4 @@
 using Research.Fetching.Domain;
-using Research.Shared.Core.Transactions;
 
 namespace Research.Fetching.Application.Common.Interfaces;
 
@@ -8,5 +7,5 @@ public interface IFetchedDocumentRepository
 {
     /// <summary>Inserts the row, or refreshes the existing row for the same job and URL.</summary>
     /// <returns>The id of the stored row (the existing id when the row was already there).</returns>
-    Task<Guid> UpsertAsync(FetchedDocument document, ITransactionScope transaction, CancellationToken cancellationToken);
+    Task<Guid> UpsertAsync(FetchedDocument document, CancellationToken cancellationToken);
 }

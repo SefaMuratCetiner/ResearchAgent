@@ -1,8 +1,7 @@
 using Microsoft.Extensions.Logging;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Domain;
 using Research.Jobs.Observability;
-using Research.Shared.Core.Actors;
 using Research.Shared.Core.Messaging;
 using Research.Shared.Core.Transactions;
 
@@ -14,13 +13,11 @@ namespace Research.Jobs.Lifecycle;
 /// results, §10.1) and replies for steps that already finished are acknowledged and discarded.
 /// </summary>
 public sealed partial class JobReplyGate(
-    ITransactionFactory transactions,
+    IUnitOfWork unitOfWork,
     IInbox inbox,
     IResearchJobRepository jobs,
     IJobStepRepository steps,
     JobsMetrics metrics,
-    TimeProvider timeProvider,
-    ICurrentActor actor,
     ILogger<JobReplyGate> logger)
 {
     /// <summary>
@@ -33,25 +30,25 @@ public sealed partial class JobReplyGate(
         StepStatus stepStatus,
         string? stepErrorCode,
         MessageContext context,
-        Func<ResearchJob, ITransactionScope, Task> advance,
+        Func<ResearchJob, Task> advance,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(advance);
 
-        await using var transaction = await transactions.BeginAsync(cancellationToken).ConfigureAwait(false);
+        await using var _ = await unitOfWork.BeginAsync(cancellationToken).ConfigureAwait(false);
 
-        if (!await inbox.TryRecordAsync(context.MessageId, context.Consumer, transaction, cancellationToken).ConfigureAwait(false))
+        if (!await inbox.TryRecordAsync(context.MessageId, context.Consumer, cancellationToken).ConfigureAwait(false))
         {
             LogDuplicate(logger, context.MessageId, context.MessageType);
             return;
         }
 
-        var job = await jobs.GetForUpdateAsync(jobId, transaction, cancellationToken).ConfigureAwait(false);
+        var job = await jobs.GetForUpdateAsync(jobId, cancellationToken).ConfigureAwait(false);
         if (job is null)
         {
             LogUnknownJob(logger, jobId, context.MessageType);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -59,7 +56,7 @@ public sealed partial class JobReplyGate(
         {
             metrics.LateResult(context.MessageType);
             LogLateResult(logger, jobId, job.Status, context.MessageType);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -68,20 +65,17 @@ public sealed partial class JobReplyGate(
             stepKey,
             stepStatus,
             stepErrorCode,
-            timeProvider.GetUtcNow(),
-            actor.Id,
-            transaction,
             cancellationToken).ConfigureAwait(false);
         if (!finished)
         {
             LogStepAlreadyFinished(logger, jobId, stepKey, context.MessageType);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
 
         metrics.StepFinished(JobStepKeys.KindOf(stepKey), stepStatus, stepErrorCode);
-        await advance(job, transaction).ConfigureAwait(false);
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        await advance(job).ConfigureAwait(false);
+        await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     [LoggerMessage(EventId = 2010, Level = LogLevel.Debug, Message = "Message {MessageId} ({MessageType}) was already processed")]

@@ -2,15 +2,14 @@ using System.Text.Json;
 using Dapper;
 using Research.Providers.Postgres.Transactions;
 using Research.Shared.Core.Messaging;
-using Research.Shared.Core.Transactions;
 
 namespace Research.Providers.Postgres.Messaging;
 
 /// <summary>
-/// Inserts the message in the caller's transaction and queues a NOTIFY, which Postgres delivers only on commit, so
-/// the dispatcher wakes exactly when there is something committed to publish.
+/// Inserts the message in the active <see cref="PostgresUnitOfWork"/> transaction and queues a NOTIFY, which Postgres
+/// delivers only on commit, so the dispatcher wakes exactly when there is something committed to publish.
 /// </summary>
-public sealed class PostgresOutbox : IOutbox
+public sealed class PostgresOutbox(PostgresUnitOfWork unitOfWork) : IOutbox
 {
     public const string Channel = "research_outbox";
 
@@ -20,12 +19,11 @@ public sealed class PostgresOutbox : IOutbox
         SELECT pg_notify('research_outbox', '');
         """;
 
-    public async Task EnqueueAsync(OutgoingEnvelope envelope, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task EnqueueAsync(OutgoingEnvelope envelope, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(envelope);
-        var scope = PostgresTransactionScope.From(transaction);
 
-        await scope.Connection.ExecuteAsync(new CommandDefinition(
+        await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             Sql,
             new
             {
@@ -35,7 +33,7 @@ public sealed class PostgresOutbox : IOutbox
                 Headers = JsonSerializer.Serialize(envelope.Headers),
                 envelope.OccurredAt,
             },
-            scope.Transaction,
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
     }
 }

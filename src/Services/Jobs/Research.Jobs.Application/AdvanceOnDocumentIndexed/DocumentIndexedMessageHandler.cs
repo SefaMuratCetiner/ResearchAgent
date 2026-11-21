@@ -17,7 +17,7 @@ public sealed class DocumentIndexedMessageHandler(JobReplyGate gate, JobLifecycl
             StepStatus.Succeeded,
             stepErrorCode: null,
             context,
-            (job, transaction) => lifecycle.EvaluateGatheringAsync(job, forcedReason: null, transaction, cancellationToken),
+            job => lifecycle.EvaluateGatheringAsync(job, forcedReason: null, cancellationToken),
             cancellationToken);
     }
 }

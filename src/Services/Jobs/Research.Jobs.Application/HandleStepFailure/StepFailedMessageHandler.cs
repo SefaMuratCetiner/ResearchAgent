@@ -20,15 +20,15 @@ public sealed class StepFailedMessageHandler(JobReplyGate gate, JobLifecycle lif
             StepStatus.Failed,
             message.ErrorCode,
             context,
-            async (job, transaction) =>
+            async job =>
             {
                 switch (JobStepKeys.KindOf(message.StepKey))
                 {
                     case StepKind.Plan or StepKind.Synthesize:
-                        await lifecycle.FailAsync(job, message.ErrorCode, transaction, cancellationToken).ConfigureAwait(false);
+                        await lifecycle.FailAsync(job, message.ErrorCode, cancellationToken).ConfigureAwait(false);
                         break;
                     default:
-                        await lifecycle.EvaluateGatheringAsync(job, forcedReason: null, transaction, cancellationToken).ConfigureAwait(false);
+                        await lifecycle.EvaluateGatheringAsync(job, forcedReason: null, cancellationToken).ConfigureAwait(false);
                         break;
                 }
             },

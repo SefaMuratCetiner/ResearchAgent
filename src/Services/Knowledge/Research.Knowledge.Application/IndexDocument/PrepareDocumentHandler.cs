@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Domain;
-using Research.Shared.Core.Actors;
 using Research.Shared.Core.Documents;
 using Research.Shared.Core.Embeddings;
 using Research.SharedKernel.Results;
@@ -31,7 +30,6 @@ public sealed partial class PrepareDocumentHandler(
     IEmbeddingGenerator embeddings,
     IOptionsSnapshot<KnowledgeOptions> options,
     TimeProvider timeProvider,
-    ICurrentActor actor,
     ILogger<PrepareDocumentHandler> logger)
 {
     public async Task<Result<PreparedDocument>> HandleAsync(PrepareDocumentCommand command, CancellationToken cancellationToken)
@@ -79,8 +77,6 @@ public sealed partial class PrepareDocumentHandler(
             Title = command.Title,
             CharacterCount = text.Length,
             PassageCount = passages.Count,
-            CreatedAt = now,
-            CreatedBy = actor.Id,
         };
 
         LogPrepared(logger, command.Url, passages.Count, embeddings.ModelId);

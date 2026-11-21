@@ -2,7 +2,6 @@ using Research.Contracts.Fetching;
 using Research.Contracts.Steps;
 using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Domain;
-using Research.Shared.Core.Actors;
 using Research.Shared.Core.Messaging;
 using Research.Shared.Core.Transactions;
 
@@ -17,12 +16,11 @@ namespace Research.Fetching.FetchPage;
 public sealed class FetchRequestedMessageHandler(
     FetchPageHandler handler,
     IFetchedDocumentRepository documents,
-    ITransactionFactory transactions,
+    IUnitOfWork unitOfWork,
     IInbox inbox,
     IOutbox outbox,
     IEnvelopeFactory envelopes,
-    TimeProvider timeProvider,
-    ICurrentActor actor) : IMessageHandler<FetchRequested>
+    TimeProvider timeProvider) : IMessageHandler<FetchRequested>
 {
     public const string ServiceName = "fetching";
 
@@ -39,8 +37,8 @@ public sealed class FetchRequestedMessageHandler(
         var result = await handler.HandleAsync(new FetchPageCommand(message.JobId, message.Url, message.Title), cancellationToken)
             .ConfigureAwait(false);
 
-        await using var transaction = await transactions.BeginAsync(cancellationToken).ConfigureAwait(false);
-        if (!await inbox.TryRecordAsync(context.MessageId, context.Consumer, transaction, cancellationToken).ConfigureAwait(false))
+        await using var _ = await unitOfWork.BeginAsync(cancellationToken).ConfigureAwait(false);
+        if (!await inbox.TryRecordAsync(context.MessageId, context.Consumer, cancellationToken).ConfigureAwait(false))
         {
             return;
         }
@@ -49,11 +47,10 @@ public sealed class FetchRequestedMessageHandler(
         if (result.IsSuccess)
         {
             var page = result.Value;
-            var now = timeProvider.GetUtcNow();
             var documentId = await documents.UpsertAsync(
                 new FetchedDocument
                 {
-                    Id = Guid.CreateVersion7(now),
+                    Id = Guid.CreateVersion7(timeProvider.GetUtcNow()),
                     JobId = message.JobId,
                     Url = page.Url,
                     UrlHash = page.UrlHash,
@@ -64,10 +61,7 @@ public sealed class FetchRequestedMessageHandler(
                     SizeBytes = page.SizeBytes,
                     CharacterCount = page.CharacterCount,
                     BlobKey = page.BlobKey,
-                    CreatedAt = now,
-                    CreatedBy = actor.Id,
                 },
-                transaction,
                 cancellationToken).ConfigureAwait(false);
 
             reply = envelopes.Create(new DocumentFetched(
@@ -85,7 +79,7 @@ public sealed class FetchRequestedMessageHandler(
             reply = envelopes.Create(new StepFailed(message.JobId, message.StepKey, result.Error.Code, ServiceName));
         }
 
-        await outbox.EnqueueAsync(reply, transaction, cancellationToken).ConfigureAwait(false);
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        await outbox.EnqueueAsync(reply, cancellationToken).ConfigureAwait(false);
+        await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 }

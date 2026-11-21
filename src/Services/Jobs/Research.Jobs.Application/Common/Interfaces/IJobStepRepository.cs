@@ -1,5 +1,4 @@
 using Research.Jobs.Domain;
-using Research.Shared.Core.Transactions;
 
 namespace Research.Jobs.Application.Common.Interfaces;
 
@@ -7,7 +6,7 @@ namespace Research.Jobs.Application.Common.Interfaces;
 public interface IJobStepRepository
 {
     /// <summary>Inserts the step; false when the job already has a step with that key (a duplicate request).</summary>
-    Task<bool> InsertAsync(JobStep step, ITransactionScope transaction, CancellationToken cancellationToken);
+    Task<bool> InsertAsync(JobStep step, CancellationToken cancellationToken);
 
     /// <summary>
     /// Moves a running step to <paramref name="status"/>; false when the step is unknown or already finished
@@ -18,26 +17,20 @@ public interface IJobStepRepository
         string stepKey,
         StepStatus status,
         string? errorCode,
-        DateTimeOffset now,
-        string actor,
-        ITransactionScope transaction,
         CancellationToken cancellationToken);
 
-    Task<StepCounts> CountAsync(Guid jobId, ITransactionScope transaction, CancellationToken cancellationToken);
+    Task<StepCounts> CountAsync(Guid jobId, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<JobStep>> ListAsync(Guid jobId, CancellationToken cancellationToken);
 
     /// <summary>Running steps of the job whose lease ended before <paramref name="now"/>.</summary>
-    Task<IReadOnlyList<JobStep>> ListExpiredAsync(Guid jobId, DateTimeOffset now, ITransactionScope transaction, CancellationToken cancellationToken);
+    Task<IReadOnlyList<JobStep>> ListExpiredAsync(Guid jobId, DateTimeOffset now, CancellationToken cancellationToken);
 
     /// <summary>Records a re-emission: attempts and a new lease.</summary>
     Task RenewLeaseAsync(
         Guid stepId,
         int attempts,
         DateTimeOffset leaseUntil,
-        DateTimeOffset now,
-        string actor,
-        ITransactionScope transaction,
         CancellationToken cancellationToken);
 }
 

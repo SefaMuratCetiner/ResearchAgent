@@ -63,7 +63,7 @@ public sealed class ResearchJob : BaseAuditableEntity
         TimeSpan synthesisReserve,
         long tokenBudget,
         DateTimeOffset now,
-        string createdBy)
+        string? createdBy = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(question);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(tokenBudget);
@@ -85,8 +85,13 @@ public sealed class ResearchJob : BaseAuditableEntity
             Version = 0,
             PersistedVersion = 0,
             PersistedStatus = JobStatus.Planning,
+            CreatedAt = now,
         };
-        job.StampCreated(now, createdBy);
+        if (!string.IsNullOrWhiteSpace(createdBy))
+        {
+            job.StampCreated(now, createdBy);
+        }
+
         job.AddDomainEvent(new JobCreatedDomainEvent(id, question, now));
         return job;
     }

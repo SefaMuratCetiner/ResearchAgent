@@ -21,7 +21,7 @@ internal sealed class FetchingModuleFeature : IResearchFeature
         app.Services.AddSingleton<IDomainThrottle, DomainThrottle>();
         app.Services.AddSingleton<IPageDownloader, PageDownloader>();
         app.Services.AddSingleton<IContentExtractor, ContentExtractor>();
-        app.Services.AddSingleton<IFetchedDocumentRepository, FetchedDocumentRepository>();
+        app.Services.AddScoped<IFetchedDocumentRepository, FetchedDocumentRepository>();
         app.Services.AddScoped<FetchPageHandler>();
 
         // Every connection goes through SsrfGuard (first request, each redirect, robots.txt). No resilience handler:

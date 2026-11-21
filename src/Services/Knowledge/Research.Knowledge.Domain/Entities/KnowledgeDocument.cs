@@ -29,7 +29,13 @@ public sealed record StoredDocument(Guid Id, int PassageCount);
 public sealed record Passage(Guid Id, int Ordinal, string Text, float[] Embedding);
 
 /// <summary>A job uses a document, found at <see cref="Url"/>.</summary>
-public sealed record JobDocumentLink(Guid JobId, Guid DocumentId, string Url, string Title, DateTimeOffset CreatedAt, string CreatedBy);
+public sealed record JobDocumentLink(
+    Guid JobId,
+    Guid DocumentId,
+    string Url,
+    string Title,
+    DateTimeOffset CreatedAt = default,
+    string CreatedBy = "");
 
 /// <summary>A passage found by a similarity search; <see cref="Score"/> is cosine similarity (1 = identical).</summary>
 public sealed record PassageMatch(Guid PassageId, Guid DocumentId, string Url, string Title, string Text, double Score);

@@ -23,15 +23,20 @@ internal sealed class JobsModuleFeature : IResearchFeature
         app.Services.AddSingleton<JobsMetrics>();
         app.Services.AddSingleton<IEnvelopeFactory, EnvelopeFactory>();
 
-        app.Services.AddSingleton<IResearchJobRepository, ResearchJobRepository>();
-        app.Services.AddSingleton<IJobStepRepository, JobStepRepository>();
-        app.Services.AddSingleton<IResearchReportRepository, ResearchReportRepository>();
+        app.Services.AddScoped<IResearchJobRepository, ResearchJobRepository>();
+        app.Services.AddScoped<IJobStepRepository, JobStepRepository>();
+        app.Services.AddScoped<IResearchReportRepository, ResearchReportRepository>();
 
         app.Services.AddScoped<StepEmitter>();
         app.Services.AddScoped<JobLifecycle>();
 
         app.Services.AddScoped<IDomainEventHandler<JobCreatedDomainEvent>, JobCreatedDomainEventHandler>();
+        app.Services.AddScoped<IDomainEventHandler<JobGatheringStartedDomainEvent>, JobGatheringStartedDomainEventHandler>();
+        app.Services.AddScoped<IDomainEventHandler<JobSynthesisStartedDomainEvent>, JobSynthesisStartedDomainEventHandler>();
+        app.Services.AddScoped<IDomainEventHandler<JobCompletedDomainEvent>, JobCompletedDomainEventHandler>();
         app.Services.AddScoped<IDomainEventHandler<JobCancelledDomainEvent>, JobCancelledDomainEventHandler>();
+        app.Services.AddScoped<IDomainEventHandler<JobFailedDomainEvent>, JobFailedDomainEventHandler>();
+        app.Services.AddScoped<IDomainEventHandler<JobExpiredDomainEvent>, JobExpiredDomainEventHandler>();
 
         app.Services.AddScoped<CreateResearchJobHandler>();
         app.Services.AddScoped<GetResearchJobHandler>();

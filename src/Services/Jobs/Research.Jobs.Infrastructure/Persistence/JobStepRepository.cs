@@ -1,14 +1,12 @@
 using Dapper;
-using Npgsql;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Domain;
 using Research.Providers.Postgres.Transactions;
-using Research.Shared.Core.Transactions;
 
 namespace Research.Jobs.Infrastructure.Persistence;
 
 /// <summary>Dapper repository over <c>job_steps</c>.</summary>
-public sealed class JobStepRepository(NpgsqlDataSource dataSource) : IJobStepRepository
+public sealed class JobStepRepository(PostgresUnitOfWork unitOfWork) : IJobStepRepository
 {
     private const string Columns = """
         id, job_id, kind, step_key, status, attempts, lease_until, last_error_code, trace_id, request_type,
@@ -43,11 +41,13 @@ public sealed class JobStepRepository(NpgsqlDataSource dataSource) : IJobStepRep
         WHERE id = @Id
         """;
 
-    public async Task<bool> InsertAsync(JobStep step, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<bool> InsertAsync(JobStep step, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(step);
-        var scope = PostgresTransactionScope.From(transaction);
-        var inserted = await scope.Connection.ExecuteAsync(new CommandDefinition(
+        var createdAt = step.CreatedAt == default ? unitOfWork.Now : step.CreatedAt;
+        var createdBy = string.IsNullOrWhiteSpace(step.CreatedBy) ? unitOfWork.ActorId : step.CreatedBy;
+
+        var inserted = await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             InsertSql,
             new
             {
@@ -61,10 +61,10 @@ public sealed class JobStepRepository(NpgsqlDataSource dataSource) : IJobStepRep
                 step.TraceId,
                 step.RequestType,
                 step.RequestPayload,
-                step.CreatedAt,
-                step.CreatedBy,
+                CreatedAt = createdAt,
+                CreatedBy = createdBy,
             },
-            scope.Transaction,
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return inserted == 1;
     }
@@ -74,34 +74,37 @@ public sealed class JobStepRepository(NpgsqlDataSource dataSource) : IJobStepRep
         string stepKey,
         StepStatus status,
         string? errorCode,
-        DateTimeOffset now,
-        string actor,
-        ITransactionScope transaction,
         CancellationToken cancellationToken)
     {
-        var scope = PostgresTransactionScope.From(transaction);
-        var updated = await scope.Connection.ExecuteAsync(new CommandDefinition(
+        var updated = await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             FinishSql,
-            new { JobId = jobId, StepKey = stepKey, Status = status.ToString(), ErrorCode = errorCode, Now = now, Actor = actor },
-            scope.Transaction,
+            new
+            {
+                JobId = jobId,
+                StepKey = stepKey,
+                Status = status.ToString(),
+                ErrorCode = errorCode,
+                Now = unitOfWork.Now,
+                Actor = unitOfWork.ActorId,
+            },
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return updated == 1;
     }
 
-    public async Task<StepCounts> CountAsync(Guid jobId, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<StepCounts> CountAsync(Guid jobId, CancellationToken cancellationToken)
     {
-        var scope = PostgresTransactionScope.From(transaction);
-        var row = await scope.Connection.QuerySingleAsync<CountRow>(new CommandDefinition(
+        var row = await unitOfWork.ActiveConnection.QuerySingleAsync<CountRow>(new CommandDefinition(
             CountSql,
             new { JobId = jobId },
-            scope.Transaction,
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return new StepCounts((int)row.GatheringRunning, (int)row.FetchSucceeded, (int)row.GatheringFailed, (int)row.FetchTotal);
     }
 
     public async Task<IReadOnlyList<JobStep>> ListAsync(Guid jobId, CancellationToken cancellationToken)
     {
-        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         var rows = await connection.QueryAsync<StepRow>(new CommandDefinition(
             $"SELECT {Columns} FROM job_steps WHERE job_id = @JobId ORDER BY created_at, id",
             new { JobId = jobId },
@@ -109,13 +112,12 @@ public sealed class JobStepRepository(NpgsqlDataSource dataSource) : IJobStepRep
         return rows.Select(static r => r.ToDomain()).ToList();
     }
 
-    public async Task<IReadOnlyList<JobStep>> ListExpiredAsync(Guid jobId, DateTimeOffset now, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<JobStep>> ListExpiredAsync(Guid jobId, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        var scope = PostgresTransactionScope.From(transaction);
-        var rows = await scope.Connection.QueryAsync<StepRow>(new CommandDefinition(
+        var rows = await unitOfWork.ActiveConnection.QueryAsync<StepRow>(new CommandDefinition(
             $"SELECT {Columns} FROM job_steps WHERE job_id = @JobId AND status = 'Running' AND lease_until <= @Now ORDER BY created_at, id",
             new { JobId = jobId, Now = now },
-            scope.Transaction,
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return rows.Select(static r => r.ToDomain()).ToList();
     }
@@ -124,16 +126,19 @@ public sealed class JobStepRepository(NpgsqlDataSource dataSource) : IJobStepRep
         Guid stepId,
         int attempts,
         DateTimeOffset leaseUntil,
-        DateTimeOffset now,
-        string actor,
-        ITransactionScope transaction,
         CancellationToken cancellationToken)
     {
-        var scope = PostgresTransactionScope.From(transaction);
-        await scope.Connection.ExecuteAsync(new CommandDefinition(
+        await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             RenewSql,
-            new { Id = stepId, Attempts = attempts, LeaseUntil = leaseUntil, Now = now, Actor = actor },
-            scope.Transaction,
+            new
+            {
+                Id = stepId,
+                Attempts = attempts,
+                LeaseUntil = leaseUntil,
+                Now = unitOfWork.Now,
+                Actor = unitOfWork.ActorId,
+            },
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
     }
 

@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Options;
 using Research.Contracts.Fetching;
 using Research.Contracts.Search;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Domain;
 using Research.Jobs.Lifecycle;
 using Research.Shared.Core.Messaging;
 using Research.Shared.Core.Security;
@@ -29,9 +29,9 @@ public sealed class ResultsFoundMessageHandler(
             StepStatus.Succeeded,
             stepErrorCode: null,
             context,
-            async (job, transaction) =>
+            async job =>
             {
-                if (!await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, transaction, cancellationToken)
+                if (!await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, cancellationToken)
                         .ConfigureAwait(false)
                     || job.Status != JobStatus.Gathering)
                 {
@@ -40,7 +40,7 @@ public sealed class ResultsFoundMessageHandler(
 
                 if (!job.BudgetExhausted)
                 {
-                    var counts = await steps.CountAsync(job.Id, transaction, cancellationToken).ConfigureAwait(false);
+                    var counts = await steps.CountAsync(job.Id, cancellationToken).ConfigureAwait(false);
                     var room = options.Value.MaxSources - counts.FetchTotal;
                     foreach (var hit in message.Hits ?? [])
                     {
@@ -57,7 +57,6 @@ public sealed class ResultsFoundMessageHandler(
 
                         var started = await emitter.EmitAsync(
                             new FetchRequested(job.Id, JobStepKeys.Fetch(hit.Url), hit.Url, UntrustedText.SingleLine(hit.Title)),
-                            transaction,
                             cancellationToken).ConfigureAwait(false);
                         if (started)
                         {
@@ -66,7 +65,7 @@ public sealed class ResultsFoundMessageHandler(
                     }
                 }
 
-                await lifecycle.EvaluateGatheringAsync(job, forcedReason: null, transaction, cancellationToken).ConfigureAwait(false);
+                await lifecycle.EvaluateGatheringAsync(job, forcedReason: null, cancellationToken).ConfigureAwait(false);
             },
             cancellationToken);
     }

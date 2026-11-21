@@ -13,7 +13,7 @@ internal sealed class KnowledgeModuleFeature : IResearchFeature
     public void Register(ResearchBuilder app)
     {
         app.Services.AddSingleton<KnowledgeMetrics>();
-        app.Services.AddSingleton<IKnowledgeRepository, KnowledgeRepository>();
+        app.Services.AddScoped<IKnowledgeRepository, KnowledgeRepository>();
         app.Services.AddScoped<PrepareDocumentHandler>();
         app.Services.AddScoped<SearchPassagesHandler>();
     }

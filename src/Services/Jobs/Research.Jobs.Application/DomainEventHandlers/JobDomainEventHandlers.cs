@@ -10,7 +10,6 @@ using Research.Jobs.Lifecycle;
 using Research.Jobs.Observability;
 using Research.Shared.Core.Events;
 using Research.Shared.Core.Messaging;
-using Research.Shared.Core.Transactions;
 
 namespace Research.Jobs.DomainEventHandlers;
 
@@ -24,16 +23,14 @@ public sealed class JobCreatedDomainEventHandler(
 {
     private const string JobStepKey = "job";
 
-    public async Task HandleAsync(JobCreatedDomainEvent domainEvent, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task HandleAsync(JobCreatedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
         await emitter.EmitAsync(
             new PlanRequested(domainEvent.JobId, JobStepKeys.Plan, domainEvent.Question, options.Value.MaxSubQuestions),
-            transaction,
             cancellationToken).ConfigureAwait(false);
         await outbox.EnqueueAsync(
             envelopes.Create(new JobCreated(domainEvent.JobId, JobStepKey, domainEvent.Question)),
-            transaction,
             cancellationToken).ConfigureAwait(false);
         metrics.Created();
     }
@@ -44,7 +41,7 @@ public sealed class JobGatheringStartedDomainEventHandler(
     StepEmitter emitter,
     IOptionsSnapshot<JobsOptions> options) : IDomainEventHandler<JobGatheringStartedDomainEvent>
 {
-    public async Task HandleAsync(JobGatheringStartedDomainEvent domainEvent, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task HandleAsync(JobGatheringStartedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
         var resultsPerSearch = options.Value.ResultsPerSearch;
@@ -52,7 +49,6 @@ public sealed class JobGatheringStartedDomainEventHandler(
         {
             await emitter.EmitAsync(
                 new SearchRequested(domainEvent.JobId, JobStepKeys.Search(i), domainEvent.SubQuestions[i], resultsPerSearch),
-                transaction,
                 cancellationToken).ConfigureAwait(false);
         }
     }
@@ -63,12 +59,11 @@ public sealed class JobSynthesisStartedDomainEventHandler(
     StepEmitter emitter,
     IOptionsSnapshot<JobsOptions> options) : IDomainEventHandler<JobSynthesisStartedDomainEvent>
 {
-    public Task HandleAsync(JobSynthesisStartedDomainEvent domainEvent, ITransactionScope transaction, CancellationToken cancellationToken)
+    public Task HandleAsync(JobSynthesisStartedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
         return emitter.EmitAsync(
             new SynthesisRequested(domainEvent.JobId, JobStepKeys.Synthesize, domainEvent.Question, domainEvent.Plan, options.Value.SynthesisTopK),
-            transaction,
             cancellationToken);
     }
 }
@@ -82,12 +77,11 @@ public sealed partial class JobCompletedDomainEventHandler(
 {
     private const string JobStepKey = "job";
 
-    public async Task HandleAsync(JobCompletedDomainEvent domainEvent, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task HandleAsync(JobCompletedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
         await outbox.EnqueueAsync(
             envelopes.Create(new JobCompleted(domainEvent.JobId, JobStepKey, domainEvent.Status.ToString(), domainEvent.Warnings)),
-            transaction,
             cancellationToken).ConfigureAwait(false);
         metrics.Finished(domainEvent.Status, errorCode: null, domainEvent.OccurredAt - domainEvent.JobCreatedAt);
         LogJobFinished(logger, domainEvent.JobId, domainEvent.Status, errorCode: null);
@@ -106,12 +100,11 @@ public sealed partial class JobCancelledDomainEventHandler(
 {
     private const string JobStepKey = "job";
 
-    public async Task HandleAsync(JobCancelledDomainEvent domainEvent, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task HandleAsync(JobCancelledDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
         await outbox.EnqueueAsync(
             envelopes.Create(new JobCancelled(domainEvent.JobId, JobStepKey)),
-            transaction,
             cancellationToken).ConfigureAwait(false);
         metrics.Finished(JobStatus.Cancelled, errorCode: null, domainEvent.OccurredAt - domainEvent.JobCreatedAt);
         LogJobFinished(logger, domainEvent.JobId, JobStatus.Cancelled, errorCode: null);
@@ -130,12 +123,11 @@ public sealed partial class JobFailedDomainEventHandler(
 {
     private const string JobStepKey = "job";
 
-    public async Task HandleAsync(JobFailedDomainEvent domainEvent, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task HandleAsync(JobFailedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
         await outbox.EnqueueAsync(
             envelopes.Create(new JobFailed(domainEvent.JobId, JobStepKey, domainEvent.ErrorCode)),
-            transaction,
             cancellationToken).ConfigureAwait(false);
         metrics.Finished(JobStatus.Failed, domainEvent.ErrorCode, domainEvent.OccurredAt - domainEvent.JobCreatedAt);
         LogJobFinished(logger, domainEvent.JobId, JobStatus.Failed, domainEvent.ErrorCode);
@@ -154,12 +146,11 @@ public sealed partial class JobExpiredDomainEventHandler(
 {
     private const string JobStepKey = "job";
 
-    public async Task HandleAsync(JobExpiredDomainEvent domainEvent, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task HandleAsync(JobExpiredDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
         await outbox.EnqueueAsync(
             envelopes.Create(new JobExpired(domainEvent.JobId, JobStepKey)),
-            transaction,
             cancellationToken).ConfigureAwait(false);
         metrics.Finished(JobStatus.Expired, JobsErrors.DeadlineExceeded.Code, domainEvent.OccurredAt - domainEvent.JobCreatedAt);
         LogJobFinished(logger, domainEvent.JobId, JobStatus.Expired, JobsErrors.DeadlineExceeded.Code);

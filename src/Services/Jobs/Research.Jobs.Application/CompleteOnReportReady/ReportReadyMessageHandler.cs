@@ -1,9 +1,8 @@
 using Microsoft.Extensions.Options;
 using Research.Contracts.Synthesis;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Domain;
 using Research.Jobs.Lifecycle;
-using Research.Shared.Core.Actors;
 using Research.Shared.Core.Messaging;
 using Research.Shared.Core.Security;
 
@@ -18,8 +17,6 @@ public sealed class ReportReadyMessageHandler(
     JobReplyGate gate,
     JobLifecycle lifecycle,
     IResearchReportRepository reports,
-    TimeProvider timeProvider,
-    ICurrentActor actor,
     IOptionsSnapshot<JobsOptions> options) : IMessageHandler<ReportReady>
 {
     public Task HandleAsync(ReportReady message, MessageContext context, CancellationToken cancellationToken)
@@ -31,14 +28,14 @@ public sealed class ReportReadyMessageHandler(
             StepStatus.Succeeded,
             stepErrorCode: null,
             context,
-            async (job, transaction) =>
+            async job =>
             {
                 if (job.Status != JobStatus.Synthesizing)
                 {
                     return;
                 }
 
-                if (!await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, transaction, cancellationToken)
+                if (!await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, cancellationToken)
                         .ConfigureAwait(false))
                 {
                     return;
@@ -60,11 +57,9 @@ public sealed class ReportReadyMessageHandler(
                         .ToList(),
                     Model = UntrustedText.SingleLine(message.Model, 100),
                     Truncated = message.Truncated || cut,
-                    CreatedAt = timeProvider.GetUtcNow(),
-                    CreatedBy = actor.Id,
                 };
-                await reports.InsertAsync(report, transaction, cancellationToken).ConfigureAwait(false);
-                await lifecycle.CompleteAsync(job, report.Truncated, transaction, cancellationToken).ConfigureAwait(false);
+                await reports.InsertAsync(report, cancellationToken).ConfigureAwait(false);
+                await lifecycle.CompleteAsync(job, report.Truncated, cancellationToken).ConfigureAwait(false);
             },
             cancellationToken);
     }

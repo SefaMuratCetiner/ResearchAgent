@@ -1,8 +1,8 @@
 using Dapper;
 using Microsoft.Extensions.Logging.Abstractions;
-using Research.Shared.Adapters.Messaging;
 using Research.Providers.Postgres.Messaging;
 using Research.Providers.Postgres.Transactions;
+using Research.Shared.Adapters.Messaging;
 using Research.Shared.Core.Messaging;
 
 namespace Research.Infrastructure.IntegrationTests.Postgres;
@@ -17,22 +17,22 @@ public sealed class OutboxInboxTests(PostgresFixture postgres)
     [Fact]
     public async Task RolledBackMessage_IsNeverPublished_CommittedOneIsPublishedOnce()
     {
-        var transactions = new PostgresTransactionFactory(postgres.Fetching);
-        var outbox = new PostgresOutbox();
+        await using var unitOfWork = new PostgresUnitOfWork(postgres.Fetching);
+        var outbox = new PostgresOutbox(unitOfWork);
         var store = new PostgresOutboxStore(postgres.Fetching, NullLogger<PostgresOutboxStore>.Instance);
         await DrainAsync(store);
 
         var rolledBack = _envelopes.Create(new Research.Contracts.Steps.StepFailed(Guid.NewGuid(), "fetch:a", "x.y", "fetching"));
-        await using (var transaction = await transactions.BeginAsync(CancellationToken.None))
+        await using (await unitOfWork.BeginAsync(CancellationToken.None))
         {
-            await outbox.EnqueueAsync(rolledBack, transaction, CancellationToken.None);
+            await outbox.EnqueueAsync(rolledBack, CancellationToken.None);
         }
 
         var committed = _envelopes.Create(new Research.Contracts.Steps.StepFailed(Guid.NewGuid(), "fetch:b", "x.y", "fetching"));
-        await using (var transaction = await transactions.BeginAsync(CancellationToken.None))
+        await using (await unitOfWork.BeginAsync(CancellationToken.None))
         {
-            await outbox.EnqueueAsync(committed, transaction, CancellationToken.None);
-            await transaction.CommitAsync(CancellationToken.None);
+            await outbox.EnqueueAsync(committed, CancellationToken.None);
+            await unitOfWork.CommitAsync(CancellationToken.None);
         }
 
         var published = new List<OutgoingEnvelope>();
@@ -114,16 +114,16 @@ public sealed class OutboxInboxTests(PostgresFixture postgres)
     [Fact]
     public async Task Inbox_RecordsEachMessageOncePerConsumer()
     {
-        var transactions = new PostgresTransactionFactory(postgres.Knowledge);
-        var inbox = new PostgresInbox(postgres.Knowledge);
+        await using var unitOfWork = new PostgresUnitOfWork(postgres.Knowledge);
+        var inbox = new PostgresInbox(unitOfWork);
         var messageId = Guid.NewGuid();
 
-        await using (var transaction = await transactions.BeginAsync(CancellationToken.None))
+        await using (await unitOfWork.BeginAsync(CancellationToken.None))
         {
-            (await inbox.TryRecordAsync(messageId, "knowledge.a", transaction, CancellationToken.None)).ShouldBeTrue();
-            (await inbox.TryRecordAsync(messageId, "knowledge.a", transaction, CancellationToken.None)).ShouldBeFalse();
-            (await inbox.TryRecordAsync(messageId, "knowledge.b", transaction, CancellationToken.None)).ShouldBeTrue();
-            await transaction.CommitAsync(CancellationToken.None);
+            (await inbox.TryRecordAsync(messageId, "knowledge.a", CancellationToken.None)).ShouldBeTrue();
+            (await inbox.TryRecordAsync(messageId, "knowledge.a", CancellationToken.None)).ShouldBeFalse();
+            (await inbox.TryRecordAsync(messageId, "knowledge.b", CancellationToken.None)).ShouldBeTrue();
+            await unitOfWork.CommitAsync(CancellationToken.None);
         }
 
         (await inbox.HasProcessedAsync(messageId, "knowledge.a", CancellationToken.None)).ShouldBeTrue();
@@ -140,9 +140,13 @@ public sealed class OutboxInboxTests(PostgresFixture postgres)
     private async Task<OutgoingEnvelope> EnqueueAsync(string stepKey)
     {
         var envelope = _envelopes.Create(new Research.Contracts.Steps.StepFailed(Guid.NewGuid(), stepKey, "x.y", "fetching"));
-        await using var transaction = await new PostgresTransactionFactory(postgres.Fetching).BeginAsync(CancellationToken.None);
-        await new PostgresOutbox().EnqueueAsync(envelope, transaction, CancellationToken.None);
-        await transaction.CommitAsync(CancellationToken.None);
+        await using var unitOfWork = new PostgresUnitOfWork(postgres.Fetching);
+        await using (await unitOfWork.BeginAsync(CancellationToken.None))
+        {
+            await new PostgresOutbox(unitOfWork).EnqueueAsync(envelope, CancellationToken.None);
+            await unitOfWork.CommitAsync(CancellationToken.None);
+        }
+
         return envelope;
     }
 

@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Research.Shared.Adapters.Events;
 using Research.Shared.Core.Events;
-using Research.Shared.Core.Transactions;
 using Research.SharedKernel.Common;
 
 namespace Research.Infrastructure.UnitTests.Events;
@@ -20,9 +19,8 @@ public sealed class DomainEventDispatcherTests
         await using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var dispatcher = scope.ServiceProvider.GetRequiredService<IDomainEventDispatcher>();
-        await using var tx = new FakeTransactionScope();
 
-        await dispatcher.DispatchAsync([new PingEvent("hello", DateTimeOffset.UtcNow)], tx, CancellationToken.None);
+        await dispatcher.DispatchAsync([new PingEvent("hello", DateTimeOffset.UtcNow)], CancellationToken.None);
 
         log.ShouldBe(["first:hello", "second:hello"]);
     }
@@ -33,9 +31,8 @@ public sealed class DomainEventDispatcherTests
         await using var provider = new ServiceCollection().AddScoped<IDomainEventDispatcher, DomainEventDispatcher>().BuildServiceProvider();
         using var scope = provider.CreateScope();
         var dispatcher = scope.ServiceProvider.GetRequiredService<IDomainEventDispatcher>();
-        await using var tx = new FakeTransactionScope();
 
-        await dispatcher.DispatchAsync([new UnhandledEvent(DateTimeOffset.UtcNow)], tx, CancellationToken.None);
+        await dispatcher.DispatchAsync([new UnhandledEvent(DateTimeOffset.UtcNow)], CancellationToken.None);
     }
 
     private sealed record PingEvent(string Message, DateTimeOffset OccurredAt) : IDomainEvent;
@@ -44,21 +41,10 @@ public sealed class DomainEventDispatcherTests
 
     private sealed class RecordingHandler(string name, List<string> log) : IDomainEventHandler<PingEvent>
     {
-        public Task HandleAsync(PingEvent domainEvent, ITransactionScope transaction, CancellationToken cancellationToken)
+        public Task HandleAsync(PingEvent domainEvent, CancellationToken cancellationToken)
         {
             log.Add($"{name}:{domainEvent.Message}");
             return Task.CompletedTask;
         }
-    }
-
-    private sealed class FakeTransactionScope : ITransactionScope
-    {
-        public void Track(BaseEntity entity)
-        {
-        }
-
-        public Task CommitAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-
-        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }

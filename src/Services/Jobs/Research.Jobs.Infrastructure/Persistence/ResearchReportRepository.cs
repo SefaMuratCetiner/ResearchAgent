@@ -1,15 +1,13 @@
 using System.Text.Json;
 using Dapper;
-using Npgsql;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Domain;
 using Research.Providers.Postgres.Transactions;
-using Research.Shared.Core.Transactions;
 
 namespace Research.Jobs.Infrastructure.Persistence;
 
 /// <summary>Dapper repository over <c>research_reports</c>; citations are stored as jsonb.</summary>
-public sealed class ResearchReportRepository(NpgsqlDataSource dataSource) : IResearchReportRepository
+public sealed class ResearchReportRepository(PostgresUnitOfWork unitOfWork) : IResearchReportRepository
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -24,11 +22,13 @@ public sealed class ResearchReportRepository(NpgsqlDataSource dataSource) : IRes
         FROM research_reports WHERE job_id = @JobId
         """;
 
-    public async Task InsertAsync(ResearchReport report, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task InsertAsync(ResearchReport report, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(report);
-        var scope = PostgresTransactionScope.From(transaction);
-        await scope.Connection.ExecuteAsync(new CommandDefinition(
+        var createdAt = report.CreatedAt == default ? unitOfWork.Now : report.CreatedAt;
+        var createdBy = string.IsNullOrWhiteSpace(report.CreatedBy) ? unitOfWork.ActorId : report.CreatedBy;
+
+        await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             InsertSql,
             new
             {
@@ -37,16 +37,16 @@ public sealed class ResearchReportRepository(NpgsqlDataSource dataSource) : IRes
                 Citations = JsonSerializer.Serialize(report.Citations, Json),
                 report.Model,
                 report.Truncated,
-                report.CreatedAt,
-                report.CreatedBy,
+                CreatedAt = createdAt,
+                CreatedBy = createdBy,
             },
-            scope.Transaction,
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
     }
 
     public async Task<ResearchReport?> GetAsync(Guid jobId, CancellationToken cancellationToken)
     {
-        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         var row = await connection.QuerySingleOrDefaultAsync<ReportRow>(new CommandDefinition(
             SelectSql,
             new { JobId = jobId },

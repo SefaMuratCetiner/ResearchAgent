@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Domain;
-using Research.Shared.Core.Actors;
 using Research.Shared.Core.Security;
 using Research.Shared.Core.Transactions;
 using Research.SharedKernel.Results;
@@ -15,11 +14,10 @@ namespace Research.Jobs.CreateResearchJob;
 /// inside the same transaction (§16.1).
 /// </summary>
 public sealed partial class CreateResearchJobHandler(
-    ITransactionFactory transactions,
+    IUnitOfWork unitOfWork,
     IResearchJobRepository jobs,
     IOptionsSnapshot<JobsOptions> options,
     TimeProvider timeProvider,
-    ICurrentActor actor,
     ILogger<CreateResearchJobHandler> logger)
 {
     public async Task<Result<CreateResearchJobResult>> HandleAsync(CreateResearchJobCommand command, CancellationToken cancellationToken)
@@ -54,12 +52,11 @@ public sealed partial class CreateResearchJobHandler(
             settings.MaxDuration,
             settings.SynthesisReserve,
             settings.TokenBudget,
-            now,
-            actor.Id);
+            now);
 
-        await using (var transaction = await transactions.BeginAsync(cancellationToken).ConfigureAwait(false))
+        await using (await unitOfWork.BeginAsync(cancellationToken).ConfigureAwait(false))
         {
-            if (!await jobs.InsertAsync(job, transaction, cancellationToken).ConfigureAwait(false))
+            if (!await jobs.InsertAsync(job, cancellationToken).ConfigureAwait(false))
             {
                 // Another request with the same key won the insert race; answer with its job.
                 var winner = await jobs.FindByIdempotencyKeyAsync(command.IdempotencyKey!, cancellationToken).ConfigureAwait(false)
@@ -67,7 +64,7 @@ public sealed partial class CreateResearchJobHandler(
                 return Replay(winner, question);
             }
 
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
         }
 
         LogJobCreated(logger, job.Id, job.DeadlineAt);

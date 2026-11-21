@@ -2,12 +2,11 @@ using Dapper;
 using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Domain;
 using Research.Providers.Postgres.Transactions;
-using Research.Shared.Core.Transactions;
 
 namespace Research.Fetching.Infrastructure.Persistence;
 
 /// <summary>Dapper repository over <c>fetched_documents</c>.</summary>
-public sealed class FetchedDocumentRepository : IFetchedDocumentRepository
+public sealed class FetchedDocumentRepository(PostgresUnitOfWork unitOfWork) : IFetchedDocumentRepository
 {
     private const string UpsertSql = """
         INSERT INTO fetched_documents
@@ -27,11 +26,13 @@ public sealed class FetchedDocumentRepository : IFetchedDocumentRepository
         RETURNING id
         """;
 
-    public async Task<Guid> UpsertAsync(FetchedDocument document, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<Guid> UpsertAsync(FetchedDocument document, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(document);
-        var scope = PostgresTransactionScope.From(transaction);
-        return await scope.Connection.ExecuteScalarAsync<Guid>(new CommandDefinition(
+        var createdAt = document.CreatedAt == default ? unitOfWork.Now : document.CreatedAt;
+        var createdBy = string.IsNullOrWhiteSpace(document.CreatedBy) ? unitOfWork.ActorId : document.CreatedBy;
+
+        return await unitOfWork.ActiveConnection.ExecuteScalarAsync<Guid>(new CommandDefinition(
             UpsertSql,
             new
             {
@@ -46,10 +47,10 @@ public sealed class FetchedDocumentRepository : IFetchedDocumentRepository
                 document.SizeBytes,
                 document.CharacterCount,
                 document.BlobKey,
-                document.CreatedAt,
-                document.CreatedBy,
+                CreatedAt = createdAt,
+                CreatedBy = createdBy,
             },
-            scope.Transaction,
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
     }
 }

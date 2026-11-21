@@ -26,9 +26,9 @@ public sealed class PlanReadyMessageHandler(
             StepStatus.Succeeded,
             stepErrorCode: null,
             context,
-            async (job, transaction) =>
+            async job =>
             {
-                if (!await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, transaction, cancellationToken)
+                if (!await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, cancellationToken)
                         .ConfigureAwait(false)
                     || job.Status != JobStatus.Planning)
                 {
@@ -38,7 +38,7 @@ public sealed class PlanReadyMessageHandler(
                 var settings = options.Value;
                 var subQuestions = Normalize(message.SubQuestions, settings.MaxSubQuestions, settings.MaxSubQuestionLength);
                 job.StartGathering(subQuestions, timeProvider.GetUtcNow());
-                await lifecycle.SaveAsync(job, transaction, cancellationToken).ConfigureAwait(false);
+                await lifecycle.SaveAsync(job, cancellationToken).ConfigureAwait(false);
             },
             cancellationToken);
     }

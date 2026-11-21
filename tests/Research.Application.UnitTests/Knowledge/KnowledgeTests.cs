@@ -6,7 +6,6 @@ using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Domain;
 using Research.Knowledge.IndexDocument;
 using Research.Knowledge.SearchPassages;
-using Research.Shared.Core.Transactions;
 
 namespace Research.Application.UnitTests.Knowledge;
 
@@ -120,10 +119,10 @@ public sealed class SearchPassagesHandlerTests
         public Task<StoredDocument?> FindDocumentAsync(string contentHash, string embeddingModel, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        public Task<(StoredDocument Document, bool Inserted)> InsertDocumentAsync(KnowledgeDocument document, IReadOnlyList<Passage> passages, ITransactionScope transaction, CancellationToken cancellationToken) =>
+        public Task<(StoredDocument Document, bool Inserted)> InsertDocumentAsync(KnowledgeDocument document, IReadOnlyList<Passage> passages, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        public Task LinkAsync(JobDocumentLink link, ITransactionScope transaction, CancellationToken cancellationToken) =>
+        public Task LinkAsync(JobDocumentLink link, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
     }
 }
@@ -178,7 +177,6 @@ public sealed class PrepareDocumentHandlerTests
             embeddings ?? new FakeEmbeddingGenerator(),
             TestOptions.Of(new KnowledgeOptions()),
             new FakeTimeProvider(),
-            new FixedActor(),
             NullLogger<PrepareDocumentHandler>.Instance);
 
     private sealed class LookupRepository(StoredDocument? existing) : IKnowledgeRepository
@@ -186,10 +184,10 @@ public sealed class PrepareDocumentHandlerTests
         public Task<StoredDocument?> FindDocumentAsync(string contentHash, string embeddingModel, CancellationToken cancellationToken) =>
             Task.FromResult(existing);
 
-        public Task<(StoredDocument Document, bool Inserted)> InsertDocumentAsync(KnowledgeDocument document, IReadOnlyList<Passage> passages, ITransactionScope transaction, CancellationToken cancellationToken) =>
+        public Task<(StoredDocument Document, bool Inserted)> InsertDocumentAsync(KnowledgeDocument document, IReadOnlyList<Passage> passages, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        public Task LinkAsync(JobDocumentLink link, ITransactionScope transaction, CancellationToken cancellationToken) =>
+        public Task LinkAsync(JobDocumentLink link, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
         public Task<IReadOnlyList<PassageMatch>> SearchAsync(Guid jobId, float[] embedding, string embeddingModel, int topK, CancellationToken cancellationToken) =>

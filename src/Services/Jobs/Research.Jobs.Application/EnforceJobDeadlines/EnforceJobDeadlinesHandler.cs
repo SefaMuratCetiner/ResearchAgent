@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Domain;
 using Research.Jobs.Lifecycle;
 using Research.Shared.Core.Transactions;
 
@@ -12,7 +12,7 @@ namespace Research.Jobs.EnforceJobDeadlines;
 /// compare-and-set transitions under the job's row lock (<c>SKIP LOCKED</c>), so they race safely with replies.
 /// </summary>
 public sealed class EnforceJobDeadlinesHandler(
-    ITransactionFactory transactions,
+    IUnitOfWork unitOfWork,
     IResearchJobRepository jobs,
     JobLifecycle lifecycle,
     IOptionsSnapshot<JobsOptions> options,
@@ -31,7 +31,7 @@ public sealed class EnforceJobDeadlinesHandler(
             changed += await WithLockedJobAsync(
                 jobId,
                 job => job.Status.IsTerminal() || job.DeadlineAt > now,
-                (job, transaction) => lifecycle.ExpireAsync(job, transaction, cancellationToken),
+                job => lifecycle.ExpireAsync(job, cancellationToken),
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -40,7 +40,7 @@ public sealed class EnforceJobDeadlinesHandler(
             changed += await WithLockedJobAsync(
                 jobId,
                 job => job.Status != JobStatus.Gathering || job.SynthesisCutoffAt > now,
-                (job, transaction) => lifecycle.EvaluateGatheringAsync(job, GatheringEndReason.CutoffReached, transaction, cancellationToken),
+                job => lifecycle.EvaluateGatheringAsync(job, GatheringEndReason.CutoffReached, cancellationToken),
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -50,18 +50,18 @@ public sealed class EnforceJobDeadlinesHandler(
     private async Task<int> WithLockedJobAsync(
         Guid jobId,
         Func<ResearchJob, bool> skip,
-        Func<ResearchJob, ITransactionScope, Task<bool>> change,
+        Func<ResearchJob, Task<bool>> change,
         CancellationToken cancellationToken)
     {
-        await using var transaction = await transactions.BeginAsync(cancellationToken).ConfigureAwait(false);
-        var job = await jobs.TryLockAsync(jobId, transaction, cancellationToken).ConfigureAwait(false);
+        await using var _ = await unitOfWork.BeginAsync(cancellationToken).ConfigureAwait(false);
+        var job = await jobs.TryLockAsync(jobId, cancellationToken).ConfigureAwait(false);
         if (job is null || skip(job))
         {
             return 0;
         }
 
-        var changed = await change(job, transaction).ConfigureAwait(false);
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        var changed = await change(job).ConfigureAwait(false);
+        await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
         return changed ? 1 : 0;
     }
 }

@@ -1,17 +1,15 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Options;
 using Research.Contracts;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
-using Research.Shared.Core.Actors;
+using Research.Jobs.Domain;
 using Research.Shared.Core.Messaging;
-using Research.Shared.Core.Transactions;
 
 namespace Research.Jobs.Lifecycle;
 
 /// <summary>
 /// Starts a step: inserts its row (with the request, for re-emission, and a lease) and enqueues the request in the
-/// outbox, in the caller's transaction. A step key the job already has is skipped, which is how duplicate URLs and
+/// outbox, inside the active unit of work. A step key the job already has is skipped, which is how duplicate URLs and
 /// replayed replies collapse.
 /// </summary>
 public sealed class StepEmitter(
@@ -19,11 +17,10 @@ public sealed class StepEmitter(
     IOutbox outbox,
     IEnvelopeFactory envelopes,
     IOptionsSnapshot<JobsOptions> options,
-    TimeProvider timeProvider,
-    ICurrentActor actor)
+    TimeProvider timeProvider)
 {
     /// <returns>True when the step was new and its request enqueued.</returns>
-    public async Task<bool> EmitAsync<TMessage>(TMessage message, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task<bool> EmitAsync<TMessage>(TMessage message, CancellationToken cancellationToken)
         where TMessage : IIntegrationMessage
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -42,16 +39,14 @@ public sealed class StepEmitter(
             TraceId = Activity.Current?.TraceId.ToString(),
             RequestType = envelope.MessageType,
             RequestPayload = envelope.Payload,
-            CreatedAt = now,
-            CreatedBy = actor.Id,
         };
 
-        if (!await steps.InsertAsync(step, transaction, cancellationToken).ConfigureAwait(false))
+        if (!await steps.InsertAsync(step, cancellationToken).ConfigureAwait(false))
         {
             return false;
         }
 
-        await outbox.EnqueueAsync(envelope, transaction, cancellationToken).ConfigureAwait(false);
+        await outbox.EnqueueAsync(envelope, cancellationToken).ConfigureAwait(false);
         return true;
     }
 }

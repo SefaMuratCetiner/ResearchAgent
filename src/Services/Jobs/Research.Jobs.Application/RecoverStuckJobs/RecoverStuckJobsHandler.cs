@@ -1,10 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Domain;
 using Research.Jobs.Lifecycle;
 using Research.Jobs.Observability;
-using Research.Shared.Core.Actors;
 using Research.Shared.Core.Messaging;
 using Research.Shared.Core.Transactions;
 
@@ -17,7 +16,7 @@ namespace Research.Jobs.RecoverStuckJobs;
 /// failed step. Jobs are locked one at a time with <c>SKIP LOCKED</c>, so every replica can run this safely.
 /// </summary>
 public sealed partial class RecoverStuckJobsHandler(
-    ITransactionFactory transactions,
+    IUnitOfWork unitOfWork,
     IResearchJobRepository jobs,
     IJobStepRepository steps,
     JobLifecycle lifecycle,
@@ -26,7 +25,6 @@ public sealed partial class RecoverStuckJobsHandler(
     JobsMetrics metrics,
     IOptionsSnapshot<JobsOptions> options,
     TimeProvider timeProvider,
-    ICurrentActor actor,
     ILogger<RecoverStuckJobsHandler> logger)
 {
     /// <returns>How many steps were re-emitted or failed.</returns>
@@ -47,14 +45,14 @@ public sealed partial class RecoverStuckJobsHandler(
 
     private async Task<int> RecoverJobAsync(Guid jobId, DateTimeOffset now, JobsOptions settings, CancellationToken cancellationToken)
     {
-        await using var transaction = await transactions.BeginAsync(cancellationToken).ConfigureAwait(false);
-        var job = await jobs.TryLockAsync(jobId, transaction, cancellationToken).ConfigureAwait(false);
+        await using var _ = await unitOfWork.BeginAsync(cancellationToken).ConfigureAwait(false);
+        var job = await jobs.TryLockAsync(jobId, cancellationToken).ConfigureAwait(false);
         if (job is null || job.Status.IsTerminal())
         {
             return 0;
         }
 
-        var expired = await steps.ListExpiredAsync(jobId, now, transaction, cancellationToken).ConfigureAwait(false);
+        var expired = await steps.ListExpiredAsync(jobId, now, cancellationToken).ConfigureAwait(false);
         var gatheringStepFailed = false;
         var handled = 0;
 
@@ -64,8 +62,8 @@ public sealed partial class RecoverStuckJobsHandler(
             if (step.Attempts < settings.MaxStepAttempts)
             {
                 var envelope = envelopes.Recreate(step.RequestType, step.RequestPayload, jobId, step.StepKey);
-                await outbox.EnqueueAsync(envelope, transaction, cancellationToken).ConfigureAwait(false);
-                await steps.RenewLeaseAsync(step.Id, step.Attempts + 1, now + settings.StepLease, now, actor.Id, transaction, cancellationToken)
+                await outbox.EnqueueAsync(envelope, cancellationToken).ConfigureAwait(false);
+                await steps.RenewLeaseAsync(step.Id, step.Attempts + 1, now + settings.StepLease, cancellationToken)
                     .ConfigureAwait(false);
                 metrics.StepReemitted(step.Kind);
                 LogReemitted(logger, jobId, step.StepKey, step.Attempts + 1);
@@ -73,15 +71,15 @@ public sealed partial class RecoverStuckJobsHandler(
             }
 
             var code = MessagingErrors.StepExhausted.Code;
-            await steps.FinishAsync(jobId, step.StepKey, StepStatus.Failed, code, now, actor.Id, transaction, cancellationToken)
+            await steps.FinishAsync(jobId, step.StepKey, StepStatus.Failed, code, cancellationToken)
                 .ConfigureAwait(false);
             metrics.StepFinished(step.Kind, StepStatus.Failed, code);
             LogExhausted(logger, jobId, step.StepKey, step.Attempts);
 
             if (step.Kind is StepKind.Plan or StepKind.Synthesize)
             {
-                await lifecycle.FailAsync(job, code, transaction, cancellationToken).ConfigureAwait(false);
-                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                await lifecycle.FailAsync(job, code, cancellationToken).ConfigureAwait(false);
+                await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
                 return handled;
             }
 
@@ -90,10 +88,10 @@ public sealed partial class RecoverStuckJobsHandler(
 
         if (gatheringStepFailed)
         {
-            await lifecycle.EvaluateGatheringAsync(job, forcedReason: null, transaction, cancellationToken).ConfigureAwait(false);
+            await lifecycle.EvaluateGatheringAsync(job, forcedReason: null, cancellationToken).ConfigureAwait(false);
         }
 
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
         return handled;
     }
 

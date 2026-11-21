@@ -1,11 +1,9 @@
 using System.Globalization;
 using System.Text;
 using Dapper;
-using Npgsql;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Domain;
 using Research.Providers.Postgres.Transactions;
-using Research.Shared.Core.Transactions;
 
 namespace Research.Knowledge.Infrastructure.Persistence;
 
@@ -13,7 +11,7 @@ namespace Research.Knowledge.Infrastructure.Persistence;
 /// Dapper repository over <c>documents</c>, <c>passages</c> and <c>job_documents</c>. Embeddings are sent as pgvector
 /// text literals and cast in SQL; passages are inserted in one statement with <c>unnest</c>.
 /// </summary>
-public sealed class KnowledgeRepository(NpgsqlDataSource dataSource) : IKnowledgeRepository
+public sealed class KnowledgeRepository(PostgresUnitOfWork unitOfWork) : IKnowledgeRepository
 {
     private const string FindSql = """
         SELECT id, passage_count FROM documents WHERE content_hash = @ContentHash AND embedding_model = @EmbeddingModel
@@ -48,7 +46,7 @@ public sealed class KnowledgeRepository(NpgsqlDataSource dataSource) : IKnowledg
 
     public async Task<StoredDocument?> FindDocumentAsync(string contentHash, string embeddingModel, CancellationToken cancellationToken)
     {
-        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         var row = await connection.QuerySingleOrDefaultAsync<DocumentRow>(new CommandDefinition(
             FindSql,
             new { ContentHash = contentHash, EmbeddingModel = embeddingModel },
@@ -59,14 +57,15 @@ public sealed class KnowledgeRepository(NpgsqlDataSource dataSource) : IKnowledg
     public async Task<(StoredDocument Document, bool Inserted)> InsertDocumentAsync(
         KnowledgeDocument document,
         IReadOnlyList<Passage> passages,
-        ITransactionScope transaction,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(passages);
-        var scope = PostgresTransactionScope.From(transaction);
 
-        var inserted = await scope.Connection.ExecuteAsync(new CommandDefinition(
+        var createdAt = document.CreatedAt == default ? unitOfWork.Now : document.CreatedAt;
+        var createdBy = string.IsNullOrWhiteSpace(document.CreatedBy) ? unitOfWork.ActorId : document.CreatedBy;
+
+        var inserted = await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             InsertDocumentSql,
             new
             {
@@ -77,25 +76,25 @@ public sealed class KnowledgeRepository(NpgsqlDataSource dataSource) : IKnowledg
                 document.Title,
                 document.CharacterCount,
                 document.PassageCount,
-                document.CreatedAt,
-                document.CreatedBy,
+                CreatedAt = createdAt,
+                CreatedBy = createdBy,
             },
-            scope.Transaction,
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
 
         if (inserted == 0)
         {
             // The conflicting insert committed first (ON CONFLICT waits for it), so under READ COMMITTED the next
             // statement sees the row.
-            var existing = await scope.Connection.QuerySingleAsync<DocumentRow>(new CommandDefinition(
+            var existing = await unitOfWork.ActiveConnection.QuerySingleAsync<DocumentRow>(new CommandDefinition(
                 FindSql,
                 new { document.ContentHash, document.EmbeddingModel },
-                scope.Transaction,
+                unitOfWork.ActiveTransaction,
                 cancellationToken: cancellationToken)).ConfigureAwait(false);
             return (new StoredDocument(existing.Id, existing.PassageCount), false);
         }
 
-        await scope.Connection.ExecuteAsync(new CommandDefinition(
+        await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             InsertPassagesSql,
             new
             {
@@ -105,20 +104,30 @@ public sealed class KnowledgeRepository(NpgsqlDataSource dataSource) : IKnowledg
                 Texts = passages.Select(static p => p.Text).ToArray(),
                 Embeddings = passages.Select(static p => ToVectorLiteral(p.Embedding)).ToArray(),
             },
-            scope.Transaction,
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
 
         return (new StoredDocument(document.Id, passages.Count), true);
     }
 
-    public async Task LinkAsync(JobDocumentLink link, ITransactionScope transaction, CancellationToken cancellationToken)
+    public async Task LinkAsync(JobDocumentLink link, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(link);
-        var scope = PostgresTransactionScope.From(transaction);
-        await scope.Connection.ExecuteAsync(new CommandDefinition(
+        var createdAt = link.CreatedAt == default ? unitOfWork.Now : link.CreatedAt;
+        var createdBy = string.IsNullOrWhiteSpace(link.CreatedBy) ? unitOfWork.ActorId : link.CreatedBy;
+
+        await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             LinkSql,
-            new { link.JobId, link.DocumentId, link.Url, link.Title, link.CreatedAt, link.CreatedBy },
-            scope.Transaction,
+            new
+            {
+                link.JobId,
+                link.DocumentId,
+                link.Url,
+                link.Title,
+                CreatedAt = createdAt,
+                CreatedBy = createdBy,
+            },
+            unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
     }
 
@@ -130,7 +139,7 @@ public sealed class KnowledgeRepository(NpgsqlDataSource dataSource) : IKnowledg
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(embedding);
-        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         var rows = await connection.QueryAsync<MatchRow>(new CommandDefinition(
             SearchSql,
             new { JobId = jobId, Embedding = ToVectorLiteral(embedding), EmbeddingModel = embeddingModel, TopK = topK },

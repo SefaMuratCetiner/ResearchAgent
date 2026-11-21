@@ -14,8 +14,6 @@ using Research.Jobs.DomainEventHandlers;
 using Research.Jobs.Lifecycle;
 using Research.Jobs.Observability;
 using Research.Shared.Core.Messaging;
-using Research.Shared.Core.Transactions;
-using Research.SharedKernel.Common;
 
 namespace Research.Application.UnitTests.Jobs;
 
@@ -34,10 +32,9 @@ public sealed class JobDomainEventHandlerTests
             new FakeEnvelopeFactory(),
             new JobsMetrics(TestMeters.Create()),
             TestOptions.Of(new JobsOptions()));
-        await using var tx = new FakeTransactionScope();
 
         var jobId = Guid.NewGuid();
-        await handler.HandleAsync(new JobCreatedDomainEvent(jobId, "What is pgvector?", T0), tx, CancellationToken.None);
+        await handler.HandleAsync(new JobCreatedDomainEvent(jobId, "What is pgvector?", T0), CancellationToken.None);
 
         steps.Inserted.Select(static s => s.StepKey).ShouldBe([JobStepKeys.Plan]);
         outbox.Enqueued.Select(static e => e.MessageType).ShouldBe([PlanRequested.MessageType, JobCreated.MessageType]);
@@ -49,9 +46,8 @@ public sealed class JobDomainEventHandlerTests
         var steps = new FakeStepRepository();
         var outbox = new FakeOutbox();
         var handler = new JobGatheringStartedDomainEventHandler(CreateEmitter(steps, outbox), TestOptions.Of(new JobsOptions()));
-        await using var tx = new FakeTransactionScope();
 
-        await handler.HandleAsync(new JobGatheringStartedDomainEvent(Guid.NewGuid(), ["Q1", "Q2"], T0), tx, CancellationToken.None);
+        await handler.HandleAsync(new JobGatheringStartedDomainEvent(Guid.NewGuid(), ["Q1", "Q2"], T0), CancellationToken.None);
 
         steps.Inserted.Select(static s => s.StepKey).ShouldBe([JobStepKeys.Search(0), JobStepKeys.Search(1)]);
         outbox.Enqueued.Select(static e => e.MessageType).ShouldBe([SearchRequested.MessageType, SearchRequested.MessageType]);
@@ -63,9 +59,8 @@ public sealed class JobDomainEventHandlerTests
         var steps = new FakeStepRepository();
         var outbox = new FakeOutbox();
         var handler = new JobSynthesisStartedDomainEventHandler(CreateEmitter(steps, outbox), TestOptions.Of(new JobsOptions()));
-        await using var tx = new FakeTransactionScope();
 
-        await handler.HandleAsync(new JobSynthesisStartedDomainEvent(Guid.NewGuid(), "Question", ["Q1"], T0), tx, CancellationToken.None);
+        await handler.HandleAsync(new JobSynthesisStartedDomainEvent(Guid.NewGuid(), "Question", ["Q1"], T0), CancellationToken.None);
 
         steps.Inserted.Select(static s => s.StepKey).ShouldBe([JobStepKeys.Synthesize]);
         outbox.Enqueued.Select(static e => e.MessageType).ShouldBe([SynthesisRequested.MessageType]);
@@ -77,17 +72,16 @@ public sealed class JobDomainEventHandlerTests
         var outbox = new FakeOutbox();
         var envelopes = new FakeEnvelopeFactory();
         var metrics = new JobsMetrics(TestMeters.Create());
-        await using var tx = new FakeTransactionScope();
         var jobId = Guid.NewGuid();
 
         await new JobCompletedDomainEventHandler(outbox, envelopes, metrics, NullLogger<JobCompletedDomainEventHandler>.Instance)
-            .HandleAsync(new JobCompletedDomainEvent(jobId, JobStatus.Completed, [], T0, T0.AddSeconds(10)), tx, CancellationToken.None);
+            .HandleAsync(new JobCompletedDomainEvent(jobId, JobStatus.Completed, [], T0, T0.AddSeconds(10)), CancellationToken.None);
         await new JobCancelledDomainEventHandler(outbox, envelopes, metrics, NullLogger<JobCancelledDomainEventHandler>.Instance)
-            .HandleAsync(new JobCancelledDomainEvent(jobId, T0, T0.AddSeconds(10)), tx, CancellationToken.None);
+            .HandleAsync(new JobCancelledDomainEvent(jobId, T0, T0.AddSeconds(10)), CancellationToken.None);
         await new JobFailedDomainEventHandler(outbox, envelopes, metrics, NullLogger<JobFailedDomainEventHandler>.Instance)
-            .HandleAsync(new JobFailedDomainEvent(jobId, JobsErrors.NoSourcesFound.Code, T0, T0.AddSeconds(10)), tx, CancellationToken.None);
+            .HandleAsync(new JobFailedDomainEvent(jobId, JobsErrors.NoSourcesFound.Code, T0, T0.AddSeconds(10)), CancellationToken.None);
         await new JobExpiredDomainEventHandler(outbox, envelopes, metrics, NullLogger<JobExpiredDomainEventHandler>.Instance)
-            .HandleAsync(new JobExpiredDomainEvent(jobId, T0, T0.AddSeconds(10)), tx, CancellationToken.None);
+            .HandleAsync(new JobExpiredDomainEvent(jobId, T0, T0.AddSeconds(10)), CancellationToken.None);
 
         outbox.Enqueued.Select(static e => e.MessageType).ShouldBe([
             JobCompleted.MessageType,
@@ -102,14 +96,13 @@ public sealed class JobDomainEventHandlerTests
         outbox,
         new FakeEnvelopeFactory(),
         TestOptions.Of(new JobsOptions()),
-        new FakeTimeProvider(T0),
-        new FixedActor());
+        new FakeTimeProvider(T0));
 
     private sealed class FakeOutbox : IOutbox
     {
         public List<OutgoingEnvelope> Enqueued { get; } = [];
 
-        public Task EnqueueAsync(OutgoingEnvelope envelope, ITransactionScope transaction, CancellationToken cancellationToken)
+        public Task EnqueueAsync(OutgoingEnvelope envelope, CancellationToken cancellationToken)
         {
             Enqueued.Add(envelope);
             return Task.CompletedTask;
@@ -130,36 +123,25 @@ public sealed class JobDomainEventHandlerTests
     {
         public List<JobStep> Inserted { get; } = [];
 
-        public Task<bool> InsertAsync(JobStep step, ITransactionScope transaction, CancellationToken cancellationToken)
+        public Task<bool> InsertAsync(JobStep step, CancellationToken cancellationToken)
         {
             Inserted.Add(step);
             return Task.FromResult(true);
         }
 
-        public Task<bool> FinishAsync(Guid jobId, string stepKey, StepStatus status, string? errorCode, DateTimeOffset now, string actor, ITransactionScope transaction, CancellationToken cancellationToken) =>
+        public Task<bool> FinishAsync(Guid jobId, string stepKey, StepStatus status, string? errorCode, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        public Task<StepCounts> CountAsync(Guid jobId, ITransactionScope transaction, CancellationToken cancellationToken) =>
+        public Task<StepCounts> CountAsync(Guid jobId, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
         public Task<IReadOnlyList<JobStep>> ListAsync(Guid jobId, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        public Task<IReadOnlyList<JobStep>> ListExpiredAsync(Guid jobId, DateTimeOffset now, ITransactionScope transaction, CancellationToken cancellationToken) =>
+        public Task<IReadOnlyList<JobStep>> ListExpiredAsync(Guid jobId, DateTimeOffset now, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        public Task RenewLeaseAsync(Guid stepId, int attempts, DateTimeOffset leaseUntil, DateTimeOffset now, string actor, ITransactionScope transaction, CancellationToken cancellationToken) =>
+        public Task RenewLeaseAsync(Guid stepId, int attempts, DateTimeOffset leaseUntil, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
-    }
-
-    private sealed class FakeTransactionScope : ITransactionScope
-    {
-        public void Track(BaseEntity entity)
-        {
-        }
-
-        public Task CommitAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-
-        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }

@@ -1,14 +1,14 @@
 namespace Research.SharedKernel.Entities;
 
 /// <summary>
-/// An entity with its audit trail. Nothing fills these fields automatically: the handler sets them from
-/// <see cref="TimeProvider"/> and the current actor, and the SQL stores them as ordinary columns.
+/// An entity with its audit trail. Persistence repositories populate <see cref="CreatedAt"/>, <see cref="CreatedBy"/>,
+/// <see cref="UpdatedAt"/> and <see cref="UpdatedBy"/> automatically from the active unit of work when not already set.
 /// </summary>
 public abstract record AuditableEntity : Entity
 {
-    public required DateTimeOffset CreatedAt { get; init; }
+    public DateTimeOffset CreatedAt { get; init; }
 
-    public required string CreatedBy { get; init; }
+    public string CreatedBy { get; init; } = string.Empty;
 
     public DateTimeOffset? UpdatedAt { get; init; }
 
