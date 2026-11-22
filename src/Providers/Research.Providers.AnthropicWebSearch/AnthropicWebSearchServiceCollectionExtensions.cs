@@ -14,6 +14,7 @@ public static class AnthropicWebSearchServiceCollectionExtensions
     public static IServiceCollection AddAnthropicWebSearch(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+        services.TryAddSingleton<AnthropicWebSearchClientProvider>();
         services.TryAddSingleton<ISearchProvider, AnthropicWebSearchProvider>();
         return services;
     }

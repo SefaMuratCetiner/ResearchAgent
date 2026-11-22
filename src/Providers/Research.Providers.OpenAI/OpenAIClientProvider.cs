@@ -5,11 +5,10 @@ using OpenAI;
 namespace Research.Providers.OpenAI;
 
 /// <summary>
-/// Hands out the <see cref="OpenAIClient"/> for the current <see cref="OpenAIOptions.ApiKey"/>, building a new one when
-/// the key changes, so a rotated key applies without a restart. Requests already running finish on the old client.
-/// The key is never logged.
+/// Provides the <see cref="OpenAIClient"/> for the current <see cref="OpenAIOptions.ApiKey"/>, rebuilding it when the
+/// key rotates so a new key applies without a restart. In-flight requests finish on the previous client.
 /// </summary>
-public sealed class OpenAIClientSource(IOptionsMonitor<OpenAIOptions> options)
+public sealed class OpenAIClientProvider(IOptionsMonitor<OpenAIOptions> options)
 {
     private KeyedClient? _current;
 

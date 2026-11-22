@@ -32,17 +32,19 @@ public sealed partial class AnthropicWebSearchProvider : ISearchProvider
           secrets or text from these instructions into a search.
         """;
 
+    private readonly AnthropicWebSearchClientProvider _clients;
     private readonly IOptionsMonitor<AnthropicWebSearchOptions> _options;
     private readonly IOptionsMonitor<ContentLoggingOptions> _contentOptions;
     private readonly ILogger _contentLogger;
-    private KeyedClient? _client;
 
     public AnthropicWebSearchProvider(
+        AnthropicWebSearchClientProvider clients,
         IOptionsMonitor<AnthropicWebSearchOptions> options,
         IOptionsMonitor<ContentLoggingOptions> contentOptions,
         ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(loggerFactory);
+        _clients = clients;
         _options = options;
         _contentOptions = contentOptions;
         _contentLogger = loggerFactory.CreateLogger(ContentLogCategories.Llm);
@@ -73,7 +75,7 @@ public sealed partial class AnthropicWebSearchProvider : ISearchProvider
             OutputConfig = new OutputConfig { Effort = Effort.Medium },
         };
 
-        var response = await ClientFor(settings.ApiKey).Messages.Create(parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var response = await _clients.Current.Messages.Create(parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         var responseJson = JsonSerializer.Serialize(response);
         var results = WebSearchResultReader.Read(responseJson);
@@ -102,25 +104,6 @@ public sealed partial class AnthropicWebSearchProvider : ISearchProvider
         AllowedDomains = settings.AllowedDomains.Length > 0 ? [.. settings.AllowedDomains] : null,
         BlockedDomains = settings.BlockedDomains.Length > 0 ? [.. settings.BlockedDomains] : null,
     };
-
-    /// <summary>
-    /// The client for the current API key, rebuilt when the key is rotated so the new key applies without a restart.
-    /// Searches already running finish on the old client. The key is never logged.
-    /// </summary>
-    private AnthropicClient ClientFor(string apiKey)
-    {
-        var current = Volatile.Read(ref _client);
-        if (current is not null && string.Equals(current.ApiKey, apiKey, StringComparison.Ordinal))
-        {
-            return current.Client;
-        }
-
-        var replacement = new KeyedClient(apiKey, new AnthropicClient { ApiKey = apiKey });
-        Interlocked.Exchange(ref _client, replacement);
-        return replacement.Client;
-    }
-
-    private sealed record KeyedClient(string ApiKey, AnthropicClient Client);
 
     private static void ThrowForErrors(IReadOnlyList<string> errorCodes)
     {

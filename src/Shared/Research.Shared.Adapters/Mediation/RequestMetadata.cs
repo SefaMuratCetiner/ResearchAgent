@@ -21,7 +21,7 @@ internal static class RequestMetadata
         where TRequest : IRequest<TResponse>
     {
         var type = typeof(TRequest);
-        if (typeof(IIncomingMessageRequest).IsAssignableFrom(type))
+        if (typeof(IIncomingMessageEnvelope).IsAssignableFrom(type))
         {
             return "message";
         }

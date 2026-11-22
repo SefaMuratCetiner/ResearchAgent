@@ -4,11 +4,10 @@ using Microsoft.Extensions.Options;
 namespace Research.Providers.Anthropic;
 
 /// <summary>
-/// Hands out the <see cref="AnthropicClient"/> for the current <see cref="AnthropicOptions.ApiKey"/>, building a new
-/// one when the key changes, so a rotated key applies without a restart. Requests already running finish on the old
-/// client. The key is never logged.
+/// Provides the <see cref="AnthropicClient"/> for the current <see cref="AnthropicOptions.ApiKey"/>, rebuilding it
+/// when the key rotates so a new key applies without a restart. In-flight requests finish on the previous client.
 /// </summary>
-public sealed class AnthropicClientSource(IOptionsMonitor<AnthropicOptions> options)
+public sealed class AnthropicClientProvider(IOptionsMonitor<AnthropicOptions> options)
 {
     private KeyedClient? _current;
 

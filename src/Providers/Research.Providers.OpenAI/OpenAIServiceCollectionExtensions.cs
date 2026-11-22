@@ -18,7 +18,7 @@ public static class OpenAIServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.TryAddSingleton<OpenAIClientSource>();
+        services.TryAddSingleton<OpenAIClientProvider>();
         services.TryAddSingleton<LlmMetrics>();
         services.TryAddSingleton<OpenAILlmClient>();
         services.AddSingleton<ILlmClient>(static provider =>

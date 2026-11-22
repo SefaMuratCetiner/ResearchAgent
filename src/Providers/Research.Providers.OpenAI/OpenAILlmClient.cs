@@ -21,7 +21,7 @@ public sealed partial class OpenAILlmClient : ILlmClient
 {
     private const int TooManyRequests = 429;
 
-    private readonly OpenAIClientSource _clients;
+    private readonly OpenAIClientProvider _clients;
     private readonly IOptionsMonitor<OpenAIOptions> _options;
     private readonly IOptionsMonitor<ContentLoggingOptions> _contentOptions;
     private readonly LlmMetrics _metrics;
@@ -30,7 +30,7 @@ public sealed partial class OpenAILlmClient : ILlmClient
     private readonly ILogger _contentLogger;
 
     public OpenAILlmClient(
-        OpenAIClientSource clients,
+        OpenAIClientProvider clients,
         IOptionsMonitor<OpenAIOptions> options,
         IOptionsMonitor<ContentLoggingOptions> contentOptions,
         LlmMetrics metrics,

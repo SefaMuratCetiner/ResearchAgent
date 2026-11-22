@@ -7,7 +7,7 @@ using Research.Shared.Kernel.Results;
 namespace Research.Shared.Adapters.Mediation.Behaviors;
 
 /// <summary>
-/// Fast-path inbox deduplication for incoming integration messages (<see cref="IIncomingMessageRequest"/>):
+/// Fast-path inbox deduplication for incoming integration messages (<see cref="IIncomingMessageEnvelope"/>):
 /// when the host registers an <see cref="IInbox"/> and the message was already recorded for this consumer,
 /// short-circuits before validation or external I/O. Concurrent delivery races remain protected by atomic
 /// <see cref="IInbox.TryRecordAsync"/> inside the handler's write transaction.
@@ -22,7 +22,7 @@ public sealed partial class InboxBehavior<TRequest, TResponse>(
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        if (request is IIncomingMessageRequest incoming
+        if (request is IIncomingMessageEnvelope incoming
             && serviceProvider.GetService<IInbox>() is { } inbox
             && await inbox.HasProcessedAsync(incoming.Context.MessageId, incoming.Context.Consumer, cancellationToken).ConfigureAwait(false))
         {

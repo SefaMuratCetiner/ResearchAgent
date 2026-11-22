@@ -63,7 +63,7 @@ public static class RabbitMqServiceCollectionExtensions
         services.AddScoped<IMessageHandler<TMessage>>(static provider => provider.GetRequiredService<THandler>());
         services.AddScoped<IRequestHandler<IncomingMessageEnvelope<TMessage>, Unit>>(static provider => provider.GetRequiredService<THandler>());
         services.AddSingleton<MessageDispatcher<TMessage>>();
-        services.AddHostedService<RabbitMqListener<TMessage>>();
+        services.AddHostedService<RabbitMqConsumerWorker<TMessage>>();
         return services;
     }
 }

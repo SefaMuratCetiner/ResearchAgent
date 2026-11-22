@@ -20,7 +20,7 @@ namespace Research.Providers.Anthropic;
 /// </summary>
 public sealed partial class AnthropicLlmClient : ILlmClient
 {
-    private readonly AnthropicClientSource _clients;
+    private readonly AnthropicClientProvider _clients;
     private readonly IOptionsMonitor<AnthropicOptions> _options;
     private readonly IOptionsMonitor<ContentLoggingOptions> _contentOptions;
     private readonly LlmMetrics _metrics;
@@ -29,7 +29,7 @@ public sealed partial class AnthropicLlmClient : ILlmClient
     private readonly ILogger _contentLogger;
 
     public AnthropicLlmClient(
-        AnthropicClientSource clients,
+        AnthropicClientProvider clients,
         IOptionsMonitor<AnthropicOptions> options,
         IOptionsMonitor<ContentLoggingOptions> contentOptions,
         LlmMetrics metrics,

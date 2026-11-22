@@ -14,18 +14,18 @@ namespace Research.Providers.RabbitMq;
 /// <summary>
 /// Consumes one contract's queue on every replica (competing consumers) with manual acknowledgement. Each delivery
 /// goes to <see cref="MessageDispatcher{TMessage}"/>; the verdict decides ack, retry through a delay queue, dead-letter
-/// or requeue. The acknowledgement always comes after the handler's commit. On shutdown the listener stops
+/// or requeue. The acknowledgement always comes after the handler's commit. On shutdown the worker stops
 /// consuming, lets in-flight deliveries finish within <see cref="RabbitMqOptions.ShutdownDrainSeconds"/>, and
 /// requeues the rest.
 /// <para>
 /// Reloading: <see cref="MessagingOptions.Prefetch"/> and <see cref="MessagingOptions.RetryDelaysSeconds"/> shape the
-/// consumer and its delay queues, so when either changes the listener drains in-flight deliveries and subscribes again
+/// consumer and its delay queues, so when either changes the worker drains in-flight deliveries and subscribes again
 /// with the new values. The queue and exchange names (<see cref="MessagingOptions.ServiceName"/>,
 /// <see cref="RabbitMqOptions.Exchange"/>) say where messages live; changing them on a running system would strand
 /// the messages already in the old queue, so they are read once at startup and a change only logs a warning.
 /// </para>
 /// </summary>
-public sealed partial class RabbitMqListener<TMessage> : BackgroundService
+public sealed partial class RabbitMqConsumerWorker<TMessage> : BackgroundService
     where TMessage : class, IIntegrationMessage
 {
     private readonly IConnection _connection;
@@ -33,20 +33,20 @@ public sealed partial class RabbitMqListener<TMessage> : BackgroundService
     private readonly RabbitMqMessagePublisher _publisher;
     private readonly IOptionsMonitor<MessagingOptions> _messagingOptions;
     private readonly IOptionsMonitor<RabbitMqOptions> _rabbitOptions;
-    private readonly ILogger<RabbitMqListener<TMessage>> _logger;
+    private readonly ILogger<RabbitMqConsumerWorker<TMessage>> _logger;
     private readonly SemaphoreSlim _ackGate = new(1, 1);
     private readonly string _serviceName;
     private readonly string _exchange;
     private MessagingOptions _messaging;
     private int _inFlight;
 
-    public RabbitMqListener(
+    public RabbitMqConsumerWorker(
         IConnection connection,
         MessageDispatcher<TMessage> dispatcher,
         RabbitMqMessagePublisher publisher,
         IOptionsMonitor<MessagingOptions> messagingOptions,
         IOptionsMonitor<RabbitMqOptions> rabbitOptions,
-        ILogger<RabbitMqListener<TMessage>> logger)
+        ILogger<RabbitMqConsumerWorker<TMessage>> logger)
     {
         ArgumentNullException.ThrowIfNull(messagingOptions);
         ArgumentNullException.ThrowIfNull(rabbitOptions);
@@ -193,7 +193,8 @@ public sealed partial class RabbitMqListener<TMessage> : BackgroundService
                     break;
 
                 case DispatchOutcome.Retry:
-                    var delay = _messaging.RetryDelaysSeconds[result.RetryDelaysIndex(_messaging.RetryDelaysSeconds.Length)];
+                    var delayIndex = Math.Clamp(result.RetryDelayIndex, 0, _messaging.RetryDelaysSeconds.Length - 1);
+                    var delay = _messaging.RetryDelaysSeconds[delayIndex];
                     headers[MessageHeaders.Attempt] = (attempt + 1).ToString(CultureInfo.InvariantCulture);
                     await ForwardAsync(delivery, headers, body, RabbitMqTopology.DelayQueueName(Queue, delay)).ConfigureAwait(false);
                     await AckAsync(channel, delivery.DeliveryTag).ConfigureAwait(false);
@@ -377,10 +378,4 @@ public sealed partial class RabbitMqListener<TMessage> : BackgroundService
 
     [LoggerMessage(EventId = 8106, Level = LogLevel.Debug, Message = "Requeueing a failed delivery on {Queue} failed; the broker will redeliver unacknowledged messages")]
     private static partial void LogNackFailed(ILogger logger, Exception exception, string queue);
-}
-
-internal static class DispatchResultExtensions
-{
-    public static int RetryDelaysIndex(this DispatchResult result, int delayCount) =>
-        Math.Clamp(result.RetryDelayIndex, 0, delayCount - 1);
 }

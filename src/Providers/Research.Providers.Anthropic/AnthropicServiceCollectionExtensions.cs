@@ -18,7 +18,7 @@ public static class AnthropicServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.TryAddSingleton<AnthropicClientSource>();
+        services.TryAddSingleton<AnthropicClientProvider>();
         services.TryAddSingleton<LlmMetrics>();
         services.TryAddSingleton<AnthropicLlmClient>();
         services.AddSingleton<ILlmClient>(static provider =>
