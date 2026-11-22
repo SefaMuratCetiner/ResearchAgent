@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Options;
 using Research.Contracts.Synthesis;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
-using Research.Jobs.Application.Lifecycle;
 using Research.Shared.Messaging;
 using Research.SharedKernel.Security;
 
@@ -10,19 +10,21 @@ namespace Research.Jobs.Application.CompleteOnReportReady;
 
 /// <summary>
 /// The report arrived: store it and move the job to <see cref="JobStatus.Completed"/> or
-/// <see cref="JobStatus.CompletedWithWarnings"/>. A job cancelled or expired meanwhile discards it unstored (the gate
-/// sees a terminal job).
+/// <see cref="JobStatus.CompletedWithWarnings"/>. A job cancelled or expired meanwhile discards it unstored
+/// (<see cref="StepReplyProcessor"/> ignores terminal jobs).
 /// </summary>
 public sealed class ReportReadyMessageHandler(
-    JobReplyGate gate,
-    JobLifecycle lifecycle,
+    StepReplyProcessor replyProcessor,
+    IResearchJobRepository jobs,
+    IJobStepRepository steps,
     IResearchReportRepository reports,
-    IOptionsSnapshot<JobsOptions> options) : IMessageHandler<ReportReady>
+    IOptionsSnapshot<JobsOptions> options,
+    TimeProvider timeProvider) : IMessageHandler<ReportReady>
 {
     public Task HandleAsync(ReportReady message, MessageContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(message);
-        return gate.ProcessAsync(
+        return replyProcessor.ProcessAsync(
             message.JobId,
             message.StepKey,
             StepStatus.Succeeded,
@@ -35,8 +37,8 @@ public sealed class ReportReadyMessageHandler(
                     return;
                 }
 
-                if (!await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, cancellationToken)
-                        .ConfigureAwait(false))
+                if (job.RecordTokens(message.InputTokens + message.OutputTokens)
+                    && !await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false))
                 {
                     return;
                 }
@@ -59,7 +61,12 @@ public sealed class ReportReadyMessageHandler(
                     Truncated = message.Truncated || cut,
                 };
                 await reports.InsertAsync(report, cancellationToken).ConfigureAwait(false);
-                await lifecycle.CompleteAsync(job, report.Truncated, cancellationToken).ConfigureAwait(false);
+
+                var counts = await steps.CountAsync(job.Id, cancellationToken).ConfigureAwait(false);
+                if (job.Complete(counts.GatheringFailed, report.Truncated, timeProvider.GetUtcNow()))
+                {
+                    await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false);
+                }
             },
             cancellationToken);
     }

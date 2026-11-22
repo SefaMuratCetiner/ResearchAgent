@@ -1,23 +1,25 @@
 using Research.Contracts.Knowledge;
+using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
-using Research.Jobs.Application.Lifecycle;
 using Research.Shared.Messaging;
 
 namespace Research.Jobs.Application.AdvanceOnDocumentIndexed;
 
 /// <summary>A page was indexed: its fetch step succeeded and the job has one more source. Gathering may now end.</summary>
-public sealed class DocumentIndexedMessageHandler(JobReplyGate gate, JobLifecycle lifecycle) : IMessageHandler<DocumentIndexed>
+public sealed class DocumentIndexedMessageHandler(
+    StepReplyProcessor replyProcessor,
+    GatheringPhaseCompleter gatheringCompleter) : IMessageHandler<DocumentIndexed>
 {
     public Task HandleAsync(DocumentIndexed message, MessageContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(message);
-        return gate.ProcessAsync(
+        return replyProcessor.ProcessAsync(
             message.JobId,
             message.StepKey,
             StepStatus.Succeeded,
             stepErrorCode: null,
             context,
-            job => lifecycle.EvaluateGatheringAsync(job, forcedReason: null, cancellationToken),
+            job => gatheringCompleter.TryCompleteAsync(job, forcedReason: null, cancellationToken),
             cancellationToken);
     }
 }

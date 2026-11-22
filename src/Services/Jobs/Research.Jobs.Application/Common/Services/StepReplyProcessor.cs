@@ -1,28 +1,32 @@
 using Microsoft.Extensions.Logging;
 using Research.Jobs.Application.Common.Interfaces;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Observability;
-using Research.Shared.Messaging;
+using Research.Jobs.Domain;
 using Research.Shared.Core.Transactions;
+using Research.Shared.Messaging;
 
-namespace Research.Jobs.Application.Lifecycle;
+namespace Research.Jobs.Application.Common.Services;
 
 /// <summary>
-/// The frame of every reply Jobs consumes: one transaction holding the inbox record, the job's row lock and the
-/// step's completion, so a reply takes effect exactly once. Duplicates, replies for unknown or terminal jobs (late
-/// results, §10.1) and replies for steps that already finished are acknowledged and discarded.
+/// Executes a worker reply handler inside a single idempotent transaction: records the message in the inbox, locks the
+/// target <see cref="ResearchJob"/> row, marks the corresponding <see cref="JobStep"/> finished, and invokes the
+/// slice's state-transition callback.
 /// </summary>
-public sealed partial class JobReplyGate(
+/// <remarks>
+/// Duplicate deliveries, replies for unknown or already-terminal jobs (late results), and replies for already-finished
+/// steps are safely ignored and committed without invoking the callback.
+/// </remarks>
+public sealed partial class StepReplyProcessor(
     IUnitOfWork unitOfWork,
     IInbox inbox,
     IResearchJobRepository jobs,
     IJobStepRepository steps,
     JobsMetrics metrics,
-    ILogger<JobReplyGate> logger)
+    ILogger<StepReplyProcessor> logger)
 {
     /// <summary>
-    /// Records the reply, finishes its step with <paramref name="stepStatus"/>, and runs <paramref name="advance"/>
-    /// with the locked job, all in one transaction.
+    /// Processes a single step reply atomically and invokes <paramref name="onStepFinished"/> with the locked job
+    /// when the reply is new and transitions the step to a finished state.
     /// </summary>
     public async Task ProcessAsync(
         Guid jobId,
@@ -30,11 +34,11 @@ public sealed partial class JobReplyGate(
         StepStatus stepStatus,
         string? stepErrorCode,
         MessageContext context,
-        Func<ResearchJob, Task> advance,
+        Func<ResearchJob, Task> onStepFinished,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(advance);
+        ArgumentNullException.ThrowIfNull(onStepFinished);
 
         await using var _ = await unitOfWork.BeginAsync(cancellationToken).ConfigureAwait(false);
 
@@ -74,7 +78,7 @@ public sealed partial class JobReplyGate(
         }
 
         metrics.StepFinished(JobStepKeys.KindOf(stepKey), stepStatus, stepErrorCode);
-        await advance(job).ConfigureAwait(false);
+        await onStepFinished(job).ConfigureAwait(false);
         await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 

@@ -3,13 +3,13 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Research.Jobs.Application.AdvanceOnPlanReady;
 using Research.Jobs.Application.CancelResearchJob;
 using Research.Jobs.Application.Common.Models;
+using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Application.CompleteOnReportReady;
 using Research.Jobs.Application.CreateResearchJob;
 using Research.Jobs.Application.EnforceJobDeadlines;
 using Research.Jobs.Application.FailResearchJob;
 using Research.Jobs.Application.GetResearchJob;
 using Research.Jobs.Application.GetResearchReport;
-using Research.Jobs.Application.Lifecycle;
 using Research.Jobs.Application.Observability;
 using Research.Jobs.Application.RecoverStuckJobs;
 using Research.Jobs.Application.StartSynthesis;
@@ -23,7 +23,7 @@ namespace Research.Jobs.Application;
 /// <summary>DI registrations for the Jobs Application layer (API host and Worker host).</summary>
 public static class JobsApplicationServiceCollectionExtensions
 {
-    /// <summary>Registers Jobs API handlers, validators, lifecycle orchestration, and domain event handlers.</summary>
+    /// <summary>Registers Jobs API handlers, validators, and domain event handlers.</summary>
     public static IServiceCollection AddJobsApiApplication(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -39,14 +39,15 @@ public static class JobsApplicationServiceCollectionExtensions
         return services;
     }
 
-    /// <summary>Registers Jobs worker/coordinator handlers, reply gate, lifecycle orchestration, and domain event handlers.</summary>
+    /// <summary>Registers Jobs worker/coordinator handlers, step reply processor, gathering completer, and domain event handlers.</summary>
     public static IServiceCollection AddJobsWorkerApplication(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddJobsApplicationCore();
 
-        services.TryAddScoped<JobReplyGate>();
+        services.TryAddScoped<StepReplyProcessor>();
+        services.TryAddScoped<GatheringPhaseCompleter>();
         services.AddScoped<IRequestHandler<RecoverStuckJobsCommand, int>, RecoverStuckJobsHandler>();
         services.AddScoped<IRequestHandler<EnforceJobDeadlinesCommand, int>, EnforceJobDeadlinesHandler>();
 
@@ -56,8 +57,7 @@ public static class JobsApplicationServiceCollectionExtensions
     private static void AddJobsApplicationCore(this IServiceCollection services)
     {
         services.TryAddSingleton<JobsMetrics>();
-        services.TryAddScoped<StepEmitter>();
-        services.TryAddScoped<JobLifecycle>();
+        services.TryAddScoped<StepDispatcher>();
 
         services.AddScoped<IDomainEventHandler<JobCreatedDomainEvent>, JobCreatedDomainEventHandler>();
         services.AddScoped<IDomainEventHandler<JobGatheringStartedDomainEvent>, JobGatheringStartedDomainEventHandler>();

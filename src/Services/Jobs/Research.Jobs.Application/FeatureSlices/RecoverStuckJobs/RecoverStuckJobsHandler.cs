@@ -1,12 +1,12 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Interfaces;
-using Research.Jobs.Application.Lifecycle;
+using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Application.Observability;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
-using Research.Shared.Messaging;
 using Research.Shared.Core.Transactions;
+using Research.Shared.Messaging;
 
 namespace Research.Jobs.Application.RecoverStuckJobs;
 
@@ -20,7 +20,7 @@ public sealed partial class RecoverStuckJobsHandler(
     IUnitOfWork unitOfWork,
     IResearchJobRepository jobs,
     IJobStepRepository steps,
-    JobLifecycle lifecycle,
+    GatheringPhaseCompleter gatheringCompleter,
     IOutbox outbox,
     IEnvelopeFactory envelopes,
     JobsMetrics metrics,
@@ -85,7 +85,11 @@ public sealed partial class RecoverStuckJobsHandler(
 
             if (step.Kind is StepKind.Plan or StepKind.Synthesize)
             {
-                await lifecycle.FailAsync(job, code, cancellationToken).ConfigureAwait(false);
+                if (job.Fail(code, now))
+                {
+                    await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false);
+                }
+
                 await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
                 return handled;
             }
@@ -95,7 +99,7 @@ public sealed partial class RecoverStuckJobsHandler(
 
         if (gatheringStepFailed)
         {
-            await lifecycle.EvaluateGatheringAsync(job, forcedReason: null, cancellationToken).ConfigureAwait(false);
+            await gatheringCompleter.TryCompleteAsync(job, forcedReason: null, cancellationToken).ConfigureAwait(false);
         }
 
         await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);

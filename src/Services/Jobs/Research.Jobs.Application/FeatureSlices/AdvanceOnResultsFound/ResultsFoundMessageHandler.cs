@@ -2,8 +2,8 @@ using Microsoft.Extensions.Options;
 using Research.Contracts.Fetching;
 using Research.Contracts.Search;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
-using Research.Jobs.Application.Lifecycle;
 using Research.Shared.Messaging;
 using Research.SharedKernel.Security;
 
@@ -14,16 +14,17 @@ namespace Research.Jobs.Application.AdvanceOnResultsFound;
 /// capped at <see cref="JobsOptions.MaxSources"/>, none once the budget is spent), then check whether gathering ended.
 /// </summary>
 public sealed class ResultsFoundMessageHandler(
-    JobReplyGate gate,
-    JobLifecycle lifecycle,
-    StepEmitter emitter,
+    StepReplyProcessor replyProcessor,
+    GatheringPhaseCompleter gatheringCompleter,
+    StepDispatcher stepDispatcher,
+    IResearchJobRepository jobs,
     IJobStepRepository steps,
     IOptionsSnapshot<JobsOptions> options) : IMessageHandler<ResultsFound>
 {
     public Task HandleAsync(ResultsFound message, MessageContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(message);
-        return gate.ProcessAsync(
+        return replyProcessor.ProcessAsync(
             message.JobId,
             message.StepKey,
             StepStatus.Succeeded,
@@ -31,9 +32,13 @@ public sealed class ResultsFoundMessageHandler(
             context,
             async job =>
             {
-                if (!await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, cancellationToken)
-                        .ConfigureAwait(false)
-                    || job.Status != JobStatus.Gathering)
+                if (job.RecordTokens(message.InputTokens + message.OutputTokens)
+                    && !await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false))
+                {
+                    return;
+                }
+
+                if (job.Status != JobStatus.Gathering)
                 {
                     return;
                 }
@@ -55,7 +60,7 @@ public sealed class ResultsFoundMessageHandler(
                             continue;
                         }
 
-                        var started = await emitter.EmitAsync(
+                        var started = await stepDispatcher.TryDispatchAsync(
                             new FetchRequested(job.Id, JobStepKeys.Fetch(hit.Url), hit.Url, UntrustedText.SingleLine(hit.Title)),
                             cancellationToken).ConfigureAwait(false);
                         if (started)
@@ -65,7 +70,7 @@ public sealed class ResultsFoundMessageHandler(
                     }
                 }
 
-                await lifecycle.EvaluateGatheringAsync(job, forcedReason: null, cancellationToken).ConfigureAwait(false);
+                await gatheringCompleter.TryCompleteAsync(job, forcedReason: null, cancellationToken).ConfigureAwait(false);
             },
             cancellationToken);
     }

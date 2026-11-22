@@ -5,22 +5,28 @@ using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Domain;
 using Research.Shared.Messaging;
 
-namespace Research.Jobs.Application.Lifecycle;
+namespace Research.Jobs.Application.Common.Services;
 
 /// <summary>
-/// Starts a step: inserts its row (with the request, for re-emission, and a lease) and enqueues the request in the
-/// outbox, inside the active unit of work. A step key the job already has is skipped, which is how duplicate URLs and
-/// replayed replies collapse.
+/// Dispatches an outbound worker step within the active unit of work: inserts a leased <see cref="JobStep"/> row
+/// (storing the serialized request for timeout re-emission) and enqueues the message in the outbox.
 /// </summary>
-public sealed class StepEmitter(
+/// <remarks>
+/// Idempotent per <c>(JobId, StepKey)</c>: if the job already has a step with the same key (for example, a duplicate
+/// URL across searches or a replayed message), nothing is inserted or enqueued.
+/// </remarks>
+public sealed class StepDispatcher(
     IJobStepRepository steps,
     IOutbox outbox,
     IEnvelopeFactory envelopes,
     IOptionsSnapshot<JobsOptions> options,
     TimeProvider timeProvider)
 {
-    /// <returns>True when the step was new and its request enqueued.</returns>
-    public async Task<bool> EmitAsync<TMessage>(TMessage message, CancellationToken cancellationToken)
+    /// <summary>
+    /// Persists the step and enqueues <paramref name="message"/> if its step key does not already exist for the job.
+    /// </summary>
+    /// <returns><see langword="true"/> if a new step was created and enqueued; <see langword="false"/> if the step key already existed.</returns>
+    public async Task<bool> TryDispatchAsync<TMessage>(TMessage message, CancellationToken cancellationToken)
         where TMessage : IIntegrationMessage
     {
         ArgumentNullException.ThrowIfNull(message);

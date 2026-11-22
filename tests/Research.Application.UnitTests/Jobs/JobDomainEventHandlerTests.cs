@@ -10,11 +10,11 @@ using Research.Jobs.Application;
 using Research.Jobs.Application.AdvanceOnPlanReady;
 using Research.Jobs.Application.CancelResearchJob;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Application.CompleteOnReportReady;
 using Research.Jobs.Application.CreateResearchJob;
 using Research.Jobs.Application.EnforceJobDeadlines;
 using Research.Jobs.Application.FailResearchJob;
-using Research.Jobs.Application.Lifecycle;
 using Research.Jobs.Application.Observability;
 using Research.Jobs.Application.StartSynthesis;
 using Research.Jobs.Domain;
@@ -33,7 +33,7 @@ public sealed class JobDomainEventHandlerTests
         var steps = new FakeStepRepository();
         var outbox = new FakeOutbox();
         var handler = new JobCreatedDomainEventHandler(
-            CreateEmitter(steps, outbox),
+            CreateStepDispatcher(steps, outbox),
             outbox,
             new FakeEnvelopeFactory(),
             new JobsMetrics(TestMeters.Create()),
@@ -51,7 +51,7 @@ public sealed class JobDomainEventHandlerTests
     {
         var steps = new FakeStepRepository();
         var outbox = new FakeOutbox();
-        var handler = new JobGatheringStartedDomainEventHandler(CreateEmitter(steps, outbox), TestOptions.Of(new JobsOptions()));
+        var handler = new JobGatheringStartedDomainEventHandler(CreateStepDispatcher(steps, outbox), TestOptions.Of(new JobsOptions()));
 
         await handler.HandleAsync(new JobGatheringStartedDomainEvent(Guid.NewGuid(), ["Q1", "Q2"], T0), CancellationToken.None);
 
@@ -64,7 +64,7 @@ public sealed class JobDomainEventHandlerTests
     {
         var steps = new FakeStepRepository();
         var outbox = new FakeOutbox();
-        var handler = new JobSynthesisStartedDomainEventHandler(CreateEmitter(steps, outbox), TestOptions.Of(new JobsOptions()));
+        var handler = new JobSynthesisStartedDomainEventHandler(CreateStepDispatcher(steps, outbox), TestOptions.Of(new JobsOptions()));
 
         await handler.HandleAsync(new JobSynthesisStartedDomainEvent(Guid.NewGuid(), "Question", ["Q1"], T0), CancellationToken.None);
 
@@ -97,7 +97,7 @@ public sealed class JobDomainEventHandlerTests
         ]);
     }
 
-    private static StepEmitter CreateEmitter(IJobStepRepository steps, IOutbox outbox) => new(
+    private static StepDispatcher CreateStepDispatcher(IJobStepRepository steps, IOutbox outbox) => new(
         steps,
         outbox,
         new FakeEnvelopeFactory(),

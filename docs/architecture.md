@@ -114,7 +114,7 @@ POST /research ─► Planning ─► Gathering ─► Synthesizing ─► Compl
    worker dispatches `EnforceJobDeadlinesCommand` to enforce the cutoff and expire overdue jobs. Cancellation is a
    compare-and-set update to `Cancelled`.
 
-Every reply goes through `JobReplyGate`, one transaction that does the following in order:
+Every reply goes through `StepReplyProcessor`, one transaction that does the following in order:
 
 1. records the reply in the inbox;
 2. locks the job row;

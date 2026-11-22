@@ -8,11 +8,11 @@ using Research.Fetching.Infrastructure;
 using Research.Jobs.Application;
 using Research.Jobs.Application.CancelResearchJob;
 using Research.Jobs.Application.Common.Models;
+using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Application.CreateResearchJob;
 using Research.Jobs.Application.EnforceJobDeadlines;
 using Research.Jobs.Application.GetResearchJob;
 using Research.Jobs.Application.GetResearchReport;
-using Research.Jobs.Application.Lifecycle;
 using Research.Jobs.Application.RecoverStuckJobs;
 using Research.Jobs.Domain.Events;
 using Research.Knowledge.Application;
@@ -79,12 +79,14 @@ public sealed class ServiceRegistrationTests
         apiServices.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<GetResearchReportQuery, Result<ResearchReportDto>>));
         apiServices.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<CancelResearchJobCommand, Result<ResearchJobDto>>));
         apiServices.ShouldContain(static d => d.ServiceType == typeof(IDomainEventHandler<JobCreatedDomainEvent>));
-        apiServices.ShouldNotContain(static d => d.ServiceType == typeof(JobReplyGate));
+        apiServices.ShouldNotContain(static d => d.ServiceType == typeof(StepReplyProcessor));
+        apiServices.ShouldNotContain(static d => d.ServiceType == typeof(GatheringPhaseCompleter));
 
         var workerServices = new ServiceCollection();
         workerServices.AddJobsWorkerApplication();
 
-        workerServices.ShouldContain(static d => d.ServiceType == typeof(JobReplyGate));
+        workerServices.ShouldContain(static d => d.ServiceType == typeof(StepReplyProcessor));
+        workerServices.ShouldContain(static d => d.ServiceType == typeof(GatheringPhaseCompleter));
         workerServices.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<RecoverStuckJobsCommand, int>));
         workerServices.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<EnforceJobDeadlinesCommand, int>));
         workerServices.ShouldContain(static d => d.ServiceType == typeof(IDomainEventHandler<JobCompletedDomainEvent>));

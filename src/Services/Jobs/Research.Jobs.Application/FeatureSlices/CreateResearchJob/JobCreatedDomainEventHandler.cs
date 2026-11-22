@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
 using Research.Contracts.Jobs;
 using Research.Contracts.Planning;
-using Research.Jobs.Application.Lifecycle;
+using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Application.Observability;
 using Research.Jobs.Domain;
 using Research.Jobs.Domain.Events;
@@ -12,7 +12,7 @@ namespace Research.Jobs.Application.CreateResearchJob;
 
 /// <summary>Emits the initial <c>PlanRequested</c> step and enqueues <c>JobCreated</c> when a job is created.</summary>
 public sealed class JobCreatedDomainEventHandler(
-    StepEmitter emitter,
+    StepDispatcher stepDispatcher,
     IOutbox outbox,
     IEnvelopeFactory envelopes,
     JobsMetrics metrics,
@@ -23,7 +23,7 @@ public sealed class JobCreatedDomainEventHandler(
     public async Task HandleAsync(JobCreatedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
-        await emitter.EmitAsync(
+        await stepDispatcher.TryDispatchAsync(
             new PlanRequested(domainEvent.JobId, JobStepKeys.Plan, domainEvent.Question, options.Value.MaxSubQuestions),
             cancellationToken).ConfigureAwait(false);
         await outbox.EnqueueAsync(

@@ -1,7 +1,8 @@
 using Microsoft.Extensions.Options;
 using Research.Contracts.Planning;
+using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
-using Research.Jobs.Application.Lifecycle;
 using Research.Shared.Messaging;
 using Research.SharedKernel.Security;
 
@@ -12,15 +13,15 @@ namespace Research.Jobs.Application.AdvanceOnPlanReady;
 /// handlers emit one <c>SearchRequested</c> step per sub-question (or enqueue <c>JobFailed</c> for an empty plan).
 /// </summary>
 public sealed class PlanReadyMessageHandler(
-    JobReplyGate gate,
-    JobLifecycle lifecycle,
+    StepReplyProcessor replyProcessor,
+    IResearchJobRepository jobs,
     TimeProvider timeProvider,
     IOptionsSnapshot<JobsOptions> options) : IMessageHandler<PlanReady>
 {
     public Task HandleAsync(PlanReady message, MessageContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(message);
-        return gate.ProcessAsync(
+        return replyProcessor.ProcessAsync(
             message.JobId,
             message.StepKey,
             StepStatus.Succeeded,
@@ -28,9 +29,13 @@ public sealed class PlanReadyMessageHandler(
             context,
             async job =>
             {
-                if (!await lifecycle.AddTokensAsync(job, message.InputTokens + message.OutputTokens, cancellationToken)
-                        .ConfigureAwait(false)
-                    || job.Status != JobStatus.Planning)
+                if (job.RecordTokens(message.InputTokens + message.OutputTokens)
+                    && !await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false))
+                {
+                    return;
+                }
+
+                if (job.Status != JobStatus.Planning)
                 {
                     return;
                 }
@@ -38,7 +43,7 @@ public sealed class PlanReadyMessageHandler(
                 var settings = options.Value;
                 var subQuestions = Normalize(message.SubQuestions, settings.MaxSubQuestions, settings.MaxSubQuestionLength);
                 job.StartGathering(subQuestions, timeProvider.GetUtcNow());
-                await lifecycle.SaveAsync(job, cancellationToken).ConfigureAwait(false);
+                await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false);
             },
             cancellationToken);
     }

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Interfaces;
-using Research.Jobs.Application.Lifecycle;
+using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Transactions;
@@ -15,7 +15,7 @@ namespace Research.Jobs.Application.EnforceJobDeadlines;
 public sealed class EnforceJobDeadlinesHandler(
     IUnitOfWork unitOfWork,
     IResearchJobRepository jobs,
-    JobLifecycle lifecycle,
+    GatheringPhaseCompleter gatheringCompleter,
     IOptionsSnapshot<JobsOptions> options,
     TimeProvider timeProvider) : ICommandHandler<EnforceJobDeadlinesCommand, int>
 {
@@ -38,7 +38,7 @@ public sealed class EnforceJobDeadlinesHandler(
             changed += await WithLockedJobAsync(
                 jobId,
                 job => job.Status.IsTerminal() || job.DeadlineAt > now,
-                job => lifecycle.ExpireAsync(job, cancellationToken),
+                job => job.Expire(now) ? jobs.UpdateAsync(job, cancellationToken) : Task.FromResult(false),
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -47,7 +47,7 @@ public sealed class EnforceJobDeadlinesHandler(
             changed += await WithLockedJobAsync(
                 jobId,
                 job => job.Status != JobStatus.Gathering || job.SynthesisCutoffAt > now,
-                job => lifecycle.EvaluateGatheringAsync(job, GatheringEndReason.CutoffReached, cancellationToken),
+                job => gatheringCompleter.TryCompleteAsync(job, GatheringEndReason.CutoffReached, cancellationToken),
                 cancellationToken).ConfigureAwait(false);
         }
 

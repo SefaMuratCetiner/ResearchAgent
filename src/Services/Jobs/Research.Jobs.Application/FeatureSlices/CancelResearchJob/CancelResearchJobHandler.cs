@@ -1,6 +1,5 @@
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Models;
-using Research.Jobs.Application.Lifecycle;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
 using Research.SharedKernel.Results;
@@ -13,7 +12,7 @@ namespace Research.Jobs.Application.CancelResearchJob;
 /// </summary>
 public sealed class CancelResearchJobHandler(
     IResearchJobRepository jobs,
-    JobLifecycle lifecycle) : ICommandHandler<CancelResearchJobCommand, Result<ResearchJobDto>>
+    TimeProvider timeProvider) : ICommandHandler<CancelResearchJobCommand, Result<ResearchJobDto>>
 {
     public async Task<Result<ResearchJobDto>> HandleAsync(CancelResearchJobCommand command, CancellationToken cancellationToken)
     {
@@ -25,9 +24,18 @@ public sealed class CancelResearchJobHandler(
             return Result<ResearchJobDto>.Failure(JobsErrors.JobNotFound);
         }
 
-        var result = await lifecycle.CancelAsync(job, cancellationToken).ConfigureAwait(false);
-        return result.IsSuccess
-            ? Result<ResearchJobDto>.Success(ResearchJobDto.From(result.Value))
-            : Result<ResearchJobDto>.Failure(result.Error);
+        var wasCancelled = job.Status == JobStatus.Cancelled;
+        var decision = job.Cancel(timeProvider.GetUtcNow());
+        if (!decision.IsSuccess)
+        {
+            return Result<ResearchJobDto>.Failure(decision.Error);
+        }
+
+        if (!wasCancelled && !await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false))
+        {
+            throw new InvalidOperationException("The cancel transition failed although the job row is locked.");
+        }
+
+        return Result<ResearchJobDto>.Success(ResearchJobDto.From(job));
     }
 }
