@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using Research.Shared.Adapters.Events;
+using Research.Shared.Adapters.Mediation;
 using Research.Shared.Core.Events;
 using Research.SharedKernel.Events;
 
@@ -12,9 +12,11 @@ public sealed class DomainEventDispatcherTests
     {
         var log = new List<string>();
         var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddMetrics();
+        services.AddMediation();
         services.AddScoped<IDomainEventHandler<PingEvent>>(_ => new RecordingHandler("first", log));
         services.AddScoped<IDomainEventHandler<PingEvent>>(_ => new RecordingHandler("second", log));
-        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         await using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
@@ -28,7 +30,12 @@ public sealed class DomainEventDispatcherTests
     [Fact]
     public async Task DispatchAsync_WithNoRegisteredHandlers_Succeeds()
     {
-        await using var provider = new ServiceCollection().AddScoped<IDomainEventDispatcher, DomainEventDispatcher>().BuildServiceProvider();
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddMetrics();
+        services.AddMediation();
+
+        await using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var dispatcher = scope.ServiceProvider.GetRequiredService<IDomainEventDispatcher>();
 

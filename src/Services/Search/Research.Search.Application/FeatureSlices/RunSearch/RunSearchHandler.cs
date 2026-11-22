@@ -1,20 +1,21 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Research.Shared.Core.Search;
 using Research.Shared.Core.Logging;
-using Research.SharedKernel.Results;
+using Research.Shared.Core.Mediation;
+using Research.Shared.Core.Search;
 using Research.Shared.Core.Security;
+using Research.SharedKernel.Results;
 
 namespace Research.Search.Application.RunSearch;
 
 /// <summary>Search for <see cref="Query"/>; at most <see cref="MaxResults"/> distinct canonical URLs.</summary>
-public sealed record RunSearchCommand(string Query, int MaxResults);
+public sealed record RunSearchCommand(string Query, int MaxResults) : ICommand<Result<SearchResponse>>;
 
 /// <summary>
 /// Runs one search through the decorated provider, canonicalizes and deduplicates the URLs, and logs the query and
 /// every hit under <see cref="ContentLogCategories.Search"/>. Permanent provider rejections become failures.
 /// </summary>
-public sealed partial class RunSearchHandler
+public sealed partial class RunSearchHandler : ICommandHandler<RunSearchCommand, Result<SearchResponse>>
 {
     private readonly ISearchProvider _provider;
     private readonly SearchMetrics _metrics;

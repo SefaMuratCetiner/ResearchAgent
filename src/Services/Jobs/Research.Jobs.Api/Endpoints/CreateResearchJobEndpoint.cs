@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Research.Jobs.Application.CreateResearchJob;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Web.Problems;
 
 namespace Research.Jobs.Api.Endpoints;
@@ -19,11 +20,11 @@ public static class CreateResearchJobEndpoint
     public static async Task<IResult> HandleAsync(
         CreateResearchJobRequest? request,
         [FromHeader(Name = IdempotencyKeyHeader)] string? idempotencyKey,
-        CreateResearchJobHandler handler,
+        ISender sender,
         HttpContext context,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(handler);
+        ArgumentNullException.ThrowIfNull(sender);
         ArgumentNullException.ThrowIfNull(context);
 
         var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
@@ -43,7 +44,7 @@ public static class CreateResearchJobEndpoint
             return ProblemResults.Validation(errors, context);
         }
 
-        var result = await handler.HandleAsync(new CreateResearchJobCommand(request!.Question!, idempotencyKey), cancellationToken)
+        var result = await sender.SendAsync(new CreateResearchJobCommand(request!.Question!, idempotencyKey), cancellationToken)
             .ConfigureAwait(false);
         if (!result.IsSuccess)
         {

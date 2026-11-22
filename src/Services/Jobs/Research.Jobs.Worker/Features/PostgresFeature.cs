@@ -3,8 +3,6 @@ using Research.Providers.Postgres.Health;
 using Research.Providers.Postgres.Messaging;
 using Research.Providers.Postgres.Transactions;
 using Research.Shared.Adapters.Composition;
-using Research.Shared.Adapters.Events;
-using Research.Shared.Core.Events;
 using Research.Shared.Core.Messaging;
 using Research.Shared.Core.Transactions;
 
@@ -24,7 +22,6 @@ internal sealed class PostgresFeature : IResearchFeature
         app.Host.AddNpgsqlDataSource("jobs");
         DapperTypeHandlers.Register();
 
-        app.Services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         app.Services.AddScoped<PostgresUnitOfWork>();
         app.Services.AddScoped<IUnitOfWork>(static provider => provider.GetRequiredService<PostgresUnitOfWork>());
         app.Services.AddScoped<IOutbox, PostgresOutbox>();

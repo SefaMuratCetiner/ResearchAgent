@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Domain;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Security;
 using Research.Shared.Core.Transactions;
 using Research.SharedKernel.Results;
@@ -18,7 +19,7 @@ public sealed partial class CreateResearchJobHandler(
     IResearchJobRepository jobs,
     IOptionsSnapshot<JobsOptions> options,
     TimeProvider timeProvider,
-    ILogger<CreateResearchJobHandler> logger)
+    ILogger<CreateResearchJobHandler> logger) : ICommandHandler<CreateResearchJobCommand, Result<CreateResearchJobResult>>
 {
     public async Task<Result<CreateResearchJobResult>> HandleAsync(CreateResearchJobCommand command, CancellationToken cancellationToken)
     {

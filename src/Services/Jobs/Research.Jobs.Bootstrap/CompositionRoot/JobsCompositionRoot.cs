@@ -4,6 +4,7 @@ using Research.Jobs.Application.Observability;
 using Research.Jobs.Bootstrap.Features;
 using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;
+using Research.Shared.Adapters.Mediation;
 using Research.Shared.Core.Messaging;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
@@ -33,6 +34,7 @@ public sealed partial class JobsCompositionRoot
     [
         // Platform
         new ActorsFeature(),
+        new MediationFeature(),
         new ErrorsFeature(new ProblemErrorCatalog(), new MessagingErrorCatalog(), new JobsErrorCatalog()),
 
         // Infrastructure
@@ -49,8 +51,8 @@ public sealed partial class JobsCompositionRoot
     public void ComposeServices()
     {
         _builder.AddServiceDefaults(
-            activitySources: [JobsTracing.SourceName],
-            meters: [JobsMetrics.MeterName]);
+            activitySources: [MediationTracing.SourceName, JobsTracing.SourceName],
+            meters: [MediationMetrics.MeterName, JobsMetrics.MeterName]);
         _builder.Services.AddSingleton(TimeProvider.System);
 
         var app = new ResearchBuilder(_builder);

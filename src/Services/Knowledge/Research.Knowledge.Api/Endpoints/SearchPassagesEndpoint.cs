@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Research.Knowledge.Application;
 using Research.Knowledge.Application.SearchPassages;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Web.Problems;
 
 namespace Research.Knowledge.Api.Endpoints;
@@ -26,12 +27,12 @@ public static class SearchPassagesEndpoint
 
     public static async Task<IResult> HandleAsync(
         SearchPassagesRequest? request,
-        SearchPassagesHandler handler,
+        ISender sender,
         IOptionsSnapshot<KnowledgeOptions> options,
         HttpContext context,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(handler);
+        ArgumentNullException.ThrowIfNull(sender);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(context);
 
@@ -62,7 +63,7 @@ public static class SearchPassagesEndpoint
             return ProblemResults.Validation(errors, context);
         }
 
-        var result = await handler.HandleAsync(new SearchPassagesQuery(request!.JobId!.Value, queries, request.TopK!.Value), cancellationToken)
+        var result = await sender.SendAsync(new SearchPassagesQuery(request!.JobId!.Value, queries, request.TopK!.Value), cancellationToken)
             .ConfigureAwait(false);
         if (!result.IsSuccess)
         {

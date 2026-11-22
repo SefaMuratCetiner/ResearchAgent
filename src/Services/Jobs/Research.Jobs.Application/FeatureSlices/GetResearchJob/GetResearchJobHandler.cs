@@ -1,11 +1,13 @@
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Domain;
+using Research.Shared.Core.Mediation;
 using Research.SharedKernel.Results;
 
 namespace Research.Jobs.Application.GetResearchJob;
 
 /// <summary>Reads a job and summarizes its steps by kind.</summary>
 public sealed class GetResearchJobHandler(IResearchJobRepository jobs, IJobStepRepository steps)
+    : IQueryHandler<GetResearchJobQuery, Result<ResearchJobView>>
 {
     public async Task<Result<ResearchJobView>> HandleAsync(GetResearchJobQuery query, CancellationToken cancellationToken)
     {

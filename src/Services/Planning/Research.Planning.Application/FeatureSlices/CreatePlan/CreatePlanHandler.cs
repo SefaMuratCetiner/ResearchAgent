@@ -6,8 +6,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Shared.Core.Caching;
 using Research.Shared.Core.Llm;
-using Research.SharedKernel.Results;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Security;
+using Research.SharedKernel.Results;
 
 namespace Research.Planning.Application.CreatePlan;
 
@@ -20,7 +21,7 @@ public sealed partial class CreatePlanHandler(
     ILlmClient llm,
     ICacheStore cache,
     IOptionsSnapshot<PlanningOptions> options,
-    ILogger<CreatePlanHandler> logger)
+    ILogger<CreatePlanHandler> logger) : ICommandHandler<CreatePlanCommand, Result<ResearchPlan>>
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 

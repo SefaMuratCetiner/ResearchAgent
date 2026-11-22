@@ -3,17 +3,17 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Fetching.Application.Common.Interfaces;
-using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Domain;
 using Research.Shared.Core.Documents;
 using Research.Shared.Core.Logging;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Security;
 using Research.SharedKernel.Results;
 
 namespace Research.Fetching.Application.FetchPage;
 
 /// <summary>Fetch <see cref="Url"/> for a job; <see cref="Title"/> is the search result title, used when the page has none.</summary>
-public sealed record FetchPageCommand(Guid JobId, string Url, string? Title);
+public sealed record FetchPageCommand(Guid JobId, string Url, string? Title) : ICommand<Result<FetchedPage>>;
 
 /// <summary>A fetched page whose text is already in the document store under <see cref="BlobKey"/>.</summary>
 public sealed record FetchedPage(
@@ -33,7 +33,7 @@ public sealed record FetchedPage(
 /// blob). The extracted text is logged under <see cref="ContentLogCategories.Documents"/>. No database work: the
 /// message handler records the result in one transaction with the reply.
 /// </summary>
-public sealed partial class FetchPageHandler
+public sealed partial class FetchPageHandler : ICommandHandler<FetchPageCommand, Result<FetchedPage>>
 {
     private readonly IRobotsPolicy _robots;
     private readonly IDomainThrottle _throttle;

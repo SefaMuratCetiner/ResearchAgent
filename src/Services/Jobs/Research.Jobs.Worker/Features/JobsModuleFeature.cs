@@ -1,13 +1,13 @@
 using Research.Jobs.Application.Common.Interfaces;
-using Research.Jobs.Domain.Events;
 using Research.Jobs.Application.DomainEventHandlers;
 using Research.Jobs.Application.EnforceJobDeadlines;
-using Research.Jobs.Infrastructure.Persistence;
 using Research.Jobs.Application.Lifecycle;
 using Research.Jobs.Application.Observability;
 using Research.Jobs.Application.RecoverStuckJobs;
+using Research.Jobs.Domain.Events;
+using Research.Jobs.Infrastructure.Persistence;
 using Research.Shared.Adapters.Composition;
-using Research.Shared.Core.Events;
+using Research.Shared.Adapters.Mediation;
 
 namespace Research.Jobs.Worker.Features;
 
@@ -26,15 +26,15 @@ internal sealed class JobsModuleFeature : IResearchFeature
         app.Services.AddScoped<JobLifecycle>();
         app.Services.AddScoped<JobReplyGate>();
 
-        app.Services.AddScoped<IDomainEventHandler<JobCreatedDomainEvent>, JobCreatedDomainEventHandler>();
-        app.Services.AddScoped<IDomainEventHandler<JobGatheringStartedDomainEvent>, JobGatheringStartedDomainEventHandler>();
-        app.Services.AddScoped<IDomainEventHandler<JobSynthesisStartedDomainEvent>, JobSynthesisStartedDomainEventHandler>();
-        app.Services.AddScoped<IDomainEventHandler<JobCompletedDomainEvent>, JobCompletedDomainEventHandler>();
-        app.Services.AddScoped<IDomainEventHandler<JobCancelledDomainEvent>, JobCancelledDomainEventHandler>();
-        app.Services.AddScoped<IDomainEventHandler<JobFailedDomainEvent>, JobFailedDomainEventHandler>();
-        app.Services.AddScoped<IDomainEventHandler<JobExpiredDomainEvent>, JobExpiredDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobCreatedDomainEvent, JobCreatedDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobGatheringStartedDomainEvent, JobGatheringStartedDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobSynthesisStartedDomainEvent, JobSynthesisStartedDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobCompletedDomainEvent, JobCompletedDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobCancelledDomainEvent, JobCancelledDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobFailedDomainEvent, JobFailedDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobExpiredDomainEvent, JobExpiredDomainEventHandler>();
 
-        app.Services.AddScoped<RecoverStuckJobsHandler>();
-        app.Services.AddScoped<EnforceJobDeadlinesHandler>();
+        app.Services.AddCommandHandler<RecoverStuckJobsCommand, int, RecoverStuckJobsHandler>();
+        app.Services.AddCommandHandler<EnforceJobDeadlinesCommand, int, EnforceJobDeadlinesHandler>();
     }
 }

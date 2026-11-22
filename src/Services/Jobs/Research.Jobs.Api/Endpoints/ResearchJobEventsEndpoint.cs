@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Research.Jobs.Application;
 using Research.Jobs.Application.GetResearchJob;
 using Research.Jobs.Domain;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Web.Problems;
 
 namespace Research.Jobs.Api.Endpoints;
@@ -22,28 +23,28 @@ public static class ResearchJobEventsEndpoint
 
     public static async Task<IResult> HandleAsync(
         Guid id,
-        GetResearchJobHandler handler,
+        ISender sender,
         IOptionsSnapshot<JobsOptions> options,
         TimeProvider timeProvider,
         HttpContext context,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(handler);
+        ArgumentNullException.ThrowIfNull(sender);
         ArgumentNullException.ThrowIfNull(options);
 
-        var first = await handler.HandleAsync(new GetResearchJobQuery(id), cancellationToken).ConfigureAwait(false);
+        var first = await sender.SendAsync(new GetResearchJobQuery(id), cancellationToken).ConfigureAwait(false);
         if (!first.IsSuccess)
         {
             return ProblemResults.From(first.Error, context);
         }
 
         return TypedResults.ServerSentEvents(
-            StreamAsync(first.Value, handler, options.Value.EventsPollInterval, timeProvider, cancellationToken));
+            StreamAsync(first.Value, sender, options.Value.EventsPollInterval, timeProvider, cancellationToken));
     }
 
     private static async IAsyncEnumerable<SseItem<ResearchJobResponse>> StreamAsync(
         ResearchJobView first,
-        GetResearchJobHandler handler,
+        ISender sender,
         TimeSpan pollInterval,
         TimeProvider timeProvider,
         [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -62,7 +63,7 @@ public static class ResearchJobEventsEndpoint
                 yield break;
             }
 
-            var next = await handler.HandleAsync(new GetResearchJobQuery(current.Job.Id), cancellationToken).ConfigureAwait(false);
+            var next = await sender.SendAsync(new GetResearchJobQuery(current.Job.Id), cancellationToken).ConfigureAwait(false);
             if (!next.IsSuccess)
             {
                 yield break;

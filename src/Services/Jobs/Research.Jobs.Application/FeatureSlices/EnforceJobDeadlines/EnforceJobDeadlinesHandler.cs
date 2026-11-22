@@ -1,10 +1,14 @@
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Interfaces;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Lifecycle;
+using Research.Jobs.Domain;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Transactions;
 
 namespace Research.Jobs.Application.EnforceJobDeadlines;
+
+/// <summary>Enforce synthesis cutoffs and hard deadlines on active jobs; returns how many jobs changed state.</summary>
+public sealed record EnforceJobDeadlinesCommand : ICommand<int>;
 
 /// <summary>
 /// Drives the two clocks (§10.1): a gathering job past <c>synthesis_cutoff_at</c> ends gathering
@@ -16,8 +20,14 @@ public sealed class EnforceJobDeadlinesHandler(
     IResearchJobRepository jobs,
     JobLifecycle lifecycle,
     IOptionsSnapshot<JobsOptions> options,
-    TimeProvider timeProvider)
+    TimeProvider timeProvider) : ICommandHandler<EnforceJobDeadlinesCommand, int>
 {
+    public Task<int> HandleAsync(EnforceJobDeadlinesCommand request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return HandleAsync(cancellationToken);
+    }
+
     /// <returns>How many jobs changed state.</returns>
     public async Task<int> HandleAsync(CancellationToken cancellationToken)
     {

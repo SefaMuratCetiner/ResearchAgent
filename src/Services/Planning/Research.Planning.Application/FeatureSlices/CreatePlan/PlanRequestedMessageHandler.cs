@@ -1,19 +1,19 @@
 using Research.Contracts.Planning;
 using Research.Contracts.Steps;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Messaging;
 
 namespace Research.Planning.Application.CreatePlan;
 
 /// <summary>Answers <c>PlanRequested</c> with <c>PlanReady</c>, or <c>StepFailed</c> for a business failure.</summary>
-public sealed class PlanRequestedMessageHandler(CreatePlanHandler handler, IMessageSender sender) : IMessageHandler<PlanRequested>
+public sealed class PlanRequestedMessageHandler(ISender mediator, IMessageSender sender) : IMessageHandler<PlanRequested>
 {
     public const string ServiceName = "planning";
 
     public async Task HandleAsync(PlanRequested message, MessageContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(message);
-        var result = await handler.HandleAsync(new CreatePlanCommand(message.Question, message.MaxSubQuestions), cancellationToken)
+        var result = await mediator.SendAsync(new CreatePlanCommand(message.Question, message.MaxSubQuestions), cancellationToken)
             .ConfigureAwait(false);
 
         if (result.IsSuccess)

@@ -3,6 +3,7 @@ using Research.Jobs.Application.Observability;
 using Research.Jobs.Worker.Features;
 using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;
+using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
 using Research.Shared.Core.Messaging;
@@ -31,6 +32,7 @@ public sealed class JobsWorkerCompositionRoot
     [
         // Platform
         new ActorsFeature(),
+        new MediationFeature(),
         new ErrorsFeature(new MessagingErrorCatalog(), new JobsErrorCatalog()),
 
         // Infrastructure
@@ -46,8 +48,8 @@ public sealed class JobsWorkerCompositionRoot
     public void ComposeServices()
     {
         _builder.AddServiceDefaults(
-            activitySources: [MessagingTracing.SourceName, JobsTracing.SourceName],
-            meters: [MessagingMetrics.MeterName, JobsMetrics.MeterName]);
+            activitySources: [MediationTracing.SourceName, MessagingTracing.SourceName, JobsTracing.SourceName],
+            meters: [MediationMetrics.MeterName, MessagingMetrics.MeterName, JobsMetrics.MeterName]);
         _builder.Services.AddSingleton(TimeProvider.System);
 
         var app = new ResearchBuilder(_builder);

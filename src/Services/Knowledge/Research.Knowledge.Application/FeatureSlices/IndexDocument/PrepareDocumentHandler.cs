@@ -4,12 +4,14 @@ using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Domain;
 using Research.Shared.Core.Documents;
 using Research.Shared.Core.Embeddings;
+using Research.Shared.Core.Mediation;
 using Research.SharedKernel.Results;
 
 namespace Research.Knowledge.Application.IndexDocument;
 
 /// <summary>Index the text stored under <see cref="BlobKey"/> (fetched from <see cref="Url"/>).</summary>
-public sealed record PrepareDocumentCommand(string Url, string Title, string BlobKey, string ContentHash);
+public sealed record PrepareDocumentCommand(string Url, string Title, string BlobKey, string ContentHash)
+    : ICommand<Result<PreparedDocument>>;
 
 /// <summary>
 /// What indexing needs to write: either the id of a document with the same content that is already indexed, or a new
@@ -30,7 +32,7 @@ public sealed partial class PrepareDocumentHandler(
     IEmbeddingGenerator embeddings,
     IOptionsSnapshot<KnowledgeOptions> options,
     TimeProvider timeProvider,
-    ILogger<PrepareDocumentHandler> logger)
+    ILogger<PrepareDocumentHandler> logger) : ICommandHandler<PrepareDocumentCommand, Result<PreparedDocument>>
 {
     public async Task<Result<PreparedDocument>> HandleAsync(PrepareDocumentCommand command, CancellationToken cancellationToken)
     {

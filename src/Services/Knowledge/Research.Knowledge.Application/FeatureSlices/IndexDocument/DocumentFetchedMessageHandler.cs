@@ -4,19 +4,20 @@ using Research.Contracts.Knowledge;
 using Research.Contracts.Steps;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Domain;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Messaging;
 using Research.Shared.Core.Transactions;
 
 namespace Research.Knowledge.Application.IndexDocument;
 
 /// <summary>
-/// Answers <c>DocumentFetched</c> with <c>DocumentIndexed</c> or <c>StepFailed</c>. A redelivered message that was
-/// already recorded is skipped before any work. The preparation (blob read, chunking, embedding) runs outside the
-/// transaction; one short transaction then records the inbox entry, the document (unless the same content is already
+/// Answers <c>DocumentFetched</c> with <c>DocumentIndexed</c> or <c>StepFailed</c>. Fast-path inbox deduplication runs
+/// in <c>InboxBehavior</c> before any work. Preparation (blob read, chunking, embedding) runs outside the transaction;
+/// one short transaction then atomically records the inbox entry, the document (unless the same content is already
 /// indexed), the job link and the reply in the outbox.
 /// </summary>
 public sealed partial class DocumentFetchedMessageHandler(
-    PrepareDocumentHandler prepare,
+    ISender sender,
     IKnowledgeRepository repository,
     IUnitOfWork unitOfWork,
     IInbox inbox,
@@ -32,12 +33,7 @@ public sealed partial class DocumentFetchedMessageHandler(
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(context);
 
-        if (await inbox.HasProcessedAsync(context.MessageId, context.Consumer, cancellationToken).ConfigureAwait(false))
-        {
-            return;
-        }
-
-        var prepared = await prepare.HandleAsync(
+        var prepared = await sender.SendAsync(
             new PrepareDocumentCommand(message.Url, message.Title, message.BlobKey, message.ContentHash),
             cancellationToken).ConfigureAwait(false);
 

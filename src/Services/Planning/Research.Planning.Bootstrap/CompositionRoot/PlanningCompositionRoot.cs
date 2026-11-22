@@ -3,6 +3,7 @@ using Research.Planning.Bootstrap.Features;
 using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Llm;
+using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
 using Research.Shared.Core.Llm;
@@ -24,6 +25,7 @@ public sealed class PlanningCompositionRoot
         [
             // Platform
             new ActorsFeature(),
+            new MediationFeature(),
             new ErrorsFeature(new MessagingErrorCatalog(), new PlanningErrorCatalog()),
 
             // Infrastructure
@@ -44,8 +46,8 @@ public sealed class PlanningCompositionRoot
     public void ComposeServices()
     {
         _builder.AddServiceDefaults(
-            activitySources: [MessagingTracing.SourceName, LlmTracing.SourceName],
-            meters: [MessagingMetrics.MeterName, LlmMetrics.MeterName]);
+            activitySources: [MediationTracing.SourceName, MessagingTracing.SourceName, LlmTracing.SourceName],
+            meters: [MediationMetrics.MeterName, MessagingMetrics.MeterName, LlmMetrics.MeterName]);
         _builder.Services.AddSingleton(TimeProvider.System);
 
         var app = new ResearchBuilder(_builder);

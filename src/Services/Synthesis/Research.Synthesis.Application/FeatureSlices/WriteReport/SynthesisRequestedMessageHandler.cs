@@ -1,19 +1,19 @@
 using Research.Contracts.Steps;
 using Research.Contracts.Synthesis;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Messaging;
 
 namespace Research.Synthesis.Application.WriteReport;
 
 /// <summary>Answers <c>SynthesisRequested</c> with <c>ReportReady</c>, or <c>StepFailed</c> for a business failure.</summary>
-public sealed class SynthesisRequestedMessageHandler(WriteReportHandler handler, IMessageSender sender) : IMessageHandler<SynthesisRequested>
+public sealed class SynthesisRequestedMessageHandler(ISender mediator, IMessageSender sender) : IMessageHandler<SynthesisRequested>
 {
     public const string ServiceName = "synthesis";
 
     public async Task HandleAsync(SynthesisRequested message, MessageContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(message);
-        var result = await handler.HandleAsync(
+        var result = await mediator.SendAsync(
             new WriteReportCommand(message.JobId, message.Question, message.SubQuestions ?? [], message.TopK),
             cancellationToken).ConfigureAwait(false);
 

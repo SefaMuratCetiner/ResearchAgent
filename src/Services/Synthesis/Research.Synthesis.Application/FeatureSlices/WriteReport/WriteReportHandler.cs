@@ -2,14 +2,16 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Shared.Core.Llm;
 using Research.Shared.Core.Logging;
-using Research.SharedKernel.Results;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Security;
+using Research.SharedKernel.Results;
 using Research.Synthesis.Application.Common.Interfaces;
 
 namespace Research.Synthesis.Application.WriteReport;
 
 /// <summary>Write the report of a job from its indexed passages.</summary>
-public sealed record WriteReportCommand(Guid JobId, string Question, IReadOnlyList<string> SubQuestions, int TopK);
+public sealed record WriteReportCommand(Guid JobId, string Question, IReadOnlyList<string> SubQuestions, int TopK)
+    : ICommand<Result<WrittenReport>>;
 
 /// <summary>The report, the sources it cites, and what it cost.</summary>
 public sealed record WrittenReport(
@@ -30,7 +32,7 @@ public sealed record WrittenReport(
 /// <c>synthesis.uncited_report</c> rather than presenting unsupported text as research (OWASP LLM09, ASI09).
 /// </para>
 /// </summary>
-public sealed partial class WriteReportHandler
+public sealed partial class WriteReportHandler : ICommandHandler<WriteReportCommand, Result<WrittenReport>>
 {
     private readonly IKnowledgeRetriever _retriever;
     private readonly ILlmClient _llm;

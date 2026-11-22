@@ -3,12 +3,39 @@ using Microsoft.Extensions.Options;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Domain;
 using Research.Shared.Core.Embeddings;
+using Research.Shared.Core.Mediation;
 using Research.SharedKernel.Results;
 
 namespace Research.Knowledge.Application.SearchPassages;
 
 /// <summary>The passages of <see cref="JobId"/>'s documents most similar to any of <see cref="Queries"/>.</summary>
-public sealed record SearchPassagesQuery(Guid JobId, IReadOnlyList<string> Queries, int TopK);
+public sealed record SearchPassagesQuery(Guid JobId, IReadOnlyList<string> Queries, int TopK)
+    : IQuery<Result<IReadOnlyList<PassageMatch>>>;
+
+/// <summary>Validates <see cref="SearchPassagesQuery"/> bounds before <see cref="SearchPassagesHandler"/> runs.</summary>
+public sealed class SearchPassagesQueryValidator(IOptionsSnapshot<KnowledgeOptions> options)
+    : IRequestValidator<SearchPassagesQuery>
+{
+    public ValueTask<Error?> ValidateAsync(SearchPassagesQuery request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var settings = options.Value;
+        var queries = (request.Queries ?? [])
+            .Select(static q => q?.Trim() ?? string.Empty)
+            .Where(static q => q.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var invalid = request.JobId == Guid.Empty
+            || queries.Count == 0
+            || queries.Count > settings.MaxQueries
+            || queries.Any(q => q.Length > settings.MaxQueryLength)
+            || request.TopK < 1
+            || request.TopK > settings.MaxTopK;
+
+        return ValueTask.FromResult(invalid ? KnowledgeErrors.InvalidSearch : null);
+    }
+}
 
 /// <summary>
 /// Embeds every query, searches each one within the job's documents, merges the hits (a passage keeps its best
@@ -20,7 +47,7 @@ public sealed partial class SearchPassagesHandler(
     KnowledgeMetrics metrics,
     IOptionsSnapshot<KnowledgeOptions> options,
     TimeProvider timeProvider,
-    ILogger<SearchPassagesHandler> logger)
+    ILogger<SearchPassagesHandler> logger) : IQueryHandler<SearchPassagesQuery, Result<IReadOnlyList<PassageMatch>>>
 {
     public async Task<Result<IReadOnlyList<PassageMatch>>> HandleAsync(SearchPassagesQuery query, CancellationToken cancellationToken)
     {

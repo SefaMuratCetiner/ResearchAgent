@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Research.Jobs.Application.GetResearchJob;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Web.Problems;
 
 namespace Research.Jobs.Api.Endpoints;
@@ -10,10 +11,10 @@ public static class GetResearchJobEndpoint
     public const string Pattern = "/{id:guid}";
     public const string Name = "GetResearchJob";
 
-    public static async Task<IResult> HandleAsync(Guid id, GetResearchJobHandler handler, HttpContext context, CancellationToken cancellationToken)
+    public static async Task<IResult> HandleAsync(Guid id, ISender sender, HttpContext context, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(handler);
-        var result = await handler.HandleAsync(new GetResearchJobQuery(id), cancellationToken).ConfigureAwait(false);
+        ArgumentNullException.ThrowIfNull(sender);
+        var result = await sender.SendAsync(new GetResearchJobQuery(id), cancellationToken).ConfigureAwait(false);
         return result.IsSuccess
             ? TypedResults.Ok(ResearchJobResponse.From(result.Value))
             : ProblemResults.From(result.Error, context);

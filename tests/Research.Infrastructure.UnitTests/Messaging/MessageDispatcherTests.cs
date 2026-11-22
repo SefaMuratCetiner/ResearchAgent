@@ -5,10 +5,13 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Research.Contracts.Search;
 using Research.Contracts.Steps;
+using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Consuming;
 using Research.Shared.Core.Actors;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Messaging;
+using Research.SharedKernel.Results;
 using Research.Infrastructure.UnitTests.TestSupport;
 
 namespace Research.Infrastructure.UnitTests.Messaging;
@@ -108,8 +111,11 @@ public sealed class MessageDispatcherTests
     private Task<DispatchResult> Dispatch(IncomingDelivery delivery, CancellationToken stoppingToken = default)
     {
         var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddMetrics();
+        services.AddMediation();
         services.AddScoped<ScopedActor>();
-        services.AddScoped<IMessageHandler<SearchRequested>>(provider =>
+        services.AddScoped<IRequestHandler<HandleMessage<SearchRequested>, Unit>>(provider =>
         {
             _handler.ActorSource = provider.GetRequiredService<ScopedActor>();
             return _handler;

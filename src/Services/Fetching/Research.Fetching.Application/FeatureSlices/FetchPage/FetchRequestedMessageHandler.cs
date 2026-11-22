@@ -2,19 +2,20 @@ using Research.Contracts.Fetching;
 using Research.Contracts.Steps;
 using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Domain;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Messaging;
 using Research.Shared.Core.Transactions;
 
 namespace Research.Fetching.Application.FetchPage;
 
 /// <summary>
-/// Answers <c>FetchRequested</c>. A redelivered message that was already recorded is skipped before any download.
-/// Otherwise the page is fetched (blob written first), then one transaction records the inbox entry, the
-/// <c>fetched_documents</c> row and the reply (<c>DocumentFetched</c> or <c>StepFailed</c>) in the outbox.
-/// Transient failures throw and the message is retried.
+/// Answers <c>FetchRequested</c>. Fast-path inbox deduplication runs in <c>InboxBehavior</c> before any download;
+/// after fetching (blob written first), one short transaction records the inbox entry atomically (guarding concurrent
+/// delivery races), the <c>fetched_documents</c> row, and the reply (<c>DocumentFetched</c> or <c>StepFailed</c>) in
+/// the outbox. Transient failures throw and the message is retried.
 /// </summary>
 public sealed class FetchRequestedMessageHandler(
-    FetchPageHandler handler,
+    ISender sender,
     IFetchedDocumentRepository documents,
     IUnitOfWork unitOfWork,
     IInbox inbox,
@@ -29,12 +30,7 @@ public sealed class FetchRequestedMessageHandler(
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(context);
 
-        if (await inbox.HasProcessedAsync(context.MessageId, context.Consumer, cancellationToken).ConfigureAwait(false))
-        {
-            return;
-        }
-
-        var result = await handler.HandleAsync(new FetchPageCommand(message.JobId, message.Url, message.Title), cancellationToken)
+        var result = await sender.SendAsync(new FetchPageCommand(message.JobId, message.Url, message.Title), cancellationToken)
             .ConfigureAwait(false);
 
         await using var _ = await unitOfWork.BeginAsync(cancellationToken).ConfigureAwait(false);

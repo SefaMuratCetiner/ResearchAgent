@@ -1,19 +1,19 @@
 using Research.Contracts.Search;
 using Research.Contracts.Steps;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Messaging;
 
 namespace Research.Search.Application.RunSearch;
 
 /// <summary>Answers <c>SearchRequested</c> with <c>ResultsFound</c> (possibly empty), or <c>StepFailed</c>.</summary>
-public sealed class SearchRequestedMessageHandler(RunSearchHandler handler, IMessageSender sender) : IMessageHandler<SearchRequested>
+public sealed class SearchRequestedMessageHandler(ISender mediator, IMessageSender sender) : IMessageHandler<SearchRequested>
 {
     public const string ServiceName = "search";
 
     public async Task HandleAsync(SearchRequested message, MessageContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(message);
-        var result = await handler.HandleAsync(new RunSearchCommand(message.Query, message.MaxResults), cancellationToken)
+        var result = await mediator.SendAsync(new RunSearchCommand(message.Query, message.MaxResults), cancellationToken)
             .ConfigureAwait(false);
 
         if (!result.IsSuccess)

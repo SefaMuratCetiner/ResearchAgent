@@ -1,5 +1,6 @@
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Domain;
+using Research.Shared.Core.Mediation;
 using Research.SharedKernel.Results;
 
 namespace Research.Jobs.Application.GetResearchReport;
@@ -9,6 +10,7 @@ namespace Research.Jobs.Application.GetResearchReport;
 /// (failed, cancelled, expired) answer <c>jobs.report_not_available</c>.
 /// </summary>
 public sealed class GetResearchReportHandler(IResearchJobRepository jobs, IResearchReportRepository reports)
+    : IQueryHandler<GetResearchReportQuery, Result<ResearchReportView>>
 {
     public async Task<Result<ResearchReportView>> HandleAsync(GetResearchReportQuery query, CancellationToken cancellationToken)
     {

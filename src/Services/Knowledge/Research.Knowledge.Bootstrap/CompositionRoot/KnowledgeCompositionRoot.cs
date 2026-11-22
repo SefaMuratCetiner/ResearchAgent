@@ -3,6 +3,7 @@ using Research.Knowledge.Application;
 using Research.Knowledge.Bootstrap.Features;
 using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;
+using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
 using Research.Shared.Core.Messaging;
@@ -33,6 +34,7 @@ public sealed partial class KnowledgeCompositionRoot
     [
         // Platform
         new ActorsFeature(),
+        new MediationFeature(),
         new ErrorsFeature(new ProblemErrorCatalog(), new MessagingErrorCatalog(), new KnowledgeErrorCatalog()),
 
         // Infrastructure
@@ -51,8 +53,8 @@ public sealed partial class KnowledgeCompositionRoot
     public void ComposeServices()
     {
         _builder.AddServiceDefaults(
-            activitySources: [MessagingTracing.SourceName],
-            meters: [MessagingMetrics.MeterName, KnowledgeMetrics.MeterName],
+            activitySources: [MediationTracing.SourceName, MessagingTracing.SourceName],
+            meters: [MediationMetrics.MeterName, MessagingMetrics.MeterName, KnowledgeMetrics.MeterName],
             configureHttpClientDefaults: false);
         _builder.Services.AddSingleton(TimeProvider.System);
 

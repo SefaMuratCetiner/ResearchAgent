@@ -1,13 +1,17 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Interfaces;
-using Research.Jobs.Domain;
 using Research.Jobs.Application.Lifecycle;
 using Research.Jobs.Application.Observability;
+using Research.Jobs.Domain;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Messaging;
 using Research.Shared.Core.Transactions;
 
 namespace Research.Jobs.Application.RecoverStuckJobs;
+
+/// <summary>Re-emit or fail expired steps on active jobs; returns how many steps were handled.</summary>
+public sealed record RecoverStuckJobsCommand : ICommand<int>;
 
 /// <summary>
 /// Scheduler-agent-supervisor: a running step whose lease expired without an answer (a lost message, a broker that
@@ -25,8 +29,14 @@ public sealed partial class RecoverStuckJobsHandler(
     JobsMetrics metrics,
     IOptionsSnapshot<JobsOptions> options,
     TimeProvider timeProvider,
-    ILogger<RecoverStuckJobsHandler> logger)
+    ILogger<RecoverStuckJobsHandler> logger) : ICommandHandler<RecoverStuckJobsCommand, int>
 {
+    public Task<int> HandleAsync(RecoverStuckJobsCommand request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return HandleAsync(cancellationToken);
+    }
+
     /// <returns>How many steps were re-emitted or failed.</returns>
     public async Task<int> HandleAsync(CancellationToken cancellationToken)
     {

@@ -1,10 +1,11 @@
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application;
 using Research.Jobs.Application.RecoverStuckJobs;
+using Research.Shared.Core.Mediation;
 
 namespace Research.Jobs.Worker.Workers;
 
-/// <summary>Runs <see cref="RecoverStuckJobsHandler"/> every <see cref="JobsOptions.RecoveryInterval"/>.</summary>
+/// <summary>Dispatches <see cref="RecoverStuckJobsCommand"/> every <see cref="JobsOptions.RecoveryInterval"/>.</summary>
 internal sealed class StuckJobRecoveryWorker(
     IServiceScopeFactory scopeFactory,
     IOptionsMonitor<JobsOptions> options,
@@ -16,5 +17,5 @@ internal sealed class StuckJobRecoveryWorker(
     protected override TimeSpan Interval => options.CurrentValue.RecoveryInterval;
 
     protected override Task<int> RunOnceAsync(IServiceProvider services, CancellationToken cancellationToken) =>
-        services.GetRequiredService<RecoverStuckJobsHandler>().HandleAsync(cancellationToken);
+        services.GetRequiredService<ISender>().SendAsync(new RecoverStuckJobsCommand(), cancellationToken);
 }

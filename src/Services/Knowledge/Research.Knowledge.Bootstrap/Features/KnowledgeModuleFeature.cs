@@ -5,6 +5,8 @@ using Research.Knowledge.Application.SearchPassages;
 using Research.Knowledge.Domain;
 using Research.Knowledge.Infrastructure.Persistence;
 using Research.Shared.Adapters.Composition;
+using Research.Shared.Adapters.Mediation;
+using Research.SharedKernel.Results;
 
 namespace Research.Knowledge.Bootstrap.Features;
 
@@ -15,7 +17,8 @@ internal sealed class KnowledgeModuleFeature : IResearchFeature
     {
         app.Services.AddSingleton<KnowledgeMetrics>();
         app.Services.AddScoped<IKnowledgeRepository, KnowledgeRepository>();
-        app.Services.AddScoped<PrepareDocumentHandler>();
-        app.Services.AddScoped<SearchPassagesHandler>();
+        app.Services.AddCommandHandler<PrepareDocumentCommand, Result<PreparedDocument>, PrepareDocumentHandler>();
+        app.Services.AddQueryHandler<SearchPassagesQuery, Result<IReadOnlyList<PassageMatch>>, SearchPassagesHandler>();
+        app.Services.AddRequestValidator<SearchPassagesQuery, SearchPassagesQueryValidator>();
     }
 }

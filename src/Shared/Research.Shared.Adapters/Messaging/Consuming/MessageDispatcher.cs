@@ -7,6 +7,7 @@ using Research.Contracts;
 using Research.Contracts.Steps;
 using Research.Shared.Adapters.Messaging.Tracing;
 using Research.Shared.Core.Actors;
+using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Messaging;
 
 namespace Research.Shared.Adapters.Messaging.Consuming;
@@ -74,8 +75,8 @@ public sealed partial class MessageDispatcher<TMessage>(
             await using (var scope = scopeFactory.CreateAsyncScope())
             {
                 scope.ServiceProvider.GetRequiredService<ScopedActor>().Id = ScopedActor.System(Settings.ServiceName);
-                var handler = scope.ServiceProvider.GetRequiredService<IMessageHandler<TMessage>>();
-                await handler.HandleAsync(message, context, timeout.Token).ConfigureAwait(false);
+                var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+                await sender.SendAsync(new HandleMessage<TMessage>(message, context), timeout.Token).ConfigureAwait(false);
             }
 
             Record(consumer, "success", started, activity, DispatchResult.Ack);

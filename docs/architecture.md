@@ -1,46 +1,70 @@
 # Architecture
 
-[PLAN.md](PLAN.md) records the decisions (D1–D25) and the reasons for them. This file describes the code as it is.
+[PLAN.md](PLAN.md) records the original design decisions (D1–D25) and the reasons for them. This file describes the code as it is today.
 
 ## Reference rules
 
+Enforced automatically by [ReferenceRuleTests.cs](../tests/Research.ArchitectureTests/ReferenceRuleTests.cs):
+
 ```text
-Host ──► Module, Module.Postgres, Module.Api, Providers, Shared
-Module.Api ──► Module, Problems
-Module.Postgres ──► Module, Providers.Postgres
-Module ──► SharedKernel, Contracts, Messaging          (never a provider, never ASP.NET Core)
-Providers.* ──► SharedKernel (+ Messaging for RabbitMQ)
-AppHost ──► Hosts, tools
+AppHost ──► *.Bootstrap, *.Worker, tools/Research.DbScripts
+*.Bootstrap / *.Worker ──► own *.Application, *.Infrastructure, (own *.Api), Research.ServiceDefaults,
+                           Research.Shared.Adapters, (Research.Shared.Web if HTTP), Providers.*
+*.Api ──► own *.Application, Research.Shared.Web                       (never ServiceDefaults or Infrastructure)
+*.Infrastructure ──► own *.Application, Research.Shared.Adapters, Providers.*
+*.Application ──► own *.Domain, Research.Shared.Core, Research.Contracts (never ASP.NET Core, Aspire, or providers)
+*.Domain ──► Research.SharedKernel                                     (zero NuGet packages)
+Providers.* ──► Research.Shared.Core, Research.Shared.Adapters, Research.Contracts
+Research.Shared.Web ──► Research.SharedKernel, Research.Shared.Core    (HTTP hosts and *.Api only)
+Research.ServiceDefaults ──► (zero project references)                 (entry points only)
+Research.Shared.Core ──► Research.SharedKernel, Research.Contracts     (zero NuGet packages)
+Research.SharedKernel / Research.Contracts ──► (no references at all)
 ```
 
-Modules define ports: interfaces in `Domain/` or in SharedKernel (`ILlmClient`, `IDocumentStore`, `ICacheStore`,
-`IEmbeddingGenerator`, `IMessagePublisher`). Providers and `*.Postgres` projects implement them. Only Hosts know the
-concrete types. Where a port has more than one provider, the Host picks one from its startup settings: `Llm:Provider`
-registers the Anthropic or the OpenAI `ILlmClient`. Code the providers share (`LlmMetrics`, `LlmTracing`, the
-concurrency limiter) lives in SharedKernel, because a provider never references another provider.
+Services never reference each other. Shared ports (`ILlmClient`, `ISearchProvider`, `ICacheStore`, `IDocumentStore`, `IEmbeddingGenerator`, `IMessagePublisher`, `IUnitOfWork`, `IInbox`, `IOutbox`, `IMediator`) live in `Research.Shared.Core`; service-specific ports live in `Research.<Service>.Application/Common/Interfaces/`. `Research.Providers.*` and `Research.<Service>.Infrastructure` implement them. Only entry points (`*.Bootstrap`, `*.Worker`) wire concrete implementations; where a port has multiple providers (`Llm:Provider`), the host picks one from startup settings.
+
+## Service defaults and shared web
+
+* **`Research.ServiceDefaults`** is a standard zero-project-reference .NET Aspire shared project (`AddServiceDefaults` / `MapDefaultEndpoints`) covering structured logging (Serilog + OpenTelemetry + optional Elasticsearch), OpenTelemetry tracing and metrics over OTLP, health checks (`/health/live`, `/health/ready`), service discovery, and default HTTP client resilience.
+* **`Research.Shared.Web`** holds HTTP-only presentation primitives (`IEndpointGroup`, `EndpointGroupExtensions`, `ProblemResults`, `ProblemErrors`, `ErrorStatus`, `CustomExceptionHandler`, `CorrelationMiddleware`, `HttpContentLoggingMiddleware`, `AddResearchProblemDetails`) and is referenced only by HTTP APIs (`Research.Jobs.Api`, `Research.Knowledge.Api`) and HTTP hosts (`Research.Jobs.Bootstrap`, `Research.Knowledge.Bootstrap`).
 
 ## Host shape (composition root)
 
 ```text
-Research.<Service>.Host/
-  Program.cs                      builder → root.ComposeServices() → Build → ComposePipeline → ComposeEndpoints → Run
+Research.<Service>.Bootstrap/ (or Research.Jobs.Worker/)
+  Program.cs                              builder → root.ComposeServices() → Build → ComposePipeline → ComposeEndpoints → Run
   CompositionRoot/
-    <Service>CompositionRoot.cs   the Features list (grouped: observability, platform, infrastructure, module, API)
-    <Service>CompositionRoot.Pipeline.cs   middleware order (HTTP-facing Hosts)
-    <Service>Settings.cs          every options section, bound and validated once
-  Features/                       one IResearchFeature per capability (PostgresFeature, MessagingFeature, ...)
-  Workers/                        timer loops (Jobs only)
+    <Service>CompositionRoot.cs           AddServiceDefaults + Features list + MapDefaultEndpoints
+    <Service>CompositionRoot.Pipeline.cs  middleware order (HTTP-facing hosts)
+    <Service>Settings.cs                  every options section, bound and validated once via SettingsBinder
+  Features/                               one IResearchFeature per capability (PostgresFeature, MessagingFeature, ...)
+  Workers/                                timer loops (Research.Jobs.Worker only)
 ```
 
-There is no ServiceDefaults project. Its parts are platform features in `Research.Hosting`: `LoggingFeature`,
-`TelemetryFeature`, `HealthChecksFeature`, `HttpClientsFeature` (service discovery and standard resilience),
-`ActorsFeature` and `ErrorsFeature`. Each composition root lists the ones it uses.
+## Module shape and unified mediation pipeline
 
-## Module shape
+Each service's `Research.<Service>.Application` project uses consistent `Research.<Service>.Application.*` namespaces and organizes use cases under `FeatureSlices/<SliceName>/` (omitted from namespaces). HTTP endpoints live in `Research.<Service>.Api/Endpoints/`.
 
-Each module is organized as vertical slices: one folder per use case, with a command or query, one handler, and the
-message handler or endpoint that calls it. There is no mediator. Expected outcomes are `Result`/`Result<T>` values,
-and exceptions are for transient or unexpected failures, which the message pipeline retries.
+Commands (`ICommand<TResponse>` / `ICommand`), queries (`IQuery<TResponse>`), integration messages (`HandleMessage<TMessage>` via `IMessageHandler<TMessage>`), and domain events (`IDomainEvent` via `IDomainEventHandler<TEvent>`) all flow through a custom, zero-third-party-package mediator (`Research.Shared.Adapters.Mediation.Mediator`) implementing `IMediator` (`ISender` + `IPublisher`) and `IDomainEventDispatcher`:
+
+```text
+HTTP Endpoint / Worker Timer / RabbitMQ MessageDispatcher
+  ──► ISender.SendAsync(...)
+        ──► LoggingBehavior
+          ──► TelemetryBehavior (Research.Mediation traces & metrics)
+            ──► InboxBehavior (fast-path duplicate skip for HandleMessage<T> when IInbox is registered)
+              ──► ValidationBehavior (IRequestValidator<T> strategies → typed Result failure)
+                ──► TransactionBehavior (opt-in IUnitOfWork wrapper for ITransactionalCommand)
+                  ──► IRequestHandler<TRequest, TResponse>
+
+PostgresUnitOfWork.CommitAsync()
+  ──► IPublisher.PublishAsync(domainEvent)
+        ──► EventLoggingBehavior
+          ──► EventTelemetryBehavior
+            ──► 0..N IDomainEventHandler<TEvent>
+```
+
+Expected business outcomes are returned as `Result` / `Result<T>` values (`IOperationResult` / `IResultFactory<TSelf>`). Exceptions are reserved for transient or unexpected failures, which `MessageDispatcher<TMessage>` retries via RabbitMQ delay queues.
 
 ## The job, end to end
 
@@ -69,8 +93,9 @@ POST /research ─► Planning ─► Gathering ─► Synthesizing ─► Compl
    `cutoff_reached`, `budget_exhausted`, `steps_failed` and `output_truncated`.
 7. **Failures.** A failed plan or synthesis step fails the job with the worker's code. A failed search or fetch step
    only adds the `steps_failed` warning.
-8. **Supervision.** The recovery worker re-emits expired steps. The deadline worker forces the cutoff and expires
-   overdue jobs. Cancellation is a compare-and-set update to `Cancelled`.
+8. **Supervision.** The recovery worker dispatches `RecoverStuckJobsCommand` to re-emit expired steps. The deadline
+   worker dispatches `EnforceJobDeadlinesCommand` to enforce the cutoff and expire overdue jobs. Cancellation is a
+   compare-and-set update to `Cancelled`.
 
 Every reply goes through `JobReplyGate`, one transaction that does the following in order:
 
@@ -84,7 +109,7 @@ Every reply goes through `JobReplyGate`, one transaction that does the following
 
 | Concern | Mechanism |
 | --- | --- |
-| Lost or duplicated message | Outbox + inbox (database services); confirmed publish + idempotent receiver in Jobs (stateless services); step leases + re-emission |
+| Lost or duplicated message | Outbox + inbox (database services, with `InboxBehavior` fast-path pre-check); confirmed publish + idempotent receiver in Jobs (stateless services); step leases + re-emission |
 | Transient dependency failure | Delay-queue retries (10 s / 60 s / 300 s), then `research.step_exhausted` |
 | Poison message | Straight to DLQ + `StepFailed(research.poison_message)` |
 | Slow or hung job | Synthesis cutoff, hard deadline (`Expired`), handler timeout |
@@ -92,19 +117,3 @@ Every reply goes through `JobReplyGate`, one transaction that does the following
 | Crash mid-handler | Nothing is committed until the single transaction commits; the message is redelivered |
 | Scale-out | Every service is stateless apart from its database; workers use `SKIP LOCKED`; quorum queues; replicas set in the AppHost |
 | Malicious URLs | `SsrfGuard` on every connection (also redirects), robots.txt, size/redirect/time limits, per-domain concurrency |
-
-## Unverified APIs
-
-None of this code has been compiled. These calls were written from documentation or memory, so check them first:
-
-| Where | What to verify |
-| --- | --- |
-| `Directory.Packages.props` | Every version exists and is mutually compatible (Aspire 13.0.0, Anthropic 13.1.0, Npgsql 9.0.4, RabbitMQ.Client 7.1.2, ...) |
-| `AnthropicLlmClient` | `client.Messages.Create(parameters, cancellationToken:)`; `OutputConfig` / `Effort` / `JsonOutputFormat` shapes; `StopReason` string comparison; `CacheControlEphemeral`; `AnthropicRateLimitException` namespace |
-| `AnthropicWebSearchProvider` / `WebSearchResultReader` | `WebSearchTool20260209` property types; `JsonSerializer.Serialize(response)` producing the wire shape that the reader parses |
-| `RabbitMqListener` / `RabbitMqMessagePublisher` | RabbitMQ.Client 7 `CreateChannelOptions` named arguments, `consumerDispatchConcurrency`, publisher confirm tracking |
-| Fetching/Knowledge Hosts | `AddAzureBlobServiceClient(name, configureSettings)` name and the `DisableHealthChecks` setting |
-| `ResearchJobEventsEndpoint` | `TypedResults.ServerSentEvents` and `SseItem<T>` |
-| Jobs/Knowledge repositories | Dapper mapping of `text[]` and `DateTimeOffset` (handlers registered in `DapperTypeHandlers`); `unnest(... ::text[])` → `::vector` cast |
-| `AppHost.cs` | `WithImage`/`WithImageTag` on Postgres, `WaitForCompletion`, `WithReplicas` with Aspire 13 |
-| `ContentExtractor` | AngleSharp 1.x `HtmlParser.ParseDocument(Stream)` encoding detection |

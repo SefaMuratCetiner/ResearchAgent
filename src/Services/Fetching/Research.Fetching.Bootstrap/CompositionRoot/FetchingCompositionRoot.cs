@@ -2,6 +2,7 @@ using Research.Fetching.Application;
 using Research.Fetching.Bootstrap.Features;
 using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;
+using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
 using Research.Shared.Core.Messaging;
@@ -31,6 +32,7 @@ public sealed class FetchingCompositionRoot
     [
         // Platform
         new ActorsFeature(),
+        new MediationFeature(),
         new ErrorsFeature(new MessagingErrorCatalog(), new FetchingErrorCatalog()),
 
         // Infrastructure
@@ -45,8 +47,8 @@ public sealed class FetchingCompositionRoot
     public void ComposeServices()
     {
         _builder.AddServiceDefaults(
-            activitySources: [MessagingTracing.SourceName],
-            meters: [MessagingMetrics.MeterName, FetchingMetrics.MeterName],
+            activitySources: [MediationTracing.SourceName, MessagingTracing.SourceName],
+            meters: [MediationMetrics.MeterName, MessagingMetrics.MeterName, FetchingMetrics.MeterName],
             configureHttpClientDefaults: false);
         _builder.Services.AddSingleton(TimeProvider.System);
 

@@ -7,6 +7,8 @@ using Research.Fetching.Infrastructure.Download;
 using Research.Fetching.Infrastructure.Extraction;
 using Research.Fetching.Infrastructure.Persistence;
 using Research.Shared.Adapters.Composition;
+using Research.Shared.Adapters.Mediation;
+using Research.SharedKernel.Results;
 
 namespace Research.Fetching.Bootstrap.Features;
 
@@ -23,7 +25,7 @@ internal sealed class FetchingModuleFeature : IResearchFeature
         app.Services.AddSingleton<IPageDownloader, PageDownloader>();
         app.Services.AddSingleton<IContentExtractor, ContentExtractor>();
         app.Services.AddScoped<IFetchedDocumentRepository, FetchedDocumentRepository>();
-        app.Services.AddScoped<FetchPageHandler>();
+        app.Services.AddCommandHandler<FetchPageCommand, Result<FetchedPage>, FetchPageHandler>();
 
         // Every connection goes through SsrfGuard (first request, each redirect, robots.txt). No resilience handler:
         // transient failures are retried by the message pipeline with its delays. Timeouts are per call.

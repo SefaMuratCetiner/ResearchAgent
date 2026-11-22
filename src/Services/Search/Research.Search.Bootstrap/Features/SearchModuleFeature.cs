@@ -3,8 +3,10 @@ using Research.Search.Application;
 using Research.Search.Application.RunSearch;
 using Research.Search.Infrastructure.Decorators;
 using Research.Shared.Adapters.Composition;
+using Research.Shared.Adapters.Mediation;
 using Research.Shared.Core.Caching;
 using Research.Shared.Core.Search;
+using Research.SharedKernel.Results;
 
 namespace Research.Search.Bootstrap.Features;
 
@@ -30,6 +32,6 @@ internal sealed class SearchModuleFeature : IResearchFeature
             return new CachedSearchProvider(inner, provider.GetRequiredService<ICacheStore>(), () => options.CurrentValue.CacheTimeToLive);
         });
 
-        app.Services.AddScoped<RunSearchHandler>();
+        app.Services.AddCommandHandler<RunSearchCommand, Result<SearchResponse>, RunSearchHandler>();
     }
 }

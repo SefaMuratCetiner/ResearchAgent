@@ -2,6 +2,7 @@ using Research.Search.Application;
 using Research.Search.Bootstrap.Features;
 using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;
+using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
 using Research.Shared.Core.Messaging;
@@ -27,6 +28,7 @@ public sealed class SearchCompositionRoot
     [
         // Platform
         new ActorsFeature(),
+        new MediationFeature(),
         new ErrorsFeature(new MessagingErrorCatalog(), new SearchErrorCatalog()),
 
         // Infrastructure
@@ -41,8 +43,8 @@ public sealed class SearchCompositionRoot
     public void ComposeServices()
     {
         _builder.AddServiceDefaults(
-            activitySources: [MessagingTracing.SourceName],
-            meters: [MessagingMetrics.MeterName, SearchMetrics.MeterName]);
+            activitySources: [MediationTracing.SourceName, MessagingTracing.SourceName],
+            meters: [MediationMetrics.MeterName, MessagingMetrics.MeterName, SearchMetrics.MeterName]);
         _builder.Services.AddSingleton(TimeProvider.System);
 
         var app = new ResearchBuilder(_builder);

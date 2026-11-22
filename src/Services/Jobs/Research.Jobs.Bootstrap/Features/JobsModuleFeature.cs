@@ -1,17 +1,19 @@
-using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.CancelResearchJob;
+using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.CreateResearchJob;
-using Research.Jobs.Domain.Events;
 using Research.Jobs.Application.DomainEventHandlers;
 using Research.Jobs.Application.GetResearchJob;
 using Research.Jobs.Application.GetResearchReport;
-using Research.Jobs.Infrastructure.Persistence;
 using Research.Jobs.Application.Lifecycle;
 using Research.Jobs.Application.Observability;
+using Research.Jobs.Domain;
+using Research.Jobs.Domain.Events;
+using Research.Jobs.Infrastructure.Persistence;
 using Research.Shared.Adapters.Composition;
+using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
-using Research.Shared.Core.Events;
 using Research.Shared.Core.Messaging;
+using Research.SharedKernel.Results;
 
 namespace Research.Jobs.Bootstrap.Features;
 
@@ -30,17 +32,18 @@ internal sealed class JobsModuleFeature : IResearchFeature
         app.Services.AddScoped<StepEmitter>();
         app.Services.AddScoped<JobLifecycle>();
 
-        app.Services.AddScoped<IDomainEventHandler<JobCreatedDomainEvent>, JobCreatedDomainEventHandler>();
-        app.Services.AddScoped<IDomainEventHandler<JobGatheringStartedDomainEvent>, JobGatheringStartedDomainEventHandler>();
-        app.Services.AddScoped<IDomainEventHandler<JobSynthesisStartedDomainEvent>, JobSynthesisStartedDomainEventHandler>();
-        app.Services.AddScoped<IDomainEventHandler<JobCompletedDomainEvent>, JobCompletedDomainEventHandler>();
-        app.Services.AddScoped<IDomainEventHandler<JobCancelledDomainEvent>, JobCancelledDomainEventHandler>();
-        app.Services.AddScoped<IDomainEventHandler<JobFailedDomainEvent>, JobFailedDomainEventHandler>();
-        app.Services.AddScoped<IDomainEventHandler<JobExpiredDomainEvent>, JobExpiredDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobCreatedDomainEvent, JobCreatedDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobGatheringStartedDomainEvent, JobGatheringStartedDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobSynthesisStartedDomainEvent, JobSynthesisStartedDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobCompletedDomainEvent, JobCompletedDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobCancelledDomainEvent, JobCancelledDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobFailedDomainEvent, JobFailedDomainEventHandler>();
+        app.Services.AddDomainEventHandler<JobExpiredDomainEvent, JobExpiredDomainEventHandler>();
 
-        app.Services.AddScoped<CreateResearchJobHandler>();
-        app.Services.AddScoped<GetResearchJobHandler>();
-        app.Services.AddScoped<GetResearchReportHandler>();
-        app.Services.AddScoped<CancelResearchJobHandler>();
+        app.Services.AddCommandHandler<CreateResearchJobCommand, Result<CreateResearchJobResult>, CreateResearchJobHandler>();
+        app.Services.AddRequestValidator<CreateResearchJobCommand, CreateResearchJobCommandValidator>();
+        app.Services.AddQueryHandler<GetResearchJobQuery, Result<ResearchJobView>, GetResearchJobHandler>();
+        app.Services.AddQueryHandler<GetResearchReportQuery, Result<ResearchReportView>, GetResearchReportHandler>();
+        app.Services.AddCommandHandler<CancelResearchJobCommand, Result<ResearchJob>, CancelResearchJobHandler>();
     }
 }
