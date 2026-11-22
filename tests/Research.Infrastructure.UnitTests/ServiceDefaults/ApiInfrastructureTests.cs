@@ -100,6 +100,75 @@ public sealed class ApiInfrastructureTests
         routes.ShouldContain("/sample/ping");
     }
 
+    [Fact]
+    public async Task EndpointValidationFilter_ShortCircuitsInvalidRequestBeforeEndpointRuns()
+    {
+        var filter = new EndpointValidationFilter<SampleRequest>(new SampleRequestValidator());
+        var context = new DefaultHttpContext { TraceIdentifier = "trace-val" };
+        context.Request.Path = "/sample/items";
+        var invocation = new DefaultEndpointFilterInvocationContext(context, new SampleRequest("   "));
+        var handlerCalled = false;
+
+        var result = await filter.InvokeAsync(invocation, _ =>
+        {
+            handlerCalled = true;
+            return ValueTask.FromResult<object?>(TypedResults.Ok("created"));
+        });
+
+        handlerCalled.ShouldBeFalse();
+        var problem = result.ShouldBeOfType<ValidationProblem>();
+        problem.StatusCode.ShouldBe(StatusCodes.Status400BadRequest);
+        problem.ProblemDetails.Errors["name"].ShouldBe(["Name is required."]);
+        problem.ProblemDetails.Extensions["code"].ShouldBe("research.validation_failed");
+    }
+
+    [Fact]
+    public async Task EndpointValidationFilter_InvokesEndpointWhenRequestIsValid()
+    {
+        var filter = new EndpointValidationFilter<SampleRequest>(new SampleRequestValidator());
+        var context = new DefaultHttpContext();
+        var invocation = new DefaultEndpointFilterInvocationContext(context, new SampleRequest("valid"));
+        var handlerCalled = false;
+
+        var result = await filter.InvokeAsync(invocation, _ =>
+        {
+            handlerCalled = true;
+            return ValueTask.FromResult<object?>(TypedResults.Ok("created"));
+        });
+
+        handlerCalled.ShouldBeTrue();
+        result.ShouldBeOfType<Ok<string>>().Value.ShouldBe("created");
+    }
+
+    [Fact]
+    public void ResultHttpExtensions_MapsSuccessAndFailureOutcomes()
+    {
+        var context = new DefaultHttpContext { TraceIdentifier = "trace-map" };
+        context.Request.Path = "/sample/1";
+
+        var ok = Result<int>.Success(42).ToOkOrProblem(context, static n => $"v={n}");
+        ok.ShouldBeOfType<Ok<string>>().Value.ShouldBe("v=42");
+
+        var error = new Error("sample.missing", ErrorKind.NotFound, "Not found.");
+        var failed = Result<int>.Failure(error).ToOkOrProblem(context, static n => $"v={n}");
+        var problem = failed.ShouldBeOfType<ProblemHttpResult>();
+        problem.StatusCode.ShouldBe(StatusCodes.Status404NotFound);
+        problem.ProblemDetails.Extensions["code"].ShouldBe("sample.missing");
+    }
+
+    private sealed record SampleRequest(string? Name);
+
+    private sealed class SampleRequestValidator : IEndpointValidator<SampleRequest>
+    {
+        public void Validate(SampleRequest? request, HttpContext httpContext, IDictionary<string, string[]> errors)
+        {
+            if (string.IsNullOrWhiteSpace(request?.Name))
+            {
+                errors["name"] = ["Name is required."];
+            }
+        }
+    }
+
     private sealed class RecordingProblemDetailsService : IProblemDetailsService
     {
         public ProblemDetailsContext? Last { get; private set; }

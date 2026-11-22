@@ -197,15 +197,19 @@ public sealed class ReferenceRuleTests
 
     [Theory]
     [MemberData(nameof(Apis))]
-    public void Api_ExposesAnIEndpointGroup(string name)
+    public void Api_ExposesAnIEndpointGroupAndEndpoints(string name)
     {
         var directory = Path.GetDirectoryName(Solution.Get(name).Path)!;
-        var hasGroup = Directory.EnumerateFiles(directory, "*.cs", SearchOption.AllDirectories)
+        var files = Directory.EnumerateFiles(directory, "*.cs", SearchOption.AllDirectories)
             .Where(static f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
                 && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
-            .Any(static f => File.ReadAllText(f).Contains(": IEndpointGroup", StringComparison.Ordinal));
+            .Select(File.ReadAllText)
+            .ToList();
 
-        hasGroup.ShouldBeTrue($"{name} must define at least one IEndpointGroup");
+        files.Any(static content => content.Contains(": IEndpointGroup", StringComparison.Ordinal))
+            .ShouldBeTrue($"{name} must define at least one IEndpointGroup");
+        files.Any(static content => content.Contains(": IEndpoint", StringComparison.Ordinal) && !content.Contains(": IEndpointGroup", StringComparison.Ordinal))
+            .ShouldBeTrue($"{name} must define at least one REPR IEndpoint");
     }
 
     [Fact]

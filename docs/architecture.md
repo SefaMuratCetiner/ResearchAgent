@@ -26,7 +26,16 @@ Services never reference each other. Shared ports (`ILlmClient`, `ISearchProvide
 ## Service defaults and shared web
 
 * **`Research.ServiceDefaults`** is a standard zero-project-reference .NET Aspire shared project (`AddServiceDefaults` / `MapDefaultEndpoints`) covering structured logging (Serilog + OpenTelemetry + optional Elasticsearch), OpenTelemetry tracing and metrics over OTLP, health checks (`/health/live`, `/health/ready`), service discovery, and default HTTP client resilience.
-* **`Research.Shared.Web`** holds HTTP-only presentation primitives (`IEndpointGroup`, `EndpointGroupExtensions`, `ProblemResults`, `ProblemErrors`, `ErrorStatus`, `CustomExceptionHandler`, `CorrelationMiddleware`, `HttpContentLoggingMiddleware`, `AddResearchProblemDetails`) and is referenced only by HTTP APIs (`Research.Jobs.Api`, `Research.Knowledge.Api`) and HTTP hosts (`Research.Jobs.Bootstrap`, `Research.Knowledge.Bootstrap`).
+* **`Research.Shared.Web`** holds HTTP-only presentation primitives (`IEndpointGroup`, `IEndpoint`, `EndpointGroupExtensions`, `IEndpointValidator<T>`, `EndpointValidationFilter<T>`, `ResultHttpExtensions`, `ProblemResults`, `ProblemErrors`, `ErrorStatus`, `CustomExceptionHandler`, `CorrelationMiddleware`, `HttpContentLoggingMiddleware`, `AddResearchProblemDetails`) and is referenced only by HTTP APIs (`Research.Jobs.Api`, `Research.Knowledge.Api`) and HTTP hosts (`Research.Jobs.Bootstrap`, `Research.Knowledge.Bootstrap`).
+
+## Endpoints and two-stage validation
+
+HTTP APIs follow the REPR pattern using native Minimal APIs: each `IEndpointGroup` owns the route prefix and OpenAPI tag and delegates to self-contained `IEndpoint` classes that co-locate their request/response models, route, OpenAPI metadata, and thin `ISender` delegation (`ToHttpResult` / `ToOkOrProblem`).
+
+Validation is intentionally split across two boundaries:
+
+1. **Stage 1 — HTTP transport validation (`EndpointValidationFilter<T>` + `IEndpointValidator<T>`):** runs as a Minimal API `IEndpointFilter` **before** the endpoint method executes, checking syntactic/HTTP-only rules (missing body, required fields, `Idempotency-Key` header format) and short-circuiting with `400 research.validation_failed` (`ValidationProblemDetails`).
+2. **Stage 2 — Application/policy validation (`ValidationBehavior<,>` + `IRequestValidator<T>`):** runs inside the mediation pipeline **before** the application handler executes, enforcing entry-point-agnostic policy rules (`JobsOptions`, `KnowledgeOptions`) and returning typed `Result<T>.Failure(...)` outcomes.
 
 ## Host shape (composition root)
 

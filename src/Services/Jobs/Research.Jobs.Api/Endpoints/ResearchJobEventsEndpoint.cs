@@ -1,11 +1,14 @@
 using System.Net.ServerSentEvents;
 using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application;
 using Research.Jobs.Application.GetResearchJob;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
+using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
 
 namespace Research.Jobs.Api.Endpoints;
@@ -15,11 +18,18 @@ namespace Research.Jobs.Api.Endpoints;
 /// id = version), and closes after the terminal state. Changes are read from the database every
 /// <see cref="JobsOptions.EventsPollInterval"/>, so a stream works on any replica, whichever replica made the change.
 /// </summary>
-public static class ResearchJobEventsEndpoint
+public sealed class ResearchJobEventsEndpoint : IEndpoint
 {
     public const string Pattern = "/{id:guid}/events";
     public const string Name = "StreamResearchJobEvents";
     public const string EventType = "job";
+
+    public static void Map(RouteGroupBuilder group) =>
+        group.MapGet(Pattern, HandleAsync)
+            .WithName(Name)
+            .WithSummary("Stream status changes of a research job (Server-Sent Events)")
+            .Produces(StatusCodes.Status200OK, contentType: "text/event-stream")
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
     public static async Task<IResult> HandleAsync(
         Guid id,
@@ -33,13 +43,8 @@ public static class ResearchJobEventsEndpoint
         ArgumentNullException.ThrowIfNull(options);
 
         var first = await sender.SendAsync(new GetResearchJobQuery(id), cancellationToken).ConfigureAwait(false);
-        if (!first.IsSuccess)
-        {
-            return ProblemResults.From(first.Error, context);
-        }
-
-        return TypedResults.ServerSentEvents(
-            StreamAsync(first.Value, sender, options.Value.EventsPollInterval, timeProvider, cancellationToken));
+        return first.ToHttpResult(context, value => TypedResults.ServerSentEvents(
+            StreamAsync(value, sender, options.Value.EventsPollInterval, timeProvider, cancellationToken)));
     }
 
     private static async IAsyncEnumerable<SseItem<ResearchJobResponse>> StreamAsync(

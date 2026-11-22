@@ -1,13 +1,9 @@
-using Research.Jobs.Domain;
 using Research.Jobs.Application.GetResearchJob;
-using Research.Jobs.Application.GetResearchReport;
+using Research.Jobs.Domain;
 
 namespace Research.Jobs.Api.Endpoints;
 
-/// <summary>Body of <c>POST /research</c>.</summary>
-public sealed record CreateResearchJobRequest(string? Question);
-
-/// <summary>A research job as the API shows it.</summary>
+/// <summary>A research job as the API shows it (shared across create, get, cancel, and SSE endpoints).</summary>
 public sealed record ResearchJobResponse(
     Guid Id,
     string Question,
@@ -61,32 +57,3 @@ public sealed record ResearchJobLinks(string Self, string Report, string Events,
         return new ResearchJobLinks(self, self + "/report", self + "/events", self + "/cancel");
     }
 }
-
-/// <summary>A finished report.</summary>
-public sealed record ResearchReportResponse(
-    Guid JobId,
-    string Status,
-    IReadOnlyList<string> Warnings,
-    string Content,
-    IReadOnlyList<CitationResponse> Citations,
-    string Model,
-    bool Truncated,
-    DateTimeOffset CreatedAt)
-{
-    public static ResearchReportResponse From(ResearchReportView view)
-    {
-        ArgumentNullException.ThrowIfNull(view);
-        return new ResearchReportResponse(
-            view.Job.Id,
-            view.Job.Status.ToString(),
-            view.Job.Warnings,
-            view.Report.Content,
-            view.Report.Citations.Select(static c => new CitationResponse(c.Number, c.Url, c.Title)).ToList(),
-            view.Report.Model,
-            view.Report.Truncated,
-            view.Report.CreatedAt);
-    }
-}
-
-/// <summary>One numbered source; <c>[n]</c> in the report text refers to <see cref="Number"/>.</summary>
-public sealed record CitationResponse(int Number, string Url, string Title);
