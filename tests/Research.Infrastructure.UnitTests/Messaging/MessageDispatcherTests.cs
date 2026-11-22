@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Research.Contracts.Search;
@@ -9,6 +11,7 @@ using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Consuming;
 using Research.Shared.Core.Actors;
+using Research.Shared.Core.Logging;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Messaging;
 using Research.SharedKernel.Results;
@@ -108,7 +111,54 @@ public sealed class MessageDispatcherTests
         (await Dispatch(Delivery(attempt: 1), stopping.Token)).ShouldBe(DispatchResult.Requeue);
     }
 
-    private Task<DispatchResult> Dispatch(IncomingDelivery delivery, CancellationToken stoppingToken = default)
+    [Fact]
+    public async Task CorrelationAndProducerTrace_FlowThroughEnvelopeFactoryAndMessageDispatcherScope()
+    {
+        var time = new FakeTimeProvider();
+        var factory = new EnvelopeFactory(time);
+        var message = new SearchRequested(Guid.NewGuid(), "search:0", "q", 5);
+
+        OutgoingEnvelope envelope;
+        ActivityTraceId producerTraceId;
+        using (var producerActivity = new Activity("produce").SetIdFormat(ActivityIdFormat.W3C).Start())
+        using (CorrelationContext.Push("corr-e2e-1"))
+        {
+            producerTraceId = producerActivity.TraceId;
+            envelope = factory.Create(message);
+        }
+
+        envelope.Headers.ShouldContainKeyAndValue(MessageHeaders.CorrelationId, "corr-e2e-1");
+        envelope.Headers.ShouldContainKey(MessageHeaders.TraceParent);
+
+        var capturedScopes = new List<IReadOnlyDictionary<string, object>>();
+        string? observedCorrelationInHandler = null;
+        _handler.OnHandle = () => observedCorrelationInHandler = CorrelationContext.Current;
+
+        var delivery = new IncomingDelivery(
+            envelope.MessageId,
+            Encoding.UTF8.GetBytes(envelope.Payload),
+            envelope.Headers,
+            Attempt: 1);
+
+        var result = await Dispatch(delivery, new ScopeRecordingLogger(capturedScopes), TestContext.Current.CancellationToken);
+
+        result.ShouldBe(DispatchResult.Ack);
+        observedCorrelationInHandler.ShouldBe("corr-e2e-1");
+        CorrelationContext.Current.ShouldBeNull();
+        var scope = capturedScopes.ShouldHaveSingleItem();
+        scope["JobId"].ShouldBe(message.JobId);
+        scope["StepKey"].ShouldBe("search:0");
+        scope["CorrelationId"].ShouldBe("corr-e2e-1");
+        scope["ProducerTraceId"].ShouldBe(producerTraceId.ToString());
+    }
+
+    private Task<DispatchResult> Dispatch(IncomingDelivery delivery, CancellationToken stoppingToken = default) =>
+        Dispatch(delivery, logger: null, stoppingToken);
+
+    private Task<DispatchResult> Dispatch(
+        IncomingDelivery delivery,
+        ILogger<MessageDispatcher<SearchRequested>>? logger,
+        CancellationToken stoppingToken = default)
     {
         var services = new ServiceCollection();
         services.AddLogging();
@@ -129,7 +179,7 @@ public sealed class MessageDispatcherTests
             TestOptions.Of(_options),
             new MessagingMetrics(TestMeters.Create()),
             time,
-            NullLogger<MessageDispatcher<SearchRequested>>.Instance);
+            logger ?? NullLogger<MessageDispatcher<SearchRequested>>.Instance);
 
         return dispatcher.DispatchAsync(delivery, "search.search.search-requested", stoppingToken);
     }
@@ -173,6 +223,41 @@ public sealed class MessageDispatcherTests
             Actor = ActorSource?.Id;
             Context = context;
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class ScopeRecordingLogger(List<IReadOnlyDictionary<string, object>> scopes)
+        : ILogger<MessageDispatcher<SearchRequested>>
+    {
+        public IDisposable BeginScope<TState>(TState state)
+            where TState : notnull
+        {
+            if (state is IReadOnlyDictionary<string, object> dict)
+            {
+                scopes.Add(dict);
+            }
+
+            return NullDisposable.Instance;
+        }
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+        }
+
+        private sealed class NullDisposable : IDisposable
+        {
+            public static readonly NullDisposable Instance = new();
+
+            public void Dispose()
+            {
+            }
         }
     }
 }

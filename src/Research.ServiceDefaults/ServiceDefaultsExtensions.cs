@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Reflection;
 using System.Threading.Channels;
 using Elastic.Channels;
 using Elastic.CommonSchema;
@@ -17,6 +19,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Serilog;
+using Serilog.Extensions.Hosting;
 using Serilog.Formatting.Compact;
 
 namespace Research.ServiceDefaults;
@@ -79,9 +82,37 @@ public static class ServiceDefaultsExtensions
         return endpoints;
     }
 
+    /// <summary>
+    /// Creates the pre-host bootstrap logger using the same compact JSON format and service/environment/instance
+    /// enrichment as the configured host logger, so startup and fatal failures match the regular stdout log schema.
+    /// <see cref="AddServiceDefaults{TBuilder}"/> replaces it once the host is built.
+    /// </summary>
+    public static ReloadableLogger CreateBootstrapLogger(string? serviceName = null)
+    {
+        var resolvedService = FirstNonEmpty(
+            Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME"),
+            serviceName,
+            Assembly.GetEntryAssembly()?.GetName().Name) ?? "unknown";
+        var environmentName = FirstNonEmpty(
+            Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"),
+            Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")) ?? Environments.Production;
+        var instanceId = ResolveInstanceId(Environment.GetEnvironmentVariable("OTEL_RESOURCE_ATTRIBUTES"));
+
+        return new LoggerConfiguration()
+            .Enrich.FromLogContext()
+            .Enrich.WithProperty("ServiceName", resolvedService)
+            .Enrich.WithProperty("Environment", environmentName)
+            .Enrich.WithProperty("ServiceInstanceId", instanceId)
+            .WriteTo.Console(new RenderedCompactJsonFormatter())
+            .CreateBootstrapLogger();
+    }
+
     private static void ConfigureLogging<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
+        // Clear the default MEL providers (Console, Debug, EventSource, EventLog) before adding OpenTelemetry so
+        // Serilog's writeToProviders: true forwards only to OpenTelemetry and does not duplicate stdout output.
+        builder.Logging.ClearProviders();
         builder.Logging.AddOpenTelemetry(static options =>
         {
             options.IncludeScopes = true;
@@ -90,8 +121,10 @@ public static class ServiceDefaultsExtensions
         });
 
         var elasticsearch = builder.Configuration.GetConnectionString("elasticsearch");
-        // Aspire names each replica's service in OTEL_SERVICE_NAME; it becomes service.name in Elasticsearch.
-        var serviceName = builder.Configuration["OTEL_SERVICE_NAME"] ?? builder.Environment.ApplicationName;
+        // Aspire names each replica's service in OTEL_SERVICE_NAME and replica id in OTEL_RESOURCE_ATTRIBUTES.
+        var serviceName = FirstNonEmpty(builder.Configuration["OTEL_SERVICE_NAME"], builder.Environment.ApplicationName) ?? "unknown";
+        var environmentName = builder.Environment.EnvironmentName;
+        var instanceId = ResolveInstanceId(builder.Configuration["OTEL_RESOURCE_ATTRIBUTES"]);
 
         builder.Services.AddSerilog(
             (services, logger) =>
@@ -100,11 +133,14 @@ public static class ServiceDefaultsExtensions
                     .ReadFrom.Configuration(builder.Configuration)
                     .ReadFrom.Services(services)
                     .Enrich.FromLogContext()
+                    .Enrich.WithProperty("ServiceName", serviceName)
+                    .Enrich.WithProperty("Environment", environmentName)
+                    .Enrich.WithProperty("ServiceInstanceId", instanceId)
                     .WriteTo.Console(new RenderedCompactJsonFormatter());
 
                 if (!string.IsNullOrEmpty(elasticsearch))
                 {
-                    WriteToElasticsearch(logger, new Uri(elasticsearch), serviceName);
+                    WriteToElasticsearch(logger, new Uri(elasticsearch), serviceName, environmentName, instanceId);
                 }
             },
             writeToProviders: true);
@@ -141,7 +177,12 @@ public static class ServiceDefaultsExtensions
         context.Request.Path.StartsWithSegments("/health", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Adds the Elasticsearch sink; <paramref name="connection"/> is Aspire's <c>http://user:password@host:port</c>.</summary>
-    private static void WriteToElasticsearch(LoggerConfiguration logger, Uri connection, string serviceName)
+    private static void WriteToElasticsearch(
+        LoggerConfiguration logger,
+        Uri connection,
+        string serviceName,
+        string environmentName,
+        string instanceId)
     {
         var credentials = connection.UserInfo.Split(':', 2);
         var node = new UriBuilder(connection) { UserName = string.Empty, Password = string.Empty }.Uri;
@@ -157,6 +198,8 @@ public static class ServiceDefaultsExtensions
                     {
                         document.Service ??= new Service();
                         document.Service.Name = serviceName;
+                        document.Service.Environment = environmentName;
+                        document.Service.NodeName = instanceId;
                         return document;
                     },
                 };
@@ -173,4 +216,28 @@ public static class ServiceDefaultsExtensions
                 }
             });
     }
+
+    internal static string ResolveInstanceId(string? resourceAttributes)
+    {
+        if (!string.IsNullOrWhiteSpace(resourceAttributes))
+        {
+            foreach (var entry in resourceAttributes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                const string Key = "service.instance.id=";
+                if (entry.StartsWith(Key, StringComparison.Ordinal))
+                {
+                    var value = Uri.UnescapeDataString(entry[Key.Length..]).Trim();
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        return value;
+                    }
+                }
+            }
+        }
+
+        return string.Create(CultureInfo.InvariantCulture, $"{Environment.MachineName}:{Environment.ProcessId}");
+    }
+
+    private static string? FirstNonEmpty(params string?[] candidates) =>
+        candidates.FirstOrDefault(static value => !string.IsNullOrWhiteSpace(value));
 }

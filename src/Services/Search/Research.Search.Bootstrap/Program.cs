@@ -1,9 +1,10 @@
-using System.Globalization;
 using Research.Search.Bootstrap.CompositionRoot;
+using Research.ServiceDefaults;
 using Serilog;
 
-// Bootstrap logger, so startup failures still reach the console. LoggingFeature replaces it once the host is built.
-Log.Logger = new LoggerConfiguration().WriteTo.Console(formatProvider: CultureInfo.InvariantCulture).CreateBootstrapLogger();
+// Bootstrap logger, so startup failures still reach the console in compact JSON. AddServiceDefaults replaces it once
+// the host is built.
+Log.Logger = ServiceDefaultsExtensions.CreateBootstrapLogger("search");
 
 try
 {

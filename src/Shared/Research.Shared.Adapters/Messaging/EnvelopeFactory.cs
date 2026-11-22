@@ -3,13 +3,14 @@ using System.Globalization;
 using System.Text.Json;
 using Research.Contracts;
 using Research.Shared.Adapters.Messaging.Tracing;
+using Research.Shared.Core.Logging;
 using Research.Shared.Messaging;
 
 namespace Research.Shared.Adapters.Messaging;
 
 /// <summary>
 /// Turns a contract into an <see cref="OutgoingEnvelope"/>: a UUID v7 message id, the JSON payload, and the headers
-/// (job id, step key, type, time, attempt 1, and the current trace context).
+/// (job id, step key, type, time, attempt 1, optional correlation id, and the current trace context).
 /// </summary>
 public sealed class EnvelopeFactory(TimeProvider timeProvider) : IEnvelopeFactory
 {
@@ -35,6 +36,11 @@ public sealed class EnvelopeFactory(TimeProvider timeProvider) : IEnvelopeFactor
             [MessageHeaders.OccurredAt] = occurredAt.ToString("O", CultureInfo.InvariantCulture),
             [MessageHeaders.Attempt] = "1",
         };
+        if (CorrelationContext.Current is { } correlationId)
+        {
+            headers[MessageHeaders.CorrelationId] = correlationId;
+        }
+
         TraceContextHeaders.Inject(Activity.Current, headers);
 
         return new OutgoingEnvelope(Guid.CreateVersion7(occurredAt), messageType, payload, headers, occurredAt);

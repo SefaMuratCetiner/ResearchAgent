@@ -14,7 +14,7 @@ public static class MediationServiceCollectionExtensions
     /// <summary>
     /// Registers the unified <see cref="Mediator"/> (<see cref="IMediator"/>, <see cref="ISender"/>,
     /// <see cref="IPublisher"/>, <see cref="IDomainEventDispatcher"/>) and the standard cross-cutting pipeline behaviors
-    /// in order: Logging → Telemetry → Inbox → Validation → Transaction.
+    /// in order: Telemetry → Logging → Inbox → Validation → Transaction.
     /// </summary>
     public static IServiceCollection AddMediation(this IServiceCollection services)
     {
@@ -30,17 +30,18 @@ public static class MediationServiceCollectionExtensions
         services.TryAddScoped<IDomainEventDispatcher>(static sp => sp.GetRequiredService<Mediator>());
 
         // Request pipeline (outermost to innermost):
-        // 1. Logging → 2. Telemetry → 3. Inbox → 4. Validation → 5. Transaction → Handler
-        services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>)));
+        // 1. Telemetry → 2. Logging → 3. Inbox → 4. Validation → 5. Transaction → Handler
+        // Telemetry sits outside Logging so mediation logs carry the mediation span id.
         services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IPipelineBehavior<,>), typeof(TelemetryBehavior<,>)));
+        services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>)));
         services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IPipelineBehavior<,>), typeof(InboxBehavior<,>)));
         services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>)));
         services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>)));
 
         // Domain event pipeline (outermost to innermost):
-        // 1. Logging → 2. Telemetry → 0..N Domain Event Handlers
-        services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IEventPipelineBehavior<>), typeof(EventLoggingBehavior<>)));
+        // 1. Telemetry → 2. Logging → 0..N Domain Event Handlers
         services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IEventPipelineBehavior<>), typeof(EventTelemetryBehavior<>)));
+        services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IEventPipelineBehavior<>), typeof(EventLoggingBehavior<>)));
 
         return services;
     }

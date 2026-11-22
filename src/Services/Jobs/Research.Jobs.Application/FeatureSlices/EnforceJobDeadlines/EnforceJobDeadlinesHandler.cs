@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Services;
@@ -17,7 +18,8 @@ public sealed class EnforceJobDeadlinesHandler(
     IResearchJobRepository jobs,
     GatheringPhaseCompleter gatheringCompleter,
     IOptionsSnapshot<JobsOptions> options,
-    TimeProvider timeProvider) : ICommandHandler<EnforceJobDeadlinesCommand, int>
+    TimeProvider timeProvider,
+    ILogger<EnforceJobDeadlinesHandler> logger) : ICommandHandler<EnforceJobDeadlinesCommand, int>
 {
     public Task<int> HandleAsync(EnforceJobDeadlinesCommand request, CancellationToken cancellationToken)
     {
@@ -60,6 +62,7 @@ public sealed class EnforceJobDeadlinesHandler(
         Func<ResearchJob, Task<bool>> change,
         CancellationToken cancellationToken)
     {
+        using var jobScope = logger.BeginScope(new Dictionary<string, object>(StringComparer.Ordinal) { ["JobId"] = jobId });
         await using var _ = await unitOfWork.BeginAsync(cancellationToken).ConfigureAwait(false);
         var job = await jobs.TryLockAsync(jobId, cancellationToken).ConfigureAwait(false);
         if (job is null || skip(job))

@@ -21,6 +21,10 @@ public sealed class TelemetryBehavior<TRequest, TResponse>(
     {
         var started = timeProvider.GetTimestamp();
         using var activity = MediationTracing.StartRequest(RequestName, RequestKind);
+        if (request is IJobScopedRequest jobScoped)
+        {
+            activity?.SetTag("research.job.id", jobScoped.JobId.ToString("D"));
+        }
 
         try
         {

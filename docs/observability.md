@@ -5,14 +5,18 @@ All three signals, traces, metrics and logs, go out over OTLP. Locally they go t
 
 ## Logs
 
-- Serilog, as a provider of `Microsoft.Extensions.Logging` (`LoggingFeature`).
-- Output is compact JSON on stdout, plus the OpenTelemetry provider (`writeToProviders: true`).
+- Serilog, as a provider of `Microsoft.Extensions.Logging` (`ServiceDefaultsExtensions.ConfigureLogging`), with default
+  MEL providers cleared before adding OpenTelemetry so stdout is written once in compact JSON.
+- Output is compact JSON on stdout (including pre-host bootstrap logs via `ServiceDefaultsExtensions.CreateBootstrapLogger`),
+  enriched with `ServiceName`, `Environment`, and `ServiceInstanceId`, plus the OpenTelemetry provider (`writeToProviders: true`).
 - When the `elasticsearch` connection string is set, every log also goes to the Elasticsearch data stream
-  `logs-dotnet-default` in ECS format, with `service.name`, the trace and span ids, and the event id as `event.code`.
+  `logs-dotnet-default` in ECS format, with `service.name`, `service.environment`, `service.node.name`, the trace and
+  span ids, and the event id as `event.code`.
   Logs are sent in batches in the background. While Elasticsearch is unreachable the oldest buffered logs are
   dropped; logging never blocks and the service keeps running. Kibana shows them (see the README).
 - Messages come from source-generated `[LoggerMessage]` definitions with fixed event ids.
-- Log scopes carry the correlation id (HTTP), the job id and the step key (messages).
+- Log scopes carry the correlation id (HTTP, messages, and inter-service HTTP calls), the job id (job-scoped requests,
+  messages, and background job workers), the step key, and the linked `ProducerTraceId` (messages).
 
 ### Content logging
 
@@ -51,7 +55,7 @@ API keys, connection strings and `Authorization` / `x-api-key` headers are never
 
 | Source | Spans |
 | --- | --- |
-| ASP.NET Core, HttpClient | Instrumented by `TelemetryFeature`; health requests are filtered out |
+| ASP.NET Core, HttpClient | Instrumented by `ServiceDefaultsExtensions.ConfigureOpenTelemetry`; health requests are filtered out |
 | Npgsql, RabbitMQ, StackExchange.Redis, Azure Blob | Instrumented by the Aspire client integrations |
 | `Research.Messaging` | One consume span per delivery, the **root of a new trace** with a link to the producer |
 | `Research.Jobs` | Worker runs |

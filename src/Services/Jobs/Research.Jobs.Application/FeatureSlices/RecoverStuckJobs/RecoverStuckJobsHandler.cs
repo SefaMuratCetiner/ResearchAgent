@@ -52,6 +52,7 @@ public sealed partial class RecoverStuckJobsHandler(
 
     private async Task<int> RecoverJobAsync(Guid jobId, DateTimeOffset now, JobsOptions settings, CancellationToken cancellationToken)
     {
+        using var jobScope = logger.BeginScope(new Dictionary<string, object>(StringComparer.Ordinal) { ["JobId"] = jobId });
         await using var _ = await unitOfWork.BeginAsync(cancellationToken).ConfigureAwait(false);
         var job = await jobs.TryLockAsync(jobId, cancellationToken).ConfigureAwait(false);
         if (job is null || job.Status.IsTerminal())

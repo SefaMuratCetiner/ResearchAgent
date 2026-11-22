@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Research.Contracts.Search;
 using Research.Shared.Adapters.Mediation;
 using Research.Shared.Core.Events;
@@ -154,6 +155,44 @@ public sealed class MediationPipelineTests
         activities.ShouldContain(static a => a.DisplayName == "event SampleEvent" && Equals(a.GetTagItem("mediation.outcome"), "ok"));
     }
 
+    [Fact]
+    public async Task TelemetryBehavior_RunsOutsideLoggingBehavior_AndScopesJobIdOnJobScopedRequests()
+    {
+        var recordedLogs = new List<(ActivitySpanId? SpanId, string? ActivityName, IReadOnlyList<IReadOnlyDictionary<string, object>> Scopes)>();
+        var activities = new List<Activity>();
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = static source => string.Equals(source.Name, MediationTracing.SourceName, StringComparison.Ordinal),
+            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStopped = activities.Add,
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        var services = new ServiceCollection();
+        services.AddLogging(logging =>
+        {
+            logging.SetMinimumLevel(LogLevel.Debug);
+            logging.AddProvider(new CapturingLoggerProvider(recordedLogs));
+        });
+        services.AddMetrics();
+        services.AddMediation();
+        services.AddScoped<IRequestHandler<JobScopedCommand, Result<string>>, JobScopedHandler>();
+
+        await using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        var jobId = Guid.NewGuid();
+
+        var result = await sender.SendAsync(new JobScopedCommand(jobId), TestContext.Current.CancellationToken);
+
+        result.IsSuccess.ShouldBeTrue();
+        var mediationActivity = activities.ShouldHaveSingleItem();
+        mediationActivity.GetTagItem("research.job.id").ShouldBe(jobId.ToString("D"));
+        recordedLogs.ShouldNotBeEmpty();
+        recordedLogs.ShouldAllBe(entry => entry.SpanId == mediationActivity.SpanId);
+        recordedLogs.ShouldAllBe(entry => entry.Scopes.Any(s => s.ContainsKey("JobId") && Equals(s["JobId"], jobId)));
+    }
+
     private static ServiceCollection CreateBaseServices()
     {
         var services = new ServiceCollection();
@@ -284,6 +323,57 @@ public sealed class MediationPipelineTests
             trace.Add("event:before");
             await next(cancellationToken);
             trace.Add("event:after");
+        }
+    }
+
+    private sealed record JobScopedCommand(Guid JobId) : ICommand<Result<string>>, IJobScopedRequest;
+
+    private sealed class JobScopedHandler : ICommandHandler<JobScopedCommand, Result<string>>
+    {
+        public Task<Result<string>> HandleAsync(JobScopedCommand request, CancellationToken cancellationToken) =>
+            Task.FromResult(Result<string>.Success("ok"));
+    }
+
+    private sealed class CapturingLoggerProvider(
+        List<(ActivitySpanId? SpanId, string? ActivityName, IReadOnlyList<IReadOnlyDictionary<string, object>> Scopes)> entries)
+        : ILoggerProvider
+    {
+        private readonly LoggerExternalScopeProvider _scopeProvider = new();
+
+        public ILogger CreateLogger(string categoryName) => new CapturingLogger(entries, _scopeProvider);
+
+        public void Dispose()
+        {
+        }
+
+        private sealed class CapturingLogger(
+            List<(ActivitySpanId? SpanId, string? ActivityName, IReadOnlyList<IReadOnlyDictionary<string, object>> Scopes)> entries,
+            LoggerExternalScopeProvider scopeProvider) : ILogger
+        {
+            public IDisposable BeginScope<TState>(TState state)
+                where TState : notnull => scopeProvider.Push(state);
+
+            public bool IsEnabled(LogLevel logLevel) => true;
+
+            public void Log<TState>(
+                LogLevel logLevel,
+                EventId eventId,
+                TState state,
+                Exception? exception,
+                Func<TState, Exception?, string> formatter)
+            {
+                var scopes = new List<IReadOnlyDictionary<string, object>>();
+                scopeProvider.ForEachScope(
+                    static (scope, target) =>
+                    {
+                        if (scope is IReadOnlyDictionary<string, object> dict)
+                        {
+                            target.Add(dict);
+                        }
+                    },
+                    scopes);
+                entries.Add((Activity.Current?.SpanId, Activity.Current?.DisplayName, scopes));
+            }
         }
     }
 }

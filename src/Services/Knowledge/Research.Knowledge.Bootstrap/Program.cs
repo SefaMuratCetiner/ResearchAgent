@@ -1,10 +1,10 @@
-using System.Globalization;
 using Research.Knowledge.Bootstrap.CompositionRoot;
+using Research.ServiceDefaults;
 using Serilog;
 
-// Bootstrap logger, so startup failures still reach the console. LoggingFeature replaces it with the configured
-// logger once the host is built.
-Log.Logger = new LoggerConfiguration().WriteTo.Console(formatProvider: CultureInfo.InvariantCulture).CreateBootstrapLogger();
+// Bootstrap logger, so startup failures still reach the console in compact JSON. AddServiceDefaults replaces it with
+// the configured logger once the host is built.
+Log.Logger = ServiceDefaultsExtensions.CreateBootstrapLogger("knowledge");
 
 try
 {

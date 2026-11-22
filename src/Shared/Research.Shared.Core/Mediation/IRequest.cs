@@ -19,3 +19,12 @@ public interface IQuery<out TResponse> : IRequest<TResponse>;
 /// transaction by <c>TransactionBehavior</c>, committing on success and rolling back on failure or exception.
 /// </summary>
 public interface ITransactionalCommand;
+
+/// <summary>
+/// Opt-in marker for requests tied to a specific research job. <c>TelemetryBehavior</c> tags the mediation span with
+/// <c>research.job.id</c> and <c>LoggingBehavior</c> opens a <c>JobId</c> log scope around the handler.
+/// </summary>
+public interface IJobScopedRequest
+{
+    Guid JobId { get; }
+}

@@ -7,6 +7,7 @@ using Research.Contracts;
 using Research.Contracts.Steps;
 using Research.Shared.Adapters.Messaging.Tracing;
 using Research.Shared.Core.Actors;
+using Research.Shared.Core.Logging;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Messaging;
 
@@ -51,14 +52,14 @@ public sealed partial class MessageDispatcher<TMessage>(
         activity?.SetTag(MessagingTracing.JobIdTag, message.JobId.ToString("D"));
         activity?.SetTag(MessagingTracing.StepKeyTag, message.StepKey);
 
-        using var logScope = logger.BeginScope(new Dictionary<string, object>(StringComparer.Ordinal)
+        var correlationId = ExtractCorrelationId(delivery.Headers);
+        if (correlationId is not null)
         {
-            ["JobId"] = message.JobId,
-            ["StepKey"] = message.StepKey,
-            ["MessageId"] = messageId,
-            ["MessageType"] = TMessage.MessageType,
-            ["Attempt"] = delivery.Attempt,
-        });
+            activity?.SetTag("research.correlation.id", correlationId);
+        }
+
+        using var correlationScope = correlationId is not null ? CorrelationContext.Push(correlationId) : null;
+        using var logScope = BeginMessageScope(message, messageId, delivery.Attempt, producer, correlationId);
 
         var context = new MessageContext(
             messageId,
@@ -190,6 +191,39 @@ public sealed partial class MessageDispatcher<TMessage>(
             metrics.DeadLettered(consumer);
         }
     }
+
+    private IDisposable? BeginMessageScope(
+        TMessage message,
+        Guid messageId,
+        int attempt,
+        ActivityContext producer,
+        string? correlationId)
+    {
+        var properties = new Dictionary<string, object>(StringComparer.Ordinal)
+        {
+            ["JobId"] = message.JobId,
+            ["StepKey"] = message.StepKey,
+            ["MessageId"] = messageId,
+            ["MessageType"] = TMessage.MessageType,
+            ["Attempt"] = attempt,
+        };
+        if (producer.TraceId != default)
+        {
+            properties["ProducerTraceId"] = producer.TraceId.ToString();
+        }
+
+        if (correlationId is not null)
+        {
+            properties["CorrelationId"] = correlationId;
+        }
+
+        return logger.BeginScope(properties);
+    }
+
+    private static string? ExtractCorrelationId(IReadOnlyDictionary<string, string> headers) =>
+        headers.TryGetValue(MessageHeaders.CorrelationId, out var value) && CorrelationContext.IsValid(value)
+            ? value
+            : null;
 
     private static DateTimeOffset ReadOccurredAt(IReadOnlyDictionary<string, string> headers) =>
         headers.TryGetValue(MessageHeaders.OccurredAt, out var text)

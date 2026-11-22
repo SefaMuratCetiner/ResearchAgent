@@ -1,18 +1,18 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Research.Shared.Core.Logging;
 
 namespace Research.Shared.Web.Middleware;
 
 /// <summary>
 /// Accepts an incoming <c>X-Correlation-ID</c> (a caller's business reference, forwarded by the gateway) when it is
-/// well formed, puts it in the log scope and on the span, and echoes it back. Trace context itself is handled by
-/// OpenTelemetry from <c>traceparent</c>; this id is only a cross-reference.
+/// well formed, puts it in <see cref="CorrelationContext"/>, the log scope and on the span, and echoes it back. Trace
+/// context itself is handled by OpenTelemetry from <c>traceparent</c>; this id is only a cross-reference.
 /// </summary>
 public sealed partial class CorrelationMiddleware(RequestDelegate next, ILogger<CorrelationMiddleware> logger)
 {
-    public const string HeaderName = "X-Correlation-ID";
-    private const int MaxLength = 64;
+    public const string HeaderName = CorrelationContext.HeaderName;
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -25,7 +25,7 @@ public sealed partial class CorrelationMiddleware(RequestDelegate next, ILogger<
             return;
         }
 
-        if (!IsValid(value))
+        if (!CorrelationContext.IsValid(value))
         {
             LogRejected(logger, value.Length);
             await next(context).ConfigureAwait(false);
@@ -40,15 +40,12 @@ public sealed partial class CorrelationMiddleware(RequestDelegate next, ILogger<
             return Task.CompletedTask;
         });
 
+        using (CorrelationContext.Push(value))
         using (logger.BeginScope(new Dictionary<string, object>(StringComparer.Ordinal) { ["CorrelationId"] = value }))
         {
             await next(context).ConfigureAwait(false);
         }
     }
-
-    private static bool IsValid(string value) =>
-        value.Length <= MaxLength
-        && value.All(static c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.' or ':');
 
     [LoggerMessage(EventId = 9200, Level = LogLevel.Debug, Message = "Ignored a malformed correlation id of length {Length}")]
     private static partial void LogRejected(ILogger logger, int length);

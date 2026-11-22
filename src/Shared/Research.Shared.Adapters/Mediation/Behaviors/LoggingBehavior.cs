@@ -19,6 +19,9 @@ public sealed partial class LoggingBehavior<TRequest, TResponse>(
         CancellationToken cancellationToken)
     {
         var started = timeProvider.GetTimestamp();
+        using var jobScope = request is IJobScopedRequest jobScoped
+            ? logger.BeginScope(new Dictionary<string, object>(StringComparer.Ordinal) { ["JobId"] = jobScoped.JobId })
+            : null;
         LogStarting(logger, RequestName);
 
         try
