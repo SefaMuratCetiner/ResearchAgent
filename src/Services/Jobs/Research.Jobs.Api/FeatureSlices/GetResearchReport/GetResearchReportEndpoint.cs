@@ -1,42 +1,12 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Application.GetResearchReport;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
 
-namespace Research.Jobs.Api.Endpoints;
-
-/// <summary>A finished report.</summary>
-public sealed record ResearchReportResponse(
-    Guid JobId,
-    string Status,
-    IReadOnlyList<string> Warnings,
-    string Content,
-    IReadOnlyList<CitationResponse> Citations,
-    string Model,
-    bool Truncated,
-    DateTimeOffset CreatedAt)
-{
-    public static ResearchReportResponse From(ResearchReportDto report)
-    {
-        ArgumentNullException.ThrowIfNull(report);
-        return new ResearchReportResponse(
-            report.JobId,
-            report.Status,
-            report.Warnings,
-            report.Content,
-            report.Citations.Select(static c => new CitationResponse(c.Number, c.Url, c.Title)).ToList(),
-            report.Model,
-            report.Truncated,
-            report.CreatedAt);
-    }
-}
-
-/// <summary>One numbered source; <c>[n]</c> in the report text refers to <see cref="Number"/>.</summary>
-public sealed record CitationResponse(int Number, string Url, string Title);
+namespace Research.Jobs.Api.GetResearchReport;
 
 /// <summary>
 /// <c>GET /research/{id}/report</c>: the report in Markdown with numbered citations. <c>409 jobs.report_not_ready</c>

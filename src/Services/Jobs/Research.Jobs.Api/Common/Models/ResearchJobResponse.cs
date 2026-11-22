@@ -1,7 +1,7 @@
 using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Application.GetResearchJob;
 
-namespace Research.Jobs.Api.Endpoints;
+namespace Research.Jobs.Api.Common.Models;
 
 /// <summary>A research job as the API shows it (shared across create, get, cancel, and SSE endpoints).</summary>
 public sealed record ResearchJobResponse(
@@ -42,18 +42,5 @@ public sealed record ResearchJobResponse(
     {
         ArgumentNullException.ThrowIfNull(view);
         return From(view.Job, view.Steps);
-    }
-}
-
-/// <summary>Step progress of one kind.</summary>
-public sealed record StepProgressResponse(string Kind, int Running, int Succeeded, int Failed);
-
-/// <summary>Where to go next.</summary>
-public sealed record ResearchJobLinks(string Self, string Report, string Events, string Cancel)
-{
-    public static ResearchJobLinks For(Guid id)
-    {
-        var self = "/research/" + id.ToString("D");
-        return new ResearchJobLinks(self, self + "/report", self + "/events", self + "/cancel");
     }
 }

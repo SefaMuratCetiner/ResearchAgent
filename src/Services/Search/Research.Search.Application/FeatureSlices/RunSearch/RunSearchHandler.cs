@@ -9,9 +9,6 @@ using Research.SharedKernel.Results;
 
 namespace Research.Search.Application.RunSearch;
 
-/// <summary>Search for <see cref="Query"/>; at most <see cref="MaxResults"/> distinct canonical URLs.</summary>
-public sealed record RunSearchCommand(string Query, int MaxResults) : ICommand<Result<SearchResponse>>;
-
 /// <summary>
 /// Runs one search through the decorated provider, canonicalizes and deduplicates the URLs, and logs the query and
 /// every hit under <see cref="ContentLogCategories.Search"/>. Permanent provider rejections become failures.

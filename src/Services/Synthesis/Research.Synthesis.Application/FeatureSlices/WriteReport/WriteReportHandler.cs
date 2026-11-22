@@ -10,19 +10,6 @@ using Research.Synthesis.Domain.Policies;
 
 namespace Research.Synthesis.Application.WriteReport;
 
-/// <summary>Write the report of a job from its indexed passages.</summary>
-public sealed record WriteReportCommand(Guid JobId, string Question, IReadOnlyList<string> SubQuestions, int TopK)
-    : ICommand<Result<WrittenReport>>;
-
-/// <summary>The report, the sources it cites, and what it cost.</summary>
-public sealed record WrittenReport(
-    string Content,
-    IReadOnlyList<CitationBuilder.Source> Citations,
-    bool Truncated,
-    long InputTokens,
-    long OutputTokens,
-    string Model);
-
 /// <summary>
 /// Retrieves the top passages for the question and every sub-question, writes the report with one LLM call, and
 /// keeps only the sources it cites. A report cut at the output limit is still returned, marked truncated. The report

@@ -12,21 +12,6 @@ using Research.SharedKernel.Results;
 
 namespace Research.Fetching.Application.FetchPage;
 
-/// <summary>Fetch <see cref="Url"/> for a job; <see cref="Title"/> is the search result title, used when the page has none.</summary>
-public sealed record FetchPageCommand(Guid JobId, string Url, string? Title) : ICommand<Result<FetchedPage>>;
-
-/// <summary>A fetched page whose text is already in the document store under <see cref="BlobKey"/>.</summary>
-public sealed record FetchedPage(
-    string Url,
-    string UrlHash,
-    string FinalUrl,
-    string Title,
-    string MimeType,
-    long SizeBytes,
-    string ContentHash,
-    int CharacterCount,
-    string BlobKey);
-
 /// <summary>
 /// Validates the URL, checks robots.txt, downloads under the per-domain limit, extracts the text and stores it in the
 /// document store under a content-addressed key (so a retry or another job fetching the same text writes the same

@@ -1,4 +1,4 @@
-using Research.Jobs.Api.Endpoints;
+using Research.Jobs.Api;
 using Research.Jobs.Application;
 using Research.Jobs.Application.Observability;
 using Research.Jobs.Bootstrap.Features;

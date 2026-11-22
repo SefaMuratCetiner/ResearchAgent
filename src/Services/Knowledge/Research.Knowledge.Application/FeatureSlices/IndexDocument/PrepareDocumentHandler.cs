@@ -10,19 +10,6 @@ using Research.SharedKernel.Results;
 
 namespace Research.Knowledge.Application.IndexDocument;
 
-/// <summary>Index the text stored under <see cref="BlobKey"/> (fetched from <see cref="Url"/>).</summary>
-public sealed record PrepareDocumentCommand(string Url, string Title, string BlobKey, string ContentHash)
-    : ICommand<Result<PreparedDocument>>;
-
-/// <summary>
-/// What indexing needs to write: either the id of a document with the same content that is already indexed, or a new
-/// document with its embedded passages.
-/// </summary>
-public sealed record PreparedDocument(StoredDocument? Existing, KnowledgeDocument? NewDocument, IReadOnlyList<Passage> Passages)
-{
-    public static PreparedDocument From(StoredDocument existing) => new(existing, null, []);
-}
-
 /// <summary>
 /// The slow, transaction-free part of indexing: looks up the content hash, and for new content reads the blob, chunks
 /// it and embeds the passages in batches. The message handler writes the result in one short transaction.

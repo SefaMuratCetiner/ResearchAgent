@@ -4,13 +4,14 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
+using Research.Jobs.Api.Common.Models;
 using Research.Jobs.Application;
 using Research.Jobs.Application.GetResearchJob;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
 
-namespace Research.Jobs.Api.Endpoints;
+namespace Research.Jobs.Api.StreamResearchJobEvents;
 
 /// <summary>
 /// <c>GET /research/{id}/events</c>: Server-Sent Events. Sends the job now and on every change (event <c>job</c>,

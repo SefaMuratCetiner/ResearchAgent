@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Routing;
+using Research.Knowledge.Api.SearchPassages;
 using Research.Shared.Web.Endpoints;
 
-namespace Research.Knowledge.Api.Endpoints;
+namespace Research.Knowledge.Api;
 
 /// <summary>The internal HTTP surface of Knowledge, discovered via <see cref="IEndpointGroup"/>.</summary>
 public sealed class KnowledgeEndpoints : IEndpointGroup

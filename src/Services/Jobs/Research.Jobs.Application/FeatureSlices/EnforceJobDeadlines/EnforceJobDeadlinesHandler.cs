@@ -7,9 +7,6 @@ using Research.Shared.Core.Transactions;
 
 namespace Research.Jobs.Application.EnforceJobDeadlines;
 
-/// <summary>Enforce synthesis cutoffs and hard deadlines on active jobs; returns how many jobs changed state.</summary>
-public sealed record EnforceJobDeadlinesCommand : ICommand<int>;
-
 /// <summary>
 /// Drives the two clocks (§10.1): a gathering job past <c>synthesis_cutoff_at</c> ends gathering
 /// (<c>jobs.cutoff_reached</c>); an active job past <c>deadline_at</c> becomes <c>Expired</c>. Both are ordinary

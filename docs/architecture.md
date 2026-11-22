@@ -60,7 +60,7 @@ Research.<Service>.Bootstrap/ (or Research.Jobs.Worker/)
 
 ## Module shape and unified mediation pipeline
 
-Each service's `Research.<Service>.Application` project uses consistent `Research.<Service>.Application.*` namespaces and organizes use cases under `FeatureSlices/<SliceName>/` (omitted from namespaces). HTTP endpoints live in `Research.<Service>.Api/Endpoints/`.
+Each service's `Research.<Service>.Application` and `Research.<Service>.Api` projects organize use cases, domain event handlers, and HTTP endpoints under `FeatureSlices/<SliceName>/` (omitted from namespaces, one top-level type per file), with each API's root `<Service>Endpoints` (`IEndpointGroup`) at the project root.
 
 Commands (`ICommand<TResponse>` / `ICommand`), queries (`IQuery<TResponse>`), integration messages (`HandleMessage<TMessage>` via `IMessageHandler<TMessage>`), and domain events (`IDomainEvent` via `IDomainEventHandler<TEvent>`) all flow through a custom, zero-third-party-package mediator (`Research.Shared.Adapters.Mediation.Mediator`) implementing `IMediator` (`ISender` + `IPublisher`) and `IDomainEventDispatcher`:
 

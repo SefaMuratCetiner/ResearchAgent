@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Research.Jobs.Api.Common.Models;
 using Research.Jobs.Application.CancelResearchJob;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
 
-namespace Research.Jobs.Api.Endpoints;
+namespace Research.Jobs.Api.CancelResearchJob;
 
 /// <summary><c>POST /research/{id}/cancel</c>: cancels an active job; cancelling twice is fine.</summary>
 public sealed class CancelResearchJobEndpoint : IEndpoint

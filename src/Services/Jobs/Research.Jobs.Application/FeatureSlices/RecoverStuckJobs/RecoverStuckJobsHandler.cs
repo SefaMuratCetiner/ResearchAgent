@@ -10,9 +10,6 @@ using Research.Shared.Core.Transactions;
 
 namespace Research.Jobs.Application.RecoverStuckJobs;
 
-/// <summary>Re-emit or fail expired steps on active jobs; returns how many steps were handled.</summary>
-public sealed record RecoverStuckJobsCommand : ICommand<int>;
-
 /// <summary>
 /// Scheduler-agent-supervisor: a running step whose lease expired without an answer (a lost message, a broker that
 /// lost its queues, a crashed worker) is re-emitted from its stored request, up to

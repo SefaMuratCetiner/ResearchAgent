@@ -8,45 +8,6 @@ using Research.SharedKernel.Results;
 
 namespace Research.Knowledge.Application.SearchPassages;
 
-/// <summary>The passages of <see cref="JobId"/>'s documents most similar to any of <see cref="Queries"/>.</summary>
-public sealed record SearchPassagesQuery(Guid JobId, IReadOnlyList<string> Queries, int TopK)
-    : IQuery<Result<IReadOnlyList<PassageMatchDto>>>;
-
-/// <summary>Immutable projection of a matching passage returned across the Application boundary.</summary>
-public sealed record PassageMatchDto(Guid PassageId, Guid DocumentId, string Url, string Title, string Text, double Score)
-{
-    public static PassageMatchDto From(PassageMatch match)
-    {
-        ArgumentNullException.ThrowIfNull(match);
-        return new PassageMatchDto(match.PassageId, match.DocumentId, match.Url, match.Title, match.Text, match.Score);
-    }
-}
-
-/// <summary>Validates <see cref="SearchPassagesQuery"/> bounds before <see cref="SearchPassagesHandler"/> runs.</summary>
-public sealed class SearchPassagesQueryValidator(IOptionsSnapshot<KnowledgeOptions> options)
-    : IRequestValidator<SearchPassagesQuery>
-{
-    public ValueTask<Error?> ValidateAsync(SearchPassagesQuery request, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        var settings = options.Value;
-        var queries = (request.Queries ?? [])
-            .Select(static q => q?.Trim() ?? string.Empty)
-            .Where(static q => q.Length > 0)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        var invalid = request.JobId == Guid.Empty
-            || queries.Count == 0
-            || queries.Count > settings.MaxQueries
-            || queries.Any(q => q.Length > settings.MaxQueryLength)
-            || request.TopK < 1
-            || request.TopK > settings.MaxTopK;
-
-        return ValueTask.FromResult(invalid ? KnowledgeErrors.InvalidSearch : null);
-    }
-}
-
 /// <summary>
 /// Embeds every query, searches each one within the job's documents, merges the hits (a passage keeps its best
 /// score) and returns the <c>TopK</c> best. A job with no indexed documents gets an empty list, not an error.

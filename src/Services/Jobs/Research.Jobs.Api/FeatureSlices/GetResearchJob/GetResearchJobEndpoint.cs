@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Research.Jobs.Api.Common.Models;
 using Research.Jobs.Application.GetResearchJob;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
 
-namespace Research.Jobs.Api.Endpoints;
+namespace Research.Jobs.Api.GetResearchJob;
 
 /// <summary><c>GET /research/{id}</c>: the job, its plan, warnings and step progress.</summary>
 public sealed class GetResearchJobEndpoint : IEndpoint

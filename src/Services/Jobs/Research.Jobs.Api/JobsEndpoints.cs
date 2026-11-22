@@ -1,7 +1,12 @@
 using Microsoft.AspNetCore.Routing;
+using Research.Jobs.Api.CancelResearchJob;
+using Research.Jobs.Api.CreateResearchJob;
+using Research.Jobs.Api.GetResearchJob;
+using Research.Jobs.Api.GetResearchReport;
+using Research.Jobs.Api.StreamResearchJobEvents;
 using Research.Shared.Web.Endpoints;
 
-namespace Research.Jobs.Api.Endpoints;
+namespace Research.Jobs.Api;
 
 /// <summary>The public HTTP surface of Jobs, discovered via <see cref="IEndpointGroup"/>.</summary>
 public sealed class JobsEndpoints : IEndpointGroup
