@@ -10,7 +10,17 @@ namespace Research.Knowledge.Application.SearchPassages;
 
 /// <summary>The passages of <see cref="JobId"/>'s documents most similar to any of <see cref="Queries"/>.</summary>
 public sealed record SearchPassagesQuery(Guid JobId, IReadOnlyList<string> Queries, int TopK)
-    : IQuery<Result<IReadOnlyList<PassageMatch>>>;
+    : IQuery<Result<IReadOnlyList<PassageMatchDto>>>;
+
+/// <summary>Immutable projection of a matching passage returned across the Application boundary.</summary>
+public sealed record PassageMatchDto(Guid PassageId, Guid DocumentId, string Url, string Title, string Text, double Score)
+{
+    public static PassageMatchDto From(PassageMatch match)
+    {
+        ArgumentNullException.ThrowIfNull(match);
+        return new PassageMatchDto(match.PassageId, match.DocumentId, match.Url, match.Title, match.Text, match.Score);
+    }
+}
 
 /// <summary>Validates <see cref="SearchPassagesQuery"/> bounds before <see cref="SearchPassagesHandler"/> runs.</summary>
 public sealed class SearchPassagesQueryValidator(IOptionsSnapshot<KnowledgeOptions> options)
@@ -47,9 +57,9 @@ public sealed partial class SearchPassagesHandler(
     KnowledgeMetrics metrics,
     IOptionsSnapshot<KnowledgeOptions> options,
     TimeProvider timeProvider,
-    ILogger<SearchPassagesHandler> logger) : IQueryHandler<SearchPassagesQuery, Result<IReadOnlyList<PassageMatch>>>
+    ILogger<SearchPassagesHandler> logger) : IQueryHandler<SearchPassagesQuery, Result<IReadOnlyList<PassageMatchDto>>>
 {
-    public async Task<Result<IReadOnlyList<PassageMatch>>> HandleAsync(SearchPassagesQuery query, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<PassageMatchDto>>> HandleAsync(SearchPassagesQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var settings = options.Value;
@@ -66,7 +76,7 @@ public sealed partial class SearchPassagesHandler(
             || query.TopK < 1
             || query.TopK > settings.MaxTopK)
         {
-            return Result<IReadOnlyList<PassageMatch>>.Failure(KnowledgeErrors.InvalidSearch);
+            return Result<IReadOnlyList<PassageMatchDto>>.Failure(KnowledgeErrors.InvalidSearch);
         }
 
         var started = timeProvider.GetTimestamp();
@@ -86,11 +96,15 @@ public sealed partial class SearchPassagesHandler(
             }
         }
 
-        var result = best.Values.OrderByDescending(static m => m.Score).Take(query.TopK).ToList();
+        var result = best.Values
+            .OrderByDescending(static m => m.Score)
+            .Take(query.TopK)
+            .Select(PassageMatchDto.From)
+            .ToList();
         var elapsed = timeProvider.GetElapsedTime(started);
         metrics.SearchCompleted(elapsed);
         LogSearched(logger, query.JobId, queries.Count, result.Count, elapsed.TotalMilliseconds);
-        return Result<IReadOnlyList<PassageMatch>>.Success(result);
+        return Result<IReadOnlyList<PassageMatchDto>>.Success(result);
     }
 
     [LoggerMessage(EventId = 6020, Level = LogLevel.Information, Message = "Passage search for job {JobId}: {QueryCount} queries, {ResultCount} passages in {ElapsedMs:F0} ms")]

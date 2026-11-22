@@ -1,4 +1,5 @@
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Application.Lifecycle;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
@@ -12,18 +13,21 @@ namespace Research.Jobs.Application.CancelResearchJob;
 /// </summary>
 public sealed class CancelResearchJobHandler(
     IResearchJobRepository jobs,
-    JobLifecycle lifecycle) : ICommandHandler<CancelResearchJobCommand, Result<ResearchJob>>
+    JobLifecycle lifecycle) : ICommandHandler<CancelResearchJobCommand, Result<ResearchJobDto>>
 {
-    public async Task<Result<ResearchJob>> HandleAsync(CancelResearchJobCommand command, CancellationToken cancellationToken)
+    public async Task<Result<ResearchJobDto>> HandleAsync(CancelResearchJobCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
 
         var job = await jobs.GetForUpdateAsync(command.JobId, cancellationToken).ConfigureAwait(false);
         if (job is null)
         {
-            return Result<ResearchJob>.Failure(JobsErrors.JobNotFound);
+            return Result<ResearchJobDto>.Failure(JobsErrors.JobNotFound);
         }
 
-        return await lifecycle.CancelAsync(job, cancellationToken).ConfigureAwait(false);
+        var result = await lifecycle.CancelAsync(job, cancellationToken).ConfigureAwait(false);
+        return result.IsSuccess
+            ? Result<ResearchJobDto>.Success(ResearchJobDto.From(result.Value))
+            : Result<ResearchJobDto>.Failure(result.Error);
     }
 }

@@ -212,6 +212,22 @@ public sealed class ReferenceRuleTests
             .ShouldBeTrue($"{name} must define at least one REPR IEndpoint");
     }
 
+    [Theory]
+    [MemberData(nameof(Apis))]
+    public void Api_DoesNotImportDomainNamespace(string name)
+    {
+        var project = Solution.Get(name);
+        var domainNamespace = $"Research.{project.ServiceName}.Domain";
+        var directory = Path.GetDirectoryName(project.Path)!;
+
+        foreach (var file in Directory.EnumerateFiles(directory, "*.cs", SearchOption.AllDirectories)
+            .Where(static f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
+                && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)))
+        {
+            File.ReadAllText(file).ShouldNotContain($"using {domainNamespace}", customMessage: $"{file} must depend on Application DTOs rather than {domainNamespace}");
+        }
+    }
+
     [Fact]
     public void DomainUnitTests_DependOnlyOnDomainAndSharedKernel()
     {

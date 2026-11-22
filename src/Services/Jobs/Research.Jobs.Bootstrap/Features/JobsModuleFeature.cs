@@ -1,12 +1,12 @@
 using Research.Jobs.Application.CancelResearchJob;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Application.CreateResearchJob;
 using Research.Jobs.Application.DomainEventHandlers;
 using Research.Jobs.Application.GetResearchJob;
 using Research.Jobs.Application.GetResearchReport;
 using Research.Jobs.Application.Lifecycle;
 using Research.Jobs.Application.Observability;
-using Research.Jobs.Domain;
 using Research.Jobs.Domain.Events;
 using Research.Jobs.Infrastructure.Persistence;
 using Research.Shared.Adapters.Composition;
@@ -43,7 +43,7 @@ internal sealed class JobsModuleFeature : IResearchFeature
         app.Services.AddCommandHandler<CreateResearchJobCommand, Result<CreateResearchJobResult>, CreateResearchJobHandler>();
         app.Services.AddRequestValidator<CreateResearchJobCommand, CreateResearchJobCommandValidator>();
         app.Services.AddQueryHandler<GetResearchJobQuery, Result<ResearchJobView>, GetResearchJobHandler>();
-        app.Services.AddQueryHandler<GetResearchReportQuery, Result<ResearchReportView>, GetResearchReportHandler>();
-        app.Services.AddCommandHandler<CancelResearchJobCommand, Result<ResearchJob>, CancelResearchJobHandler>();
+        app.Services.AddQueryHandler<GetResearchReportQuery, Result<ResearchReportDto>, GetResearchReportHandler>();
+        app.Services.AddCommandHandler<CancelResearchJobCommand, Result<ResearchJobDto>, CancelResearchJobHandler>();
     }
 }

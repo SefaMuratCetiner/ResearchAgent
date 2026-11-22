@@ -1,4 +1,5 @@
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
 using Research.SharedKernel.Results;
@@ -10,20 +11,20 @@ namespace Research.Jobs.Application.GetResearchReport;
 /// (failed, cancelled, expired) answer <c>jobs.report_not_available</c>.
 /// </summary>
 public sealed class GetResearchReportHandler(IResearchJobRepository jobs, IResearchReportRepository reports)
-    : IQueryHandler<GetResearchReportQuery, Result<ResearchReportView>>
+    : IQueryHandler<GetResearchReportQuery, Result<ResearchReportDto>>
 {
-    public async Task<Result<ResearchReportView>> HandleAsync(GetResearchReportQuery query, CancellationToken cancellationToken)
+    public async Task<Result<ResearchReportDto>> HandleAsync(GetResearchReportQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var job = await jobs.GetAsync(query.JobId, cancellationToken).ConfigureAwait(false);
         if (job is null)
         {
-            return Result<ResearchReportView>.Failure(JobsErrors.JobNotFound);
+            return Result<ResearchReportDto>.Failure(JobsErrors.JobNotFound);
         }
 
         if (!job.Status.IsTerminal())
         {
-            return Result<ResearchReportView>.Failure(JobsErrors.ReportNotReady);
+            return Result<ResearchReportDto>.Failure(JobsErrors.ReportNotReady);
         }
 
         var report = job.Status.HasReport()
@@ -31,7 +32,7 @@ public sealed class GetResearchReportHandler(IResearchJobRepository jobs, IResea
             : null;
 
         return report is null
-            ? Result<ResearchReportView>.Failure(JobsErrors.ReportNotAvailable)
-            : Result<ResearchReportView>.Success(new ResearchReportView(job, report));
+            ? Result<ResearchReportDto>.Failure(JobsErrors.ReportNotAvailable)
+            : Result<ResearchReportDto>.Success(ResearchReportDto.From(job, report));
     }
 }

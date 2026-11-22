@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Dapper;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Domain;
@@ -5,9 +6,10 @@ using Research.Providers.Postgres.Transactions;
 
 namespace Research.Jobs.Infrastructure.Persistence;
 
-/// <summary>Dapper repository over <c>research_jobs</c>. Enums are stored as their names.</summary>
+/// <summary>Dapper repository over <c>research_jobs</c>. Tracks persisted CAS snapshots in scope; enums are stored as their names.</summary>
 public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IResearchJobRepository
 {
+    private readonly Dictionary<Guid, PersistedSnapshot> _snapshots = [];
     private const string Columns = """
         id, question, status, plan, idempotency_key, synthesis_cutoff_at, deadline_at, token_budget, tokens_used,
         error_code, warnings, gathering_end_reason, completed_at, version, created_at, created_by, updated_at, updated_by
@@ -63,6 +65,7 @@ public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IRese
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         if (inserted == 1)
         {
+            RecordSnapshot(job);
             unitOfWork.Track(job);
             return true;
         }
@@ -77,7 +80,7 @@ public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IRese
             $"SELECT {Columns} FROM research_jobs WHERE id = @Id",
             new { Id = id },
             cancellationToken: cancellationToken)).ConfigureAwait(false);
-        return row?.ToDomain();
+        return RehydrateAndTrack(row);
     }
 
     public async Task<ResearchJob?> FindByIdempotencyKeyAsync(string idempotencyKey, CancellationToken cancellationToken)
@@ -87,7 +90,7 @@ public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IRese
             $"SELECT {Columns} FROM research_jobs WHERE idempotency_key = @Key",
             new { Key = idempotencyKey },
             cancellationToken: cancellationToken)).ConfigureAwait(false);
-        return row?.ToDomain();
+        return RehydrateAndTrack(row);
     }
 
     public Task<ResearchJob?> GetForUpdateAsync(Guid id, CancellationToken cancellationToken) =>
@@ -101,9 +104,12 @@ public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IRese
         ArgumentNullException.ThrowIfNull(job);
         var now = unitOfWork.Now;
         var actor = unitOfWork.ActorId;
-        var expectedVersion = job.PersistedVersion;
+        var snapshot = _snapshots.TryGetValue(job.Id, out var loaded)
+            ? loaded
+            : new PersistedSnapshot(job.Version, job.Status);
+        var expectedVersion = snapshot.Version;
         var nextVersion = expectedVersion + 1;
-        var allowedFrom = job.GetAllowedSourceStatuses();
+        var allowedFrom = ResolveAllowedSourceStatuses(snapshot.Status, job.Status);
 
         var updated = await unitOfWork.ActiveConnection.ExecuteAsync(new CommandDefinition(
             UpdateSql,
@@ -127,8 +133,8 @@ public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IRese
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         if (updated == 1)
         {
-            job.PrepareForUpdate(now, actor);
-            job.AcceptPersistedState();
+            job.MarkPersisted(nextVersion, now, actor);
+            RecordSnapshot(job);
             unitOfWork.Track(job);
             return true;
         }
@@ -172,6 +178,24 @@ public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IRese
             cancellationToken: cancellationToken)).ConfigureAwait(false);
     }
 
+    internal static IReadOnlyList<JobStatus> ResolveAllowedSourceStatuses(JobStatus persistedStatus, JobStatus currentStatus) =>
+        currentStatus == persistedStatus ? [persistedStatus] : JobStateMachine.AllowedFrom(currentStatus);
+
+    private ResearchJob? RehydrateAndTrack(JobRow? row)
+    {
+        if (row is null)
+        {
+            return null;
+        }
+
+        var job = row.ToDomain();
+        RecordSnapshot(job);
+        return job;
+    }
+
+    private void RecordSnapshot(ResearchJob job) =>
+        _snapshots[job.Id] = new PersistedSnapshot(job.Version, job.Status);
+
     private async Task<ResearchJob?> LockAsync(Guid id, string lockClause, CancellationToken cancellationToken)
     {
         var row = await unitOfWork.ActiveConnection.QuerySingleOrDefaultAsync<JobRow>(new CommandDefinition(
@@ -179,8 +203,11 @@ public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IRese
             new { Id = id },
             unitOfWork.ActiveTransaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
-        return row?.ToDomain();
+        return RehydrateAndTrack(row);
     }
+
+    [StructLayout(LayoutKind.Auto)]
+    private readonly record struct PersistedSnapshot(int Version, JobStatus Status);
 
     private async Task<IReadOnlyList<Guid>> ListIdsAsync(string sql, DateTimeOffset now, int limit, CancellationToken cancellationToken)
     {

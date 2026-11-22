@@ -172,23 +172,17 @@ public sealed class ResearchJobAggregateTests
     }
 
     [Fact]
-    public void PrepareForUpdateAndAcceptPersistedState_TrackCasVersionAndAllowedStatuses()
+    public void MarkPersisted_UpdatesVersionAndAuditFields()
     {
         var job = CreateSampleJob();
         job.StartGathering(["Q1"], T0.AddSeconds(5));
 
-        job.PersistedVersion.ShouldBe(0);
-        job.GetAllowedSourceStatuses().ShouldBe([JobStatus.Planning]);
+        job.Version.ShouldBe(0);
 
-        job.PrepareForUpdate(T0.AddSeconds(6), "system:jobs");
+        job.MarkPersisted(1, T0.AddSeconds(6), "system:jobs");
         job.Version.ShouldBe(1);
         job.UpdatedAt.ShouldBe(T0.AddSeconds(6));
         job.UpdatedBy.ShouldBe("system:jobs");
-
-        job.AcceptPersistedState();
-        job.PersistedVersion.ShouldBe(1);
-        job.PersistedStatus.ShouldBe(JobStatus.Gathering);
-        job.GetAllowedSourceStatuses().ShouldBe([JobStatus.Gathering]);
     }
 
     private static ResearchJob CreateSampleJob(long tokenBudget = 10_000) => ResearchJob.Create(

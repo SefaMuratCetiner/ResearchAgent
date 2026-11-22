@@ -24,11 +24,10 @@ public sealed partial class JobLifecycle(
     {
         ArgumentNullException.ThrowIfNull(job);
 
-        var fromStatus = job.PersistedStatus;
         var saved = await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false);
         if (!saved)
         {
-            LogTransitionLost(logger, job.Id, fromStatus, job.Status);
+            LogTransitionLost(logger, job.Id, job.Status);
             return false;
         }
 
@@ -130,8 +129,8 @@ public sealed partial class JobLifecycle(
             && await SaveAsync(job, cancellationToken).ConfigureAwait(false);
     }
 
-    [LoggerMessage(EventId = 2000, Level = LogLevel.Information, Message = "Job {JobId} transition {From} -> {To} lost a race; nothing changed")]
-    private static partial void LogTransitionLost(ILogger logger, Guid jobId, JobStatus from, JobStatus to);
+    [LoggerMessage(EventId = 2000, Level = LogLevel.Information, Message = "Job {JobId} transition to {To} lost a race; nothing changed")]
+    private static partial void LogTransitionLost(ILogger logger, Guid jobId, JobStatus to);
 
     [LoggerMessage(EventId = 2001, Level = LogLevel.Information, Message = "Job {JobId} gathering ended ({Reason}) with {Sources} sources and {FailedSteps} failed steps")]
     private static partial void LogGatheringEnded(ILogger logger, Guid jobId, GatheringEndReason reason, int sources, int failedSteps);

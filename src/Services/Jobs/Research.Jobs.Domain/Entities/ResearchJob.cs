@@ -6,8 +6,7 @@ namespace Research.Jobs.Domain;
 
 /// <summary>
 /// The research job aggregate root. Owns its state transitions, cancellation and outcome invariants, and raises
-/// domain events on every lifecycle transition. Persisted via compare-and-set on <see cref="PersistedVersion"/> and
-/// <see cref="GetAllowedSourceStatuses"/>.
+/// domain events on every lifecycle transition.
 /// </summary>
 public sealed class ResearchJob : AggregateRoot
 {
@@ -46,12 +45,6 @@ public sealed class ResearchJob : AggregateRoot
 
     public int Version { get; private set; }
 
-    /// <summary>The version currently persisted in the database, used as the CAS precondition.</summary>
-    public int PersistedVersion { get; private set; }
-
-    /// <summary>The status currently persisted in the database, used to compute the CAS allowed source states.</summary>
-    public JobStatus PersistedStatus { get; private set; }
-
     public bool BudgetExhausted => TokensUsed >= TokenBudget;
 
     /// <summary>Creates a new job in <see cref="JobStatus.Planning"/> with both clocks set and raises <see cref="JobCreatedDomainEvent"/>.</summary>
@@ -83,8 +76,6 @@ public sealed class ResearchJob : AggregateRoot
             DeadlineAt = now + maxDuration,
             TokenBudget = tokenBudget,
             Version = 0,
-            PersistedVersion = 0,
-            PersistedStatus = JobStatus.Planning,
             CreatedAt = now,
         };
         if (!string.IsNullOrWhiteSpace(createdBy))
@@ -133,8 +124,6 @@ public sealed class ResearchJob : AggregateRoot
             GatheringEndReason = gatheringEndReason,
             CompletedAt = completedAt,
             Version = version,
-            PersistedVersion = version,
-            PersistedStatus = status,
             CreatedAt = createdAt,
             CreatedBy = createdBy,
             UpdatedAt = updatedAt,
@@ -279,21 +268,11 @@ public sealed class ResearchJob : AggregateRoot
         return true;
     }
 
-    /// <summary>The source states the database row must be in for the pending update to succeed.</summary>
-    public IReadOnlyList<JobStatus> GetAllowedSourceStatuses() =>
-        Status == PersistedStatus ? [PersistedStatus] : JobStateMachine.AllowedFrom(Status);
-
-    /// <summary>Stamps the next version and update audit fields right before writing to persistence.</summary>
-    public void PrepareForUpdate(DateTimeOffset now, string actor)
+    /// <summary>Updates <see cref="Version"/> and audit metadata after persistence commits an update.</summary>
+    public void MarkPersisted(int version, DateTimeOffset updatedAt, string updatedBy)
     {
-        Version = PersistedVersion + 1;
-        StampUpdated(now, actor);
-    }
-
-    /// <summary>Marks the current <see cref="Version"/> and <see cref="Status"/> as committed to persistence.</summary>
-    public void AcceptPersistedState()
-    {
-        PersistedVersion = Version;
-        PersistedStatus = Status;
+        ArgumentOutOfRangeException.ThrowIfNegative(version);
+        Version = version;
+        StampUpdated(updatedAt, updatedBy);
     }
 }

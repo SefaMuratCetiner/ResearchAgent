@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Interfaces;
+using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Security;
@@ -69,12 +70,12 @@ public sealed partial class CreateResearchJobHandler(
         }
 
         LogJobCreated(logger, job.Id, job.DeadlineAt);
-        return Result<CreateResearchJobResult>.Success(new CreateResearchJobResult(job, Created: true));
+        return Result<CreateResearchJobResult>.Success(new CreateResearchJobResult(ResearchJobDto.From(job), Created: true));
     }
 
     private static Result<CreateResearchJobResult> Replay(ResearchJob earlier, string question) =>
         string.Equals(earlier.Question, question, StringComparison.Ordinal)
-            ? Result<CreateResearchJobResult>.Success(new CreateResearchJobResult(earlier, Created: false))
+            ? Result<CreateResearchJobResult>.Success(new CreateResearchJobResult(ResearchJobDto.From(earlier), Created: false))
             : Result<CreateResearchJobResult>.Failure(JobsErrors.IdempotencyConflict);
 
     [LoggerMessage(EventId = 2020, Level = LogLevel.Information, Message = "Job {JobId} created; deadline {DeadlineAt}")]

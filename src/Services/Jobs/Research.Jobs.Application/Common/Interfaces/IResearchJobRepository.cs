@@ -19,9 +19,8 @@ public interface IResearchJobRepository
     Task<ResearchJob?> TryLockAsync(Guid id, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Compare-and-set: writes <paramref name="job"/> (incrementing <see cref="ResearchJob.PersistedVersion"/> and
-    /// stamping update audit fields) only if the row still matches <see cref="ResearchJob.PersistedVersion"/> and
-    /// <see cref="ResearchJob.GetAllowedSourceStatuses"/>.
+    /// Compare-and-set: writes <paramref name="job"/> (incrementing its persisted version and stamping update audit
+    /// fields) only if the row still matches the version and allowed source statuses tracked by the repository.
     /// </summary>
     Task<bool> UpdateAsync(ResearchJob job, CancellationToken cancellationToken);
 

@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application;
 using Research.Jobs.Application.GetResearchJob;
-using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
@@ -57,7 +56,7 @@ public sealed class ResearchJobEventsEndpoint : IEndpoint
         var current = first;
         yield return ToItem(current);
 
-        while (!current.Job.Status.IsTerminal() && !cancellationToken.IsCancellationRequested)
+        while (!current.Job.IsTerminal && !cancellationToken.IsCancellationRequested)
         {
             try
             {

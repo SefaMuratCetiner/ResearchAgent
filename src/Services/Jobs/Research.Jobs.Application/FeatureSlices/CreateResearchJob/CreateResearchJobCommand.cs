@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Security;
@@ -10,8 +11,8 @@ namespace Research.Jobs.Application.CreateResearchJob;
 public sealed record CreateResearchJobCommand(string Question, string? IdempotencyKey)
     : ICommand<Result<CreateResearchJobResult>>;
 
-/// <summary>The job, and whether this call created it (false: an earlier call with the same key did).</summary>
-public sealed record CreateResearchJobResult(ResearchJob Job, bool Created);
+/// <summary>The job DTO, and whether this call created it (false: an earlier call with the same key did).</summary>
+public sealed record CreateResearchJobResult(ResearchJobDto Job, bool Created);
 
 /// <summary>Validates the cleaned question length before <see cref="CreateResearchJobHandler"/> runs.</summary>
 public sealed class CreateResearchJobCommandValidator(IOptionsSnapshot<JobsOptions> options)

@@ -30,7 +30,7 @@ Services never reference each other. Shared ports (`ILlmClient`, `ISearchProvide
 
 ## Endpoints and two-stage validation
 
-HTTP APIs follow the REPR pattern using native Minimal APIs: each `IEndpointGroup` owns the route prefix and OpenAPI tag and delegates to self-contained `IEndpoint` classes that co-locate their request/response models, route, OpenAPI metadata, and thin `ISender` delegation (`ToHttpResult` / `ToOkOrProblem`).
+HTTP APIs follow the REPR pattern using native Minimal APIs: each `IEndpointGroup` owns the route prefix and OpenAPI tag and delegates to self-contained `IEndpoint` classes that co-locate their request/response models, route, OpenAPI metadata, and thin `ISender` delegation (`ToHttpResult` / `ToOkOrProblem`). Use cases return immutable DTOs (`ResearchJobDto`, `ResearchReportDto`, `PassageMatchDto`) so `*.Api` projects never depend on `*.Domain`, while `ResearchJobRepository` tracks persisted CAS snapshots inside its DI scope so `ResearchJob` stays free of persistence-tracking state.
 
 Validation is intentionally split across two boundaries:
 

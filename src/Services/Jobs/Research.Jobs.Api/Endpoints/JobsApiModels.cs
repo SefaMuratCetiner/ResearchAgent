@@ -1,5 +1,5 @@
+using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Application.GetResearchJob;
-using Research.Jobs.Domain;
 
 namespace Research.Jobs.Api.Endpoints;
 
@@ -19,13 +19,13 @@ public sealed record ResearchJobResponse(
     IReadOnlyList<StepProgressResponse> Steps,
     ResearchJobLinks Links)
 {
-    public static ResearchJobResponse From(ResearchJob job, IReadOnlyList<StepProgress>? steps = null)
+    public static ResearchJobResponse From(ResearchJobDto job, IReadOnlyList<StepProgressDto>? steps = null)
     {
         ArgumentNullException.ThrowIfNull(job);
         return new ResearchJobResponse(
             job.Id,
             job.Question,
-            job.Status.ToString(),
+            job.Status,
             job.Plan,
             job.ErrorCode,
             job.Warnings,
@@ -34,7 +34,7 @@ public sealed record ResearchJobResponse(
             job.CreatedAt,
             job.DeadlineAt,
             job.CompletedAt,
-            (steps ?? []).Select(static s => new StepProgressResponse(s.Kind.ToString(), s.Running, s.Succeeded, s.Failed)).ToList(),
+            (steps ?? []).Select(static s => new StepProgressResponse(s.Kind, s.Running, s.Succeeded, s.Failed)).ToList(),
             ResearchJobLinks.For(job.Id));
     }
 

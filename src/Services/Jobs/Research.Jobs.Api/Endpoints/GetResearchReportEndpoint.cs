@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Application.GetResearchReport;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Web.Endpoints;
@@ -19,18 +20,18 @@ public sealed record ResearchReportResponse(
     bool Truncated,
     DateTimeOffset CreatedAt)
 {
-    public static ResearchReportResponse From(ResearchReportView view)
+    public static ResearchReportResponse From(ResearchReportDto report)
     {
-        ArgumentNullException.ThrowIfNull(view);
+        ArgumentNullException.ThrowIfNull(report);
         return new ResearchReportResponse(
-            view.Job.Id,
-            view.Job.Status.ToString(),
-            view.Job.Warnings,
-            view.Report.Content,
-            view.Report.Citations.Select(static c => new CitationResponse(c.Number, c.Url, c.Title)).ToList(),
-            view.Report.Model,
-            view.Report.Truncated,
-            view.Report.CreatedAt);
+            report.JobId,
+            report.Status,
+            report.Warnings,
+            report.Content,
+            report.Citations.Select(static c => new CitationResponse(c.Number, c.Url, c.Title)).ToList(),
+            report.Model,
+            report.Truncated,
+            report.CreatedAt);
     }
 }
 
