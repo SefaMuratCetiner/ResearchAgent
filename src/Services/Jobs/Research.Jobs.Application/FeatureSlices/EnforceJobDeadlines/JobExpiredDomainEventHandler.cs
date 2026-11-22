@@ -9,7 +9,7 @@ using Research.Shared.Messaging;
 namespace Research.Jobs.Application.EnforceJobDeadlines;
 
 /// <summary>Enqueues <c>JobExpired</c> and records expiration telemetry.</summary>
-public sealed partial class JobExpiredDomainEventHandler(
+public sealed class JobExpiredDomainEventHandler(
     IOutbox outbox,
     IEnvelopeFactory envelopes,
     JobsMetrics metrics,
@@ -24,9 +24,6 @@ public sealed partial class JobExpiredDomainEventHandler(
             envelopes.Create(new JobExpired(domainEvent.JobId, JobStepKey)),
             cancellationToken).ConfigureAwait(false);
         metrics.Finished(JobStatus.Expired, JobsErrors.DeadlineExceeded.Code, domainEvent.OccurredAt - domainEvent.JobCreatedAt);
-        LogJobFinished(logger, domainEvent.JobId, JobStatus.Expired, JobsErrors.DeadlineExceeded.Code);
+        JobsLog.JobFinished(logger, domainEvent.JobId, JobStatus.Expired, JobsErrors.DeadlineExceeded.Code);
     }
-
-    [LoggerMessage(EventId = 2002, Level = LogLevel.Information, Message = "Job {JobId} finished as {Status} {ErrorCode}")]
-    private static partial void LogJobFinished(ILogger logger, Guid jobId, JobStatus status, string? errorCode);
 }

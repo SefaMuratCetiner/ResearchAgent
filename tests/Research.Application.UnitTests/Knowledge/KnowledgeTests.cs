@@ -3,6 +3,7 @@ using Microsoft.Extensions.Time.Testing;
 using Research.Application.UnitTests.TestSupport;
 using Research.Knowledge.Application;
 using Research.Knowledge.Application.Common.Interfaces;
+using Research.Knowledge.Application.Observability;
 using Research.Knowledge.Domain;
 using Research.Knowledge.Domain.Policies;
 using Research.Knowledge.Application.IndexDocument;
@@ -84,24 +85,25 @@ public sealed class SearchPassagesHandlerTests
     [InlineData(51)]
     public async Task TopKOutOfRange_IsInvalid(int topK)
     {
-        var result = await CreateHandler().HandleAsync(new SearchPassagesQuery(Guid.NewGuid(), ["q"], topK), CancellationToken.None);
-        result.Error!.Code.ShouldBe(KnowledgeErrors.InvalidSearch.Code);
+        var error = await CreateValidator().ValidateAsync(new SearchPassagesQuery(Guid.NewGuid(), ["q"], topK), CancellationToken.None);
+        error!.Code.ShouldBe(KnowledgeErrors.InvalidSearch.Code);
     }
 
     [Fact]
     public async Task EmptyJobId_IsInvalid()
     {
-        var result = await CreateHandler().HandleAsync(new SearchPassagesQuery(Guid.Empty, ["q"], 3), CancellationToken.None);
-        result.Error!.Code.ShouldBe(KnowledgeErrors.InvalidSearch.Code);
+        var error = await CreateValidator().ValidateAsync(new SearchPassagesQuery(Guid.Empty, ["q"], 3), CancellationToken.None);
+        error!.Code.ShouldBe(KnowledgeErrors.InvalidSearch.Code);
     }
 
     private SearchPassagesHandler CreateHandler() => new(
         _repository,
         new FakeEmbeddingGenerator(),
         new KnowledgeMetrics(TestMeters.Create()),
-        TestOptions.Of(new KnowledgeOptions()),
         new FakeTimeProvider(),
         NullLogger<SearchPassagesHandler>.Instance);
+
+    private static SearchPassagesQueryValidator CreateValidator() => new(TestOptions.Of(new KnowledgeOptions()));
 
     private static PassageMatch Match(Guid id, double score) => new(id, Guid.NewGuid(), "https://e.com", "t", "text", score);
 

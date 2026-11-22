@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace Research.Shared.Adapters.Messaging.Consuming;
 
 /// <summary>One delivery as the transport hands it to the dispatcher.</summary>
@@ -28,6 +30,7 @@ public enum DispatchOutcome
 }
 
 /// <summary>The dispatcher's verdict on one delivery.</summary>
+[StructLayout(LayoutKind.Auto)]
 public readonly record struct DispatchResult(DispatchOutcome Outcome, int RetryDelayIndex = 0)
 {
     public static DispatchResult Ack { get; } = new(DispatchOutcome.Ack);

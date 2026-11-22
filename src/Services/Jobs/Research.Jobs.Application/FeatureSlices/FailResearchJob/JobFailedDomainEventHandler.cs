@@ -9,7 +9,7 @@ using Research.Shared.Messaging;
 namespace Research.Jobs.Application.FailResearchJob;
 
 /// <summary>Enqueues <c>JobFailed</c> and records failure telemetry.</summary>
-public sealed partial class JobFailedDomainEventHandler(
+public sealed class JobFailedDomainEventHandler(
     IOutbox outbox,
     IEnvelopeFactory envelopes,
     JobsMetrics metrics,
@@ -24,9 +24,6 @@ public sealed partial class JobFailedDomainEventHandler(
             envelopes.Create(new JobFailed(domainEvent.JobId, JobStepKey, domainEvent.ErrorCode)),
             cancellationToken).ConfigureAwait(false);
         metrics.Finished(JobStatus.Failed, domainEvent.ErrorCode, domainEvent.OccurredAt - domainEvent.JobCreatedAt);
-        LogJobFinished(logger, domainEvent.JobId, JobStatus.Failed, domainEvent.ErrorCode);
+        JobsLog.JobFinished(logger, domainEvent.JobId, JobStatus.Failed, domainEvent.ErrorCode);
     }
-
-    [LoggerMessage(EventId = 2002, Level = LogLevel.Information, Message = "Job {JobId} finished as {Status} {ErrorCode}")]
-    private static partial void LogJobFinished(ILogger logger, Guid jobId, JobStatus status, string? errorCode);
 }

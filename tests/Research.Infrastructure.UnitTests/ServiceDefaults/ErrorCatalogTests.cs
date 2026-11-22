@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Research.Fetching.Domain;
 using Research.Jobs.Domain;
 using Research.Knowledge.Application;
@@ -31,7 +32,7 @@ public sealed class ErrorCatalogTests
     {
         var catalog = new ErrorCatalog(All);
         catalog.All.ShouldNotBeEmpty();
-        catalog.All.ShouldAllBe(static e => System.Text.RegularExpressions.Regex.IsMatch(e.Code, "^[a-z]+\\.[a-z_]+$"));
+        catalog.All.ShouldAllBe(static e => Regex.IsMatch(e.Code, "^[a-z]+\\.[a-z_]+$", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1)));
     }
 
     [Fact]

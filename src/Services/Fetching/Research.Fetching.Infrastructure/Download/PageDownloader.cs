@@ -26,11 +26,7 @@ public sealed class PageDownloader(IHttpClientFactory httpClientFactory, IOption
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(settings.Timeout);
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.UserAgent.ParseAdd(settings.UserAgent);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xhtml+xml"));
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain", 0.8));
+        using var request = CreateRequest(url, settings);
 
         HttpResponseMessage response;
         try
@@ -48,54 +44,74 @@ public sealed class PageDownloader(IHttpClientFactory httpClientFactory, IOption
 
         using (response)
         {
-            var status = (int)response.StatusCode;
-            if (status is >= 300 and < 400)
-            {
-                return Result<DownloadedPage>.Failure(FetchingErrors.RedirectLimit);
-            }
-
-            if (response.StatusCode == HttpStatusCode.TooManyRequests || status >= 500)
-            {
-                throw new HttpRequestException($"The site answered {status}; retrying later.", null, response.StatusCode);
-            }
-
-            if (status >= 400)
-            {
-                return Result<DownloadedPage>.Failure(FetchingErrors.HttpError);
-            }
-
-            var mediaType = response.Content.Headers.ContentType?.MediaType ?? "text/html";
-            if (!settings.AllowedContentTypes.Contains(mediaType, StringComparer.OrdinalIgnoreCase))
-            {
-                return Result<DownloadedPage>.Failure(FetchingErrors.UnsupportedContent);
-            }
-
-            if (response.Content.Headers.ContentLength > settings.MaxBytes)
-            {
-                return Result<DownloadedPage>.Failure(FetchingErrors.TooLarge);
-            }
-
-            byte[]? body;
-            try
-            {
-                body = await ReadLimitedAsync(response.Content, settings.MaxBytes, timeout.Token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-            {
-                return Result<DownloadedPage>.Failure(FetchingErrors.Timeout);
-            }
-
-            if (body is null)
-            {
-                return Result<DownloadedPage>.Failure(FetchingErrors.TooLarge);
-            }
-
-            return Result<DownloadedPage>.Success(new DownloadedPage(
-                response.RequestMessage?.RequestUri ?? url,
-                mediaType,
-                response.Content.Headers.ContentType?.CharSet,
-                body));
+            return await ReadResponseAsync(response, url, settings, timeout.Token, cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    private static HttpRequestMessage CreateRequest(Uri url, FetchingOptions settings)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.UserAgent.ParseAdd(settings.UserAgent);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xhtml+xml"));
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain", 0.8));
+        return request;
+    }
+
+    private static async Task<Result<DownloadedPage>> ReadResponseAsync(
+        HttpResponseMessage response,
+        Uri url,
+        FetchingOptions settings,
+        CancellationToken timeoutToken,
+        CancellationToken cancellationToken)
+    {
+        var status = (int)response.StatusCode;
+        if (status is >= 300 and < 400)
+        {
+            return Result<DownloadedPage>.Failure(FetchingErrors.RedirectLimit);
+        }
+
+        if (response.StatusCode == HttpStatusCode.TooManyRequests || status >= 500)
+        {
+            throw new HttpRequestException($"The site answered {status}; retrying later.", null, response.StatusCode);
+        }
+
+        if (status >= 400)
+        {
+            return Result<DownloadedPage>.Failure(FetchingErrors.HttpError);
+        }
+
+        var mediaType = response.Content.Headers.ContentType?.MediaType ?? "text/html";
+        if (!settings.AllowedContentTypes.Contains(mediaType, StringComparer.OrdinalIgnoreCase))
+        {
+            return Result<DownloadedPage>.Failure(FetchingErrors.UnsupportedContent);
+        }
+
+        if (response.Content.Headers.ContentLength > settings.MaxBytes)
+        {
+            return Result<DownloadedPage>.Failure(FetchingErrors.TooLarge);
+        }
+
+        byte[]? body;
+        try
+        {
+            body = await ReadLimitedAsync(response.Content, settings.MaxBytes, timeoutToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return Result<DownloadedPage>.Failure(FetchingErrors.Timeout);
+        }
+
+        if (body is null)
+        {
+            return Result<DownloadedPage>.Failure(FetchingErrors.TooLarge);
+        }
+
+        return Result<DownloadedPage>.Success(new DownloadedPage(
+            response.RequestMessage?.RequestUri ?? url,
+            mediaType,
+            response.Content.Headers.ContentType?.CharSet,
+            body));
     }
 
     /// <returns>The body, or null when it exceeds <paramref name="maxBytes"/>.</returns>

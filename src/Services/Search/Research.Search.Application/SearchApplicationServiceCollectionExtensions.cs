@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Research.Search.Application.Observability;
 using Research.Search.Application.RunSearch;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Ports.Search;

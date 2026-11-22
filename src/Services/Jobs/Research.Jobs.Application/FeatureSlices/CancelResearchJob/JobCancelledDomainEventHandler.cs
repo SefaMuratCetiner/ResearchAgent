@@ -9,7 +9,7 @@ using Research.Shared.Messaging;
 namespace Research.Jobs.Application.CancelResearchJob;
 
 /// <summary>Enqueues <c>JobCancelled</c> and records cancellation telemetry.</summary>
-public sealed partial class JobCancelledDomainEventHandler(
+public sealed class JobCancelledDomainEventHandler(
     IOutbox outbox,
     IEnvelopeFactory envelopes,
     JobsMetrics metrics,
@@ -24,9 +24,6 @@ public sealed partial class JobCancelledDomainEventHandler(
             envelopes.Create(new JobCancelled(domainEvent.JobId, JobStepKey)),
             cancellationToken).ConfigureAwait(false);
         metrics.Finished(JobStatus.Cancelled, errorCode: null, domainEvent.OccurredAt - domainEvent.JobCreatedAt);
-        LogJobFinished(logger, domainEvent.JobId, JobStatus.Cancelled, errorCode: null);
+        JobsLog.JobFinished(logger, domainEvent.JobId, JobStatus.Cancelled, errorCode: null);
     }
-
-    [LoggerMessage(EventId = 2002, Level = LogLevel.Information, Message = "Job {JobId} finished as {Status} {ErrorCode}")]
-    private static partial void LogJobFinished(ILogger logger, Guid jobId, JobStatus status, string? errorCode);
 }

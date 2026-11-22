@@ -106,14 +106,14 @@ public sealed class RobotsRules
             var field = line[..colon].Trim().ToUpperInvariant();
             var value = line[(colon + 1)..].Trim();
 
-            if (field == "USER-AGENT")
+            if (string.Equals(field, "USER-AGENT", StringComparison.Ordinal))
             {
                 if (!lastWasAgent)
                 {
                     currentTargets = [];
                 }
 
-                if (value == "*")
+                if (string.Equals(value, "*", StringComparison.Ordinal))
                 {
                     currentTargets.Add(wildcard);
                 }
@@ -127,11 +127,12 @@ public sealed class RobotsRules
             }
 
             lastWasAgent = false;
-            if ((field == "ALLOW" || field == "DISALLOW") && value.Length > 0)
+            var isAllow = string.Equals(field, "ALLOW", StringComparison.Ordinal);
+            if ((isAllow || string.Equals(field, "DISALLOW", StringComparison.Ordinal)) && value.Length > 0)
             {
                 foreach (var target in currentTargets)
                 {
-                    target.Add((value, field == "ALLOW"));
+                    target.Add((value, isAllow));
                 }
             }
         }

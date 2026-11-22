@@ -11,7 +11,7 @@ namespace Research.DbScripts;
 /// serializes concurrent runs (several AppHosts, a CI job). A script that was applied and has since changed on disk
 /// stops the run: applied scripts are immutable; fix forward with a new script.
 /// </summary>
-internal static class ScriptRunner
+internal static partial class ScriptRunner
 {
     private const long AdvisoryLockKey = 0x5245_5345_4152_4348; // "RESEARCH"
 
@@ -67,7 +67,7 @@ internal static class ScriptRunner
                 await transaction.CommitAsync(cancellationToken);
 
                 applied++;
-                logger.LogInformation("Applied {Script}", script.Name);
+                LogScriptApplied(logger, script.Name);
             }
 
             return applied;
@@ -106,4 +106,16 @@ internal static class ScriptRunner
 
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "No connection string {ConnectionName}; skipping its scripts")]
+    public static partial void LogSkippedDatabase(ILogger logger, string connectionName);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "{ConnectionName}: {Applied} script(s) applied, {Total} known")]
+    public static partial void LogDatabaseApplied(ILogger logger, string connectionName, int applied, int total);
+
+    [LoggerMessage(EventId = 3, Level = LogLevel.Error, Message = "{ConnectionName}: applying scripts failed")]
+    public static partial void LogDatabaseFailed(ILogger logger, Exception exception, string connectionName);
+
+    [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Applied {Script}")]
+    private static partial void LogScriptApplied(ILogger logger, string script);
 }

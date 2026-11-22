@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Research.Search.Application.Observability;
 using Research.Search.Domain.Policies;
 using Research.Shared.Core.Logging;
 using Research.Shared.Core.Mediation;

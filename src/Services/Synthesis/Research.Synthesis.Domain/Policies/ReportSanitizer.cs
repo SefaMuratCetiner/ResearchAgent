@@ -52,7 +52,7 @@ public static partial class ReportSanitizer
         text = BareUrl().Replace(text, _ => { urls++; return LinkRemoved; });
         text = CitationBuilder.CitationMarker().Replace(text, m =>
         {
-            if (sourceNumbers.Contains(int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)))
+            if (sourceNumbers.Contains(int.Parse(m.Groups["num"].Value, CultureInfo.InvariantCulture)))
             {
                 return m.Value;
             }
@@ -64,7 +64,7 @@ public static partial class ReportSanitizer
         return new SanitizedReport(text.Trim(), new ReportRemovals(html, images, links, urls, unknown));
     }
 
-    [GeneratedRegex(@"<!--[\s\S]*?(-->|$)", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"<!--[\s\S]*?(?:-->|$)", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex HtmlComment();
 
     [GeneratedRegex(@"!\[(?<alt>[^\]\n]{0,500})\]\([^)\n]{0,2000}\)", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
@@ -82,7 +82,7 @@ public static partial class ReportSanitizer
     [GeneratedRegex(@"<[A-Za-z][A-Za-z0-9+.-]{1,20}:[^<>\s]{0,2000}>", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex AutoLink();
 
-    [GeneratedRegex(@"</?[A-Za-z][A-Za-z0-9-]{0,30}(\s[^<>]{0,2000})?/?>", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"</?[A-Za-z][A-Za-z0-9-]{0,30}(?:\s[^<>]{0,2000})?/?>", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex HtmlTag();
 
     [GeneratedRegex(@"\b(?:(?:https?|ftp|file|javascript|data|vbscript):|www\.)[^\s<>()\[\]]{1,2000}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]

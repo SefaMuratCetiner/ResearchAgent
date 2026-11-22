@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Fetching.Application.Common.Interfaces;
+using Research.Fetching.Application.Observability;
 using Research.Fetching.Domain;
 using Research.Shared.Ports.Documents;
 using Research.Shared.Core.Logging;
@@ -80,34 +81,19 @@ public sealed partial class FetchPageHandler : ICommandHandler<FetchPageCommand,
 
     private async Task<Result<FetchedPage>> FetchAsync(FetchPageCommand command, CancellationToken cancellationToken)
     {
-        if (!Uri.TryCreate(command.Url, UriKind.Absolute, out var url) || (url.Scheme != Uri.UriSchemeHttp && url.Scheme != Uri.UriSchemeHttps))
+        if (!TryParseWebUrl(command.Url, out var url))
         {
             return Result<FetchedPage>.Failure(FetchingErrors.InvalidUrl);
         }
 
         var settings = _options.Value;
-        if (settings.IsBlocked(url.IdnHost))
+        var download = await DownloadAllowedAsync(url, settings, cancellationToken).ConfigureAwait(false);
+        if (!download.IsSuccess)
         {
-            return Result<FetchedPage>.Failure(FetchingErrors.BlockedDomain);
+            return Result<FetchedPage>.Failure(download.Error);
         }
 
-        if (!await _robots.IsAllowedAsync(url, cancellationToken).ConfigureAwait(false))
-        {
-            return Result<FetchedPage>.Failure(FetchingErrors.FetchDisallowed);
-        }
-
-        DownloadedPage page;
-        using (await _throttle.AcquireAsync(url.IdnHost, cancellationToken).ConfigureAwait(false))
-        {
-            var download = await _downloader.DownloadAsync(url, cancellationToken).ConfigureAwait(false);
-            if (!download.IsSuccess)
-            {
-                return Result<FetchedPage>.Failure(download.Error);
-            }
-
-            page = download.Value;
-        }
-
+        var page = download.Value;
         _metrics.PageSize(page.Body.LongLength);
 
         if (settings.IsBlocked(page.FinalUrl.IdnHost))
@@ -123,22 +109,20 @@ public sealed partial class FetchPageHandler : ICommandHandler<FetchPageCommand,
             return Result<FetchedPage>.Failure(FetchingErrors.ContentTooShort);
         }
 
-        var signals = PromptInjectionSignals.Find(text);
-        if (signals.Count > 0)
+        if (ShouldRejectForInjection(command, text, settings))
         {
-            _metrics.InjectionSignals(signals);
-            LogInjectionSignals(_logger, command.JobId, command.Url, string.Join(", ", signals), settings.RejectSuspectedInjection);
-            if (settings.RejectSuspectedInjection)
-            {
-                return Result<FetchedPage>.Failure(FetchingErrors.SuspectedInjection);
-            }
+            return Result<FetchedPage>.Failure(FetchingErrors.SuspectedInjection);
         }
 
         var contentHash = Sha256Hex(text);
         var blobKey = $"pages/{contentHash}.txt";
         await _documents.SaveTextAsync(blobKey, text, cancellationToken).ConfigureAwait(false);
 
-        LogPageText(_contentLogger, command.JobId, command.Url, extracted.Title, ContentText.Truncate(text, _contentOptions.Value.MaxChars));
+        if (_contentLogger.IsEnabled(LogLevel.Information))
+        {
+            var truncated = ContentText.Truncate(text, _contentOptions.Value.MaxChars);
+            LogPageText(_contentLogger, command.JobId, command.Url, extracted.Title, truncated);
+        }
 
         return Result<FetchedPage>.Success(new FetchedPage(
             command.Url,
@@ -150,6 +134,50 @@ public sealed partial class FetchPageHandler : ICommandHandler<FetchPageCommand,
             contentHash,
             text.Length,
             blobKey));
+    }
+
+    private bool ShouldRejectForInjection(FetchPageCommand command, string text, FetchingOptions settings)
+    {
+        var signals = PromptInjectionSignals.Find(text);
+        if (signals.Count == 0)
+        {
+            return false;
+        }
+
+        _metrics.InjectionSignals(signals);
+        if (_logger.IsEnabled(LogLevel.Warning))
+        {
+            var summary = string.Join(", ", signals);
+            LogInjectionSignals(_logger, command.JobId, command.Url, summary, settings.RejectSuspectedInjection);
+        }
+
+        return settings.RejectSuspectedInjection;
+    }
+
+    private static bool TryParseWebUrl(string urlText, out Uri url) =>
+        Uri.TryCreate(urlText, UriKind.Absolute, out url!)
+        && (string.Equals(url.Scheme, Uri.UriSchemeHttp, StringComparison.Ordinal)
+            || string.Equals(url.Scheme, Uri.UriSchemeHttps, StringComparison.Ordinal));
+
+    private async Task<Result<DownloadedPage>> DownloadAllowedAsync(
+        Uri url,
+        FetchingOptions settings,
+        CancellationToken cancellationToken)
+    {
+        if (settings.IsBlocked(url.IdnHost))
+        {
+            return Result<DownloadedPage>.Failure(FetchingErrors.BlockedDomain);
+        }
+
+        if (!await _robots.IsAllowedAsync(url, cancellationToken).ConfigureAwait(false))
+        {
+            return Result<DownloadedPage>.Failure(FetchingErrors.FetchDisallowed);
+        }
+
+        using (await _throttle.AcquireAsync(url.IdnHost, cancellationToken).ConfigureAwait(false))
+        {
+            return await _downloader.DownloadAsync(url, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     internal static string Sha256Hex(string value) =>

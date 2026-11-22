@@ -1,4 +1,4 @@
-using Research.Fetching.Application;
+using Research.Fetching.Application.Observability;
 using Research.Fetching.Bootstrap.Features;
 using Research.Fetching.Domain;
 using Research.ServiceDefaults;

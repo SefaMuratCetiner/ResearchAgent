@@ -1,6 +1,6 @@
 using System.Diagnostics.Metrics;
 
-namespace Research.Knowledge.Application;
+namespace Research.Knowledge.Application.Observability;
 
 /// <summary>Knowledge instruments (meter <c>Research.Knowledge</c>).</summary>
 public sealed class KnowledgeMetrics : IDisposable

@@ -89,3 +89,5 @@ dotnet_diagnostic.CA1303.severity = none
 dotnet_diagnostic.CA1308.severity = none
 # The consumer pipeline, workers and middleware catch every exception on purpose to classify or log it.
 dotnet_diagnostic.CA1031.severity = none
+# Standard DDD/mediator naming (*DomainEventHandler, *HandlerDelegate) is intentional, not WinForms event delegates.
+dotnet_diagnostic.CA1711.severity = none

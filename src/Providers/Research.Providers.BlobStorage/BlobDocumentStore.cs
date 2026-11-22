@@ -8,12 +8,14 @@ namespace Research.Providers.BlobStorage;
 /// Page text as UTF-8 blobs in the <c>documents</c> container, created on first use. Writes overwrite, so a retried
 /// fetch is harmless.
 /// </summary>
-public sealed class BlobDocumentStore(BlobServiceClient serviceClient) : IDocumentStore
+public sealed class BlobDocumentStore(BlobServiceClient serviceClient) : IDocumentStore, IDisposable
 {
     public const string ContainerName = "documents";
 
     private readonly SemaphoreSlim _containerGate = new(1, 1);
     private volatile bool _containerReady;
+
+    public void Dispose() => _containerGate.Dispose();
 
     public async Task SaveTextAsync(string key, string text, CancellationToken cancellationToken)
     {

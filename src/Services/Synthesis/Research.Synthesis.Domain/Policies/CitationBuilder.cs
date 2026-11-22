@@ -59,7 +59,7 @@ public sealed partial class CitationBuilder
     {
         ArgumentNullException.ThrowIfNull(report);
         var cited = CitationMarker().Matches(report)
-            .Select(static m => int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture))
+            .Select(static m => int.Parse(m.Groups["num"].Value, CultureInfo.InvariantCulture))
             .ToHashSet();
         return _sources.Values.Where(s => cited.Contains(s.Number)).OrderBy(static s => s.Number).ToList();
     }
@@ -76,6 +76,6 @@ public sealed partial class CitationBuilder
         return source;
     }
 
-    [GeneratedRegex(@"\[(\d{1,3})\](?!\()", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"\[(?<num>\d{1,3})\](?!\()", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     internal static partial Regex CitationMarker();
 }

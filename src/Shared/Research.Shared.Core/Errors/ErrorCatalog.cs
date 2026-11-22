@@ -18,7 +18,10 @@ public sealed class ErrorCatalog
 
         foreach (var set in sets)
         {
-            ArgumentNullException.ThrowIfNull(set);
+            if (set is null)
+            {
+                throw new ArgumentException("Error sets must not contain null.", nameof(sets));
+            }
             foreach (var error in set.Errors)
             {
                 if (!error.Code.StartsWith(set.Prefix, StringComparison.Ordinal))

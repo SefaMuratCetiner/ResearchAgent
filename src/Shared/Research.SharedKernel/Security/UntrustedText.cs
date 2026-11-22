@@ -89,7 +89,8 @@ public static class UntrustedText
         !string.IsNullOrWhiteSpace(value)
         && value.Length <= maxChars
         && Uri.TryCreate(value, UriKind.Absolute, out var uri)
-        && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+        && (string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.Ordinal)
+            || string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.Ordinal))
         && !string.IsNullOrEmpty(uri.Host);
 
     private static bool IsHidden(Rune rune)

@@ -26,11 +26,11 @@ public sealed partial class CustomExceptionHandler(
 
         if (exception is OperationCanceledException && httpContext.RequestAborted.IsCancellationRequested)
         {
-            LogClientDisconnected(logger, httpContext.Request.Path);
+            LogClientDisconnected(logger, httpContext.Request.Path.Value ?? string.Empty);
             return true;
         }
 
-        LogUnhandled(logger, exception, httpContext.Request.Method, httpContext.Request.Path);
+        LogUnhandled(logger, exception, httpContext.Request.Method, httpContext.Request.Path.Value ?? string.Empty);
         Activity.Current?.AddException(exception);
         Activity.Current?.SetStatus(ActivityStatusCode.Error);
 

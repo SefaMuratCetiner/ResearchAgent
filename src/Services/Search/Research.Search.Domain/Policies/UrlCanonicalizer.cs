@@ -18,7 +18,8 @@ public static class UrlCanonicalizer
     {
         if (string.IsNullOrWhiteSpace(url)
             || !Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri)
-            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            || (!string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.Ordinal)
+                && !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.Ordinal))
             || string.IsNullOrEmpty(uri.Host))
         {
             return null;

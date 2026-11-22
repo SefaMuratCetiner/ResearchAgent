@@ -25,7 +25,7 @@ public sealed class MessageDispatcherTests
     [Fact]
     public async Task Success_Acks_AndRunsAsSystemActor()
     {
-        var result = await Dispatch(Delivery(attempt: 1));
+        var result = await Dispatch(Delivery(attempt: 1), TestContext.Current.CancellationToken);
 
         result.ShouldBe(DispatchResult.Ack);
         _handler.Received.ShouldHaveSingleItem().Query.ShouldBe("q");
@@ -38,8 +38,8 @@ public sealed class MessageDispatcherTests
     {
         _handler.Throw = new InvalidOperationException("transient");
 
-        (await Dispatch(Delivery(attempt: 1))).ShouldBe(DispatchResult.Retry(0));
-        (await Dispatch(Delivery(attempt: 2))).ShouldBe(DispatchResult.Retry(1));
+        (await Dispatch(Delivery(attempt: 1), TestContext.Current.CancellationToken)).ShouldBe(DispatchResult.Retry(0));
+        (await Dispatch(Delivery(attempt: 2), TestContext.Current.CancellationToken)).ShouldBe(DispatchResult.Retry(1));
         _publisher.Published.ShouldBeEmpty();
     }
 
@@ -48,7 +48,7 @@ public sealed class MessageDispatcherTests
     {
         _handler.Throw = new InvalidOperationException("still failing");
 
-        var result = await Dispatch(Delivery(attempt: 3));
+        var result = await Dispatch(Delivery(attempt: 3), TestContext.Current.CancellationToken);
 
         result.ShouldBe(DispatchResult.DeadLetter);
         var failed = ReadStepFailed(_publisher.Published.ShouldHaveSingleItem());
@@ -63,7 +63,7 @@ public sealed class MessageDispatcherTests
         _handler.Throw = new InvalidOperationException("still failing");
         _publisher.Fail = true;
 
-        var result = await Dispatch(Delivery(attempt: 3));
+        var result = await Dispatch(Delivery(attempt: 3), TestContext.Current.CancellationToken);
 
         result.Outcome.ShouldBe(DispatchOutcome.Retry);
     }
@@ -75,10 +75,10 @@ public sealed class MessageDispatcherTests
         var delivery = new IncomingDelivery(
             Guid.NewGuid(),
             Encoding.UTF8.GetBytes("{ not json"),
-            new Dictionary<string, string> { [MessageHeaders.JobId] = jobId.ToString(), [MessageHeaders.StepKey] = "search:1" },
+            new Dictionary<string, string>(StringComparer.Ordinal) { [MessageHeaders.JobId] = jobId.ToString(), [MessageHeaders.StepKey] = "search:1" },
             Attempt: 1);
 
-        var result = await Dispatch(delivery);
+        var result = await Dispatch(delivery, TestContext.Current.CancellationToken);
 
         result.ShouldBe(DispatchResult.DeadLetter);
         var failed = ReadStepFailed(_publisher.Published.ShouldHaveSingleItem());
@@ -90,8 +90,8 @@ public sealed class MessageDispatcherTests
     [Fact]
     public async Task Poison_WithoutHeaders_DeadLettersSilently()
     {
-        var delivery = new IncomingDelivery(Guid.NewGuid(), Encoding.UTF8.GetBytes("[]"), new Dictionary<string, string>(), Attempt: 1);
-        (await Dispatch(delivery)).ShouldBe(DispatchResult.DeadLetter);
+        var delivery = new IncomingDelivery(Guid.NewGuid(), Encoding.UTF8.GetBytes("[]"), new Dictionary<string, string>(StringComparer.Ordinal), Attempt: 1);
+        (await Dispatch(delivery, TestContext.Current.CancellationToken)).ShouldBe(DispatchResult.DeadLetter);
         _publisher.Published.ShouldBeEmpty();
     }
 
@@ -138,7 +138,7 @@ public sealed class MessageDispatcherTests
     {
         var message = new SearchRequested(Guid.NewGuid(), "search:0", "q", 5);
         var body = JsonSerializer.SerializeToUtf8Bytes(message, MessageJson.Options);
-        return new IncomingDelivery(Guid.NewGuid(), body, new Dictionary<string, string>(), attempt);
+        return new IncomingDelivery(Guid.NewGuid(), body, new Dictionary<string, string>(StringComparer.Ordinal), attempt);
     }
 
     private static StepFailed ReadStepFailed(OutgoingEnvelope envelope)

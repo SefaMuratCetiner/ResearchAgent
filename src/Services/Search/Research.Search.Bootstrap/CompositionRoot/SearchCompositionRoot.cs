@@ -1,4 +1,4 @@
-using Research.Search.Application;
+using Research.Search.Application.Observability;
 using Research.Search.Bootstrap.Features;
 using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;

@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Research.Knowledge.Application.Common.Interfaces;
+using Research.Knowledge.Application.Observability;
 using Research.Knowledge.Domain;
-using Research.Shared.Ports.Embeddings;
 using Research.Shared.Core.Mediation;
+using Research.Shared.Ports.Embeddings;
 using Research.SharedKernel.Results;
 
 namespace Research.Knowledge.Application.SearchPassages;
@@ -11,34 +11,19 @@ namespace Research.Knowledge.Application.SearchPassages;
 /// <summary>
 /// Embeds every query, searches each one within the job's documents, merges the hits (a passage keeps its best
 /// score) and returns the <c>TopK</c> best. A job with no indexed documents gets an empty list, not an error.
+/// Bounds are enforced upstream by <see cref="SearchPassagesQueryValidator"/> via <c>ValidationBehavior</c>.
 /// </summary>
 public sealed partial class SearchPassagesHandler(
     IKnowledgeRepository repository,
     IEmbeddingGenerator embeddings,
     KnowledgeMetrics metrics,
-    IOptionsSnapshot<KnowledgeOptions> options,
     TimeProvider timeProvider,
     ILogger<SearchPassagesHandler> logger) : IQueryHandler<SearchPassagesQuery, Result<IReadOnlyList<PassageMatchDto>>>
 {
     public async Task<Result<IReadOnlyList<PassageMatchDto>>> HandleAsync(SearchPassagesQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
-        var settings = options.Value;
-        var queries = (query.Queries ?? [])
-            .Select(static q => q?.Trim() ?? string.Empty)
-            .Where(static q => q.Length > 0)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        if (query.JobId == Guid.Empty
-            || queries.Count == 0
-            || queries.Count > settings.MaxQueries
-            || queries.Any(q => q.Length > settings.MaxQueryLength)
-            || query.TopK < 1
-            || query.TopK > settings.MaxTopK)
-        {
-            return Result<IReadOnlyList<PassageMatchDto>>.Failure(KnowledgeErrors.InvalidSearch);
-        }
+        var queries = SearchPassagesQuery.NormalizeQueries(query.Queries);
 
         var started = timeProvider.GetTimestamp();
         var vectors = await embeddings.GenerateAsync(queries, cancellationToken).ConfigureAwait(false);

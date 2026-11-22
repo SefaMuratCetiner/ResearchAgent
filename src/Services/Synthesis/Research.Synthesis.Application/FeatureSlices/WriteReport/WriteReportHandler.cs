@@ -66,25 +66,17 @@ public sealed partial class WriteReportHandler : ICommandHandler<WriteReportComm
             return Result<WrittenReport>.Failure(SynthesisErrors.NoPassages);
         }
 
-        var completion = await _llm.CompleteAsync(
-            new LlmRequest(
-                "synthesize",
-                settings.Model,
-                settings.Effort,
-                SynthesisPrompts.System,
-                SynthesisPrompts.User(command.Question, command.SubQuestions, context, fence),
-                settings.MaxTokens),
-            cancellationToken).ConfigureAwait(false);
-
+        var completion = await CompleteReportAsync(command, context, fence, settings, cancellationToken).ConfigureAwait(false);
         if (completion.StopReason == LlmStopReason.Refused)
         {
             return Result<WrittenReport>.Failure(SynthesisErrors.LlmRefused);
         }
 
         var sanitized = ReportSanitizer.Sanitize(completion.Text, citations.Sources.Select(static s => s.Number).ToHashSet());
-        if (sanitized.Removals.Total > 0)
+        if (sanitized.Removals.Total > 0 && _logger.IsEnabled(LogLevel.Warning))
         {
-            LogOutputSanitized(_logger, command.JobId, sanitized.Removals.ToString());
+            var removals = sanitized.Removals.ToString();
+            LogOutputSanitized(_logger, command.JobId, removals);
         }
 
         var content = sanitized.Content;
@@ -98,15 +90,40 @@ public sealed partial class WriteReportHandler : ICommandHandler<WriteReportComm
         if (cited.Count == 0)
         {
             LogUncited(_logger, command.JobId);
-            LogReport(_reportLogger, command.JobId, ContentText.Truncate(content, _contentOptions.CurrentValue.MaxChars), 0);
+            LogTruncatedReport(command.JobId, content, 0);
             return Result<WrittenReport>.Failure(SynthesisErrors.UncitedReport);
         }
 
         LogReportWritten(_logger, command.JobId, passages.Count, cited.Count, truncated);
-        LogReport(_reportLogger, command.JobId, ContentText.Truncate(content, _contentOptions.CurrentValue.MaxChars), cited.Count);
+        LogTruncatedReport(command.JobId, content, cited.Count);
 
         return Result<WrittenReport>.Success(
             new WrittenReport(content, cited, truncated, completion.InputTokens, completion.OutputTokens, completion.Model));
+    }
+
+    private Task<LlmCompletion> CompleteReportAsync(
+        WriteReportCommand command,
+        string context,
+        PromptFence fence,
+        SynthesisOptions settings,
+        CancellationToken cancellationToken) =>
+        _llm.CompleteAsync(
+            new LlmRequest(
+                "synthesize",
+                settings.Model,
+                settings.Effort,
+                SynthesisPrompts.System,
+                SynthesisPrompts.User(command.Question, command.SubQuestions, context, fence),
+                settings.MaxTokens),
+            cancellationToken);
+
+    private void LogTruncatedReport(Guid jobId, string content, int citationCount)
+    {
+        if (_reportLogger.IsEnabled(LogLevel.Information))
+        {
+            var truncated = ContentText.Truncate(content, _contentOptions.CurrentValue.MaxChars);
+            LogReport(_reportLogger, jobId, truncated, citationCount);
+        }
     }
 
     [LoggerMessage(EventId = 7000, Level = LogLevel.Information, Message = "Report for job {JobId} written from {PassageCount} passages, citing {CitationCount} sources (truncated: {Truncated})")]

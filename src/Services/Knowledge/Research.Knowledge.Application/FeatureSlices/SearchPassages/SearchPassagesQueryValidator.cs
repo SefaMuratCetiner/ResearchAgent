@@ -12,11 +12,7 @@ public sealed class SearchPassagesQueryValidator(IOptionsSnapshot<KnowledgeOptio
     {
         ArgumentNullException.ThrowIfNull(request);
         var settings = options.Value;
-        var queries = (request.Queries ?? [])
-            .Select(static q => q?.Trim() ?? string.Empty)
-            .Where(static q => q.Length > 0)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var queries = SearchPassagesQuery.NormalizeQueries(request.Queries);
 
         var invalid = request.JobId == Guid.Empty
             || queries.Count == 0

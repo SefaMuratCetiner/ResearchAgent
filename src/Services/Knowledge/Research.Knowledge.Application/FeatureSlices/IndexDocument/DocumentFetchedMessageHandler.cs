@@ -3,6 +3,7 @@ using Research.Contracts.Fetching;
 using Research.Contracts.Knowledge;
 using Research.Contracts.Steps;
 using Research.Knowledge.Application.Common.Interfaces;
+using Research.Knowledge.Application.Observability;
 using Research.Knowledge.Domain;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Messaging;

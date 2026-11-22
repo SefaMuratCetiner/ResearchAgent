@@ -72,7 +72,7 @@ public sealed class ContentExtractor : IContentExtractor
             }
 
             var paragraph = Normalize(UntrustedText.Clean(block.TextContent));
-            if (paragraph.Length == 0 || paragraph == previous)
+            if (paragraph.Length == 0 || string.Equals(paragraph, previous, StringComparison.Ordinal))
             {
                 continue;
             }

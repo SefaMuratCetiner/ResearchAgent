@@ -31,8 +31,10 @@ public sealed partial class HttpContentLoggingMiddleware(
         }
 
         var maxChars = options.CurrentValue.MaxChars;
+        var path = context.Request.Path.Value ?? string.Empty;
         var requestBody = await ReadRequestBodyAsync(context.Request, context.RequestAborted).ConfigureAwait(false);
-        LogRequest(_logger, context.Request.Method, context.Request.Path, context.Request.QueryString.Value ?? string.Empty, ContentText.Truncate(requestBody, maxChars), requestBody.Length);
+        var truncatedRequest = ContentText.Truncate(requestBody, maxChars);
+        LogRequest(_logger, context.Request.Method, path, context.Request.QueryString.Value ?? string.Empty, truncatedRequest, requestBody.Length);
 
         var originalBody = context.Response.Body;
         await using var tee = new TeeStream(originalBody, maxChars <= 0 ? int.MaxValue : maxChars * 4);
@@ -53,7 +55,8 @@ public sealed partial class HttpContentLoggingMiddleware(
         }
 
         var responseBody = Encoding.UTF8.GetString(tee.Captured);
-        LogResponse(_logger, context.Request.Method, context.Request.Path, context.Response.StatusCode, ContentText.Truncate(responseBody, maxChars), tee.TotalBytes);
+        var truncatedResponse = ContentText.Truncate(responseBody, maxChars);
+        LogResponse(_logger, context.Request.Method, path, context.Response.StatusCode, truncatedResponse, tee.TotalBytes);
     }
 
     private static async Task<string> ReadRequestBodyAsync(HttpRequest request, CancellationToken cancellationToken)

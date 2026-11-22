@@ -72,13 +72,7 @@ public sealed partial class MessageDispatcher<TMessage>(
 
         try
         {
-            await using (var scope = scopeFactory.CreateAsyncScope())
-            {
-                scope.ServiceProvider.GetRequiredService<ScopedActor>().Id = ScopedActor.System(Settings.ServiceName);
-                var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-                await sender.SendAsync(new HandleMessage<TMessage>(message, context), timeout.Token).ConfigureAwait(false);
-            }
-
+            await ExecuteInScopeAsync(message, context, timeout.Token).ConfigureAwait(false);
             Record(consumer, "success", started, activity, DispatchResult.Ack);
             return DispatchResult.Ack;
         }
@@ -92,24 +86,46 @@ public sealed partial class MessageDispatcher<TMessage>(
         catch (Exception exception)
 #pragma warning restore CA1031
         {
-            activity?.AddException(exception);
-            activity?.SetStatus(ActivityStatusCode.Error);
-
-            if (delivery.Attempt < Settings.MaxAttempts)
-            {
-                var delayIndex = Math.Min(delivery.Attempt - 1, Settings.RetryDelaysSeconds.Length - 1);
-                LogRetrying(logger, exception, consumer, messageId, delivery.Attempt, Settings.RetryDelaysSeconds[delayIndex]);
-                var retry = DispatchResult.Retry(delayIndex);
-                Record(consumer, "retry", started, activity, retry);
-                return retry;
-            }
-
-            LogExhausted(logger, exception, consumer, messageId, delivery.Attempt);
-            var result = await ReportFailureAsync(message.JobId, message.StepKey, MessagingErrors.StepExhausted.Code, stoppingToken)
+            return await HandleFailureAsync(exception, message, delivery, consumer, messageId, started, activity, stoppingToken)
                 .ConfigureAwait(false);
-            Record(consumer, "exhausted", started, activity, result);
-            return result;
         }
+    }
+
+    private async Task ExecuteInScopeAsync(TMessage message, MessageContext context, CancellationToken cancellationToken)
+    {
+        await using var scope = scopeFactory.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<ScopedActor>().Id = ScopedActor.System(Settings.ServiceName);
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        await sender.SendAsync(new HandleMessage<TMessage>(message, context), cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<DispatchResult> HandleFailureAsync(
+        Exception exception,
+        TMessage message,
+        IncomingDelivery delivery,
+        string consumer,
+        Guid messageId,
+        long started,
+        Activity? activity,
+        CancellationToken stoppingToken)
+    {
+        activity?.AddException(exception);
+        activity?.SetStatus(ActivityStatusCode.Error);
+
+        if (delivery.Attempt < Settings.MaxAttempts)
+        {
+            var delayIndex = Math.Min(delivery.Attempt - 1, Settings.RetryDelaysSeconds.Length - 1);
+            LogRetrying(logger, exception, consumer, messageId, delivery.Attempt, Settings.RetryDelaysSeconds[delayIndex]);
+            var retry = DispatchResult.Retry(delayIndex);
+            Record(consumer, "retry", started, activity, retry);
+            return retry;
+        }
+
+        LogExhausted(logger, exception, consumer, messageId, delivery.Attempt);
+        var result = await ReportFailureAsync(message.JobId, message.StepKey, MessagingErrors.StepExhausted.Code, stoppingToken)
+            .ConfigureAwait(false);
+        Record(consumer, "exhausted", started, activity, result);
+        return result;
     }
 
     private TMessage? Deserialize(IncomingDelivery delivery)

@@ -48,19 +48,19 @@ public static partial class PromptInjectionSignals
 
     [GeneratedRegex(
         @"\b(ignore|disregard|forget|override|bypass)\b[^.\n]{0,40}\b(previous|prior|above|earlier|all|any|the|your|system)\b[^.\n]{0,40}\b(instructions?|prompts?|rules|guidelines|directions)\b",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
         matchTimeoutMilliseconds: 250)]
     private static partial Regex IgnoreInstructionsPattern();
 
     [GeneratedRegex(
         @"(^|\n)\s*(system|assistant|developer)\s*:|<\|?(im_start|im_end|system|endoftext)\|?>|\[/?INST\]|</?(system|instructions?)>",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
         matchTimeoutMilliseconds: 250)]
     private static partial Regex RoleMarkerPattern();
 
     [GeneratedRegex(
         @"\b(if you are|you are now|attention|note to|message to|instructions? (for|to))\b[^.\n]{0,20}\b(an? )?(ai|llm|language model|assistant|chatbot|agent|claude|gpt)\b",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
         matchTimeoutMilliseconds: 250)]
     private static partial Regex AddressedToModelPattern();
 

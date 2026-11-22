@@ -22,7 +22,7 @@ foreach (var database in DatabaseScripts.All)
     if (string.IsNullOrWhiteSpace(connectionString))
     {
         // Not every environment has every database (a developer may run one service); skip what is not configured.
-        logger.LogWarning("No connection string {ConnectionName}; skipping its scripts", database.ConnectionName);
+        ScriptRunner.LogSkippedDatabase(logger, database.ConnectionName);
         continue;
     }
 
@@ -35,12 +35,12 @@ foreach (var database in DatabaseScripts.All)
             .ToList();
 
         var applied = await ScriptRunner.ApplyAsync(connectionString, scripts, logger, cancellationToken);
-        logger.LogInformation("{ConnectionName}: {Applied} script(s) applied, {Total} known", database.ConnectionName, applied, scripts.Count);
+        ScriptRunner.LogDatabaseApplied(logger, database.ConnectionName, applied, scripts.Count);
     }
     catch (Exception exception) when (exception is not OperationCanceledException)
     {
         failed = true;
-        logger.LogError(exception, "{ConnectionName}: applying scripts failed", database.ConnectionName);
+        ScriptRunner.LogDatabaseFailed(logger, exception, database.ConnectionName);
     }
 }
 

@@ -29,13 +29,13 @@ internal sealed record ProjectInfo(
 
     public bool IsShared => Path.Contains($"{System.IO.Path.DirectorySeparatorChar}Shared{System.IO.Path.DirectorySeparatorChar}", StringComparison.Ordinal);
 
-    public bool IsServiceDefaults => Name == "Research.ServiceDefaults";
+    public bool IsServiceDefaults => string.Equals(Name, "Research.ServiceDefaults", StringComparison.Ordinal);
 
-    public bool IsSharedWeb => Name == "Research.Shared.Web";
+    public bool IsSharedWeb => string.Equals(Name, "Research.Shared.Web", StringComparison.Ordinal);
 
     public bool IsHttpHost => IsEntryPoint && ProjectReferences.Any(static r => r.EndsWith(".Api", StringComparison.Ordinal));
 
-    public bool IsAppHost => Name == "Research.AppHost";
+    public bool IsAppHost => string.Equals(Name, "Research.AppHost", StringComparison.Ordinal);
 
     public bool IsTool => Path.Contains($"{System.IO.Path.DirectorySeparatorChar}tools{System.IO.Path.DirectorySeparatorChar}", StringComparison.Ordinal);
 
@@ -56,9 +56,9 @@ internal static class Solution
 
     public static IReadOnlyList<ProjectInfo> TestProjects => LazyTestProjects.Value;
 
-    public static ProjectInfo Get(string name) => Projects.Single(p => p.Name == name);
+    public static ProjectInfo Get(string name) => Projects.Single(p => string.Equals(p.Name, name, StringComparison.Ordinal));
 
-    public static ProjectInfo GetTest(string name) => TestProjects.Single(p => p.Name == name);
+    public static ProjectInfo GetTest(string name) => TestProjects.Single(p => string.Equals(p.Name, name, StringComparison.Ordinal));
 
     private static string FindRoot()
     {
@@ -85,10 +85,10 @@ internal static class Solution
             System.IO.Path.GetFileNameWithoutExtension(path),
             path,
             document.Root?.Attribute("Sdk")?.Value ?? string.Empty,
-            items.Where(static e => e.Name.LocalName == "ProjectReference")
+            items.Where(static e => string.Equals(e.Name.LocalName, "ProjectReference", StringComparison.Ordinal))
                 .Select(static e => System.IO.Path.GetFileNameWithoutExtension(e.Attribute("Include")!.Value.Replace('\\', '/')))
                 .ToList(),
-            items.Where(static e => e.Name.LocalName == "PackageReference").Select(static e => e.Attribute("Include")!.Value).ToList(),
-            items.Where(static e => e.Name.LocalName == "FrameworkReference").Select(static e => e.Attribute("Include")!.Value).ToList());
+            items.Where(static e => string.Equals(e.Name.LocalName, "PackageReference", StringComparison.Ordinal)).Select(static e => e.Attribute("Include")!.Value).ToList(),
+            items.Where(static e => string.Equals(e.Name.LocalName, "FrameworkReference", StringComparison.Ordinal)).Select(static e => e.Attribute("Include")!.Value).ToList());
     }
 }

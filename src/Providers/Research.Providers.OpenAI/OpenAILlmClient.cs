@@ -76,13 +76,12 @@ public sealed partial class OpenAILlmClient : ILlmClient
         activity?.SetTag("gen_ai.operation.name", request.Operation);
 
         var maxChars = _contentOptions.CurrentValue.MaxChars;
-        LogPrompt(
-            _contentLogger,
-            request.Operation,
-            model,
-            request.Effort,
-            ContentText.Truncate(request.SystemPrompt, maxChars),
-            ContentText.Truncate(request.UserPrompt, maxChars));
+        if (_contentLogger.IsEnabled(LogLevel.Information))
+        {
+            var systemPrompt = ContentText.Truncate(request.SystemPrompt, maxChars);
+            var userPrompt = ContentText.Truncate(request.UserPrompt, maxChars);
+            LogPrompt(_contentLogger, request.Operation, model, request.Effort, systemPrompt, userPrompt);
+        }
 
         ChatMessage[] messages = [new SystemChatMessage(request.SystemPrompt), new UserChatMessage(request.UserPrompt)];
         var options = CreateOptions(request, _options.CurrentValue.UseReasoningEffort);
@@ -109,6 +108,22 @@ public sealed partial class OpenAILlmClient : ILlmClient
         long inputTokens = response.Usage?.InputTokenCount ?? 0;
         long outputTokens = response.Usage?.OutputTokenCount ?? 0;
 
+        RecordCompletion(activity, request, model, started, stopReason, inputTokens, outputTokens, text, response.Refusal, maxChars);
+        return new LlmCompletion(text, stopReason, model, inputTokens, outputTokens);
+    }
+
+    private void RecordCompletion(
+        Activity? activity,
+        LlmRequest request,
+        string model,
+        long started,
+        LlmStopReason stopReason,
+        long inputTokens,
+        long outputTokens,
+        string text,
+        string? refusal,
+        int maxChars)
+    {
         _metrics.Completed(model, request.Operation, _timeProvider.GetElapsedTime(started), inputTokens, outputTokens);
         if (stopReason == LlmStopReason.Refused)
         {
@@ -119,16 +134,11 @@ public sealed partial class OpenAILlmClient : ILlmClient
         activity?.SetTag("gen_ai.usage.output_tokens", outputTokens);
         activity?.SetTag("gen_ai.response.finish_reason", stopReason.ToString());
 
-        LogResponse(
-            _contentLogger,
-            request.Operation,
-            model,
-            stopReason,
-            inputTokens,
-            outputTokens,
-            ContentText.Truncate(string.IsNullOrEmpty(text) ? response.Refusal ?? string.Empty : text, maxChars));
-
-        return new LlmCompletion(text, stopReason, model, inputTokens, outputTokens);
+        if (_contentLogger.IsEnabled(LogLevel.Information))
+        {
+            var responseText = ContentText.Truncate(string.IsNullOrEmpty(text) ? refusal ?? string.Empty : text, maxChars);
+            LogResponse(_contentLogger, request.Operation, model, stopReason, inputTokens, outputTokens, responseText);
+        }
     }
 
     internal static ChatCompletionOptions CreateOptions(LlmRequest request, bool useReasoningEffort)

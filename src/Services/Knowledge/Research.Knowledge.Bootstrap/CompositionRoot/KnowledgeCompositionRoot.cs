@@ -1,5 +1,6 @@
 using Research.Knowledge.Api;
 using Research.Knowledge.Application;
+using Research.Knowledge.Application.Observability;
 using Research.Knowledge.Bootstrap.Features;
 using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;

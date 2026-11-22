@@ -4,8 +4,9 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Research.Fetching.Application;
 using Research.Fetching.Application.Common.Interfaces;
-using Research.Fetching.Domain;
 using Research.Fetching.Application.FetchPage;
+using Research.Fetching.Application.Observability;
+using Research.Fetching.Domain;
 using Research.Fetching.Infrastructure.Download;
 using Research.Fetching.Infrastructure.Extraction;
 using Research.Shared.Core.Logging;
@@ -135,7 +136,7 @@ public sealed class FetchPagePipelineTests
             var path = request.RequestUri!.AbsolutePath;
             Requests.Add(path);
 
-            if (path == "/robots.txt")
+            if (string.Equals(path, "/robots.txt", StringComparison.Ordinal))
             {
                 return Task.FromResult(Robots is null
                     ? new HttpResponseMessage(HttpStatusCode.NotFound)

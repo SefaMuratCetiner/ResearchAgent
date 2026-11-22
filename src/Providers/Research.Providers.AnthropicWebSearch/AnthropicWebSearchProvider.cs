@@ -77,12 +77,11 @@ public sealed partial class AnthropicWebSearchProvider : ISearchProvider
 
         var responseJson = JsonSerializer.Serialize(response);
         var results = WebSearchResultReader.Read(responseJson);
-        LogResponse(
-            _contentLogger,
-            query.Text,
-            response.Usage.InputTokens,
-            response.Usage.OutputTokens,
-            ContentText.Truncate(responseJson, _contentOptions.CurrentValue.MaxChars));
+        if (_contentLogger.IsEnabled(LogLevel.Information))
+        {
+            var truncatedJson = ContentText.Truncate(responseJson, _contentOptions.CurrentValue.MaxChars);
+            LogResponse(_contentLogger, query.Text, response.Usage.InputTokens, response.Usage.OutputTokens, truncatedJson);
+        }
 
         if (response.StopReason == "refusal")
         {
@@ -130,7 +129,7 @@ public sealed partial class AnthropicWebSearchProvider : ISearchProvider
             throw new SearchProviderException(SearchErrors.InvalidQuery, string.Join(", ", errorCodes));
         }
 
-        if (errorCodes.Contains("max_uses_exceeded"))
+        if (errorCodes.Contains("max_uses_exceeded", StringComparer.Ordinal))
         {
             throw new SearchProviderException(SearchErrors.QuotaExhausted, string.Join(", ", errorCodes));
         }

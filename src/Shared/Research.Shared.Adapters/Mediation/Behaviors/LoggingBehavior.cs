@@ -73,7 +73,11 @@ public sealed partial class EventLoggingBehavior<TEvent>(
         try
         {
             await next(cancellationToken).ConfigureAwait(false);
-            LogCompleted(logger, EventName, timeProvider.GetElapsedTime(started).TotalMilliseconds);
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                var elapsedMs = timeProvider.GetElapsedTime(started).TotalMilliseconds;
+                LogCompleted(logger, EventName, elapsedMs);
+            }
         }
         catch (Exception exception)
         {

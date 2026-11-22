@@ -1,6 +1,6 @@
 using System.Diagnostics.Metrics;
 
-namespace Research.Search.Application;
+namespace Research.Search.Application.Observability;
 
 /// <summary>Search instruments, tagged by provider only.</summary>
 public sealed class SearchMetrics

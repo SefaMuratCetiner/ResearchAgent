@@ -219,9 +219,10 @@ public sealed partial class RabbitMqListener<TMessage> : BackgroundService
                 await NackAsync(channel, delivery.DeliveryTag, requeue: true).ConfigureAwait(false);
             }
 #pragma warning disable CA1031 // The channel is gone; the broker redelivers unacknowledged messages on its own.
-            catch (Exception)
+            catch (Exception nackException)
 #pragma warning restore CA1031
             {
+                LogNackFailed(_logger, nackException, Queue);
             }
         }
         finally
@@ -293,7 +294,11 @@ public sealed partial class RabbitMqListener<TMessage> : BackgroundService
                 await Task.Delay(100).ConfigureAwait(false);
             }
 
-            LogStopped(_logger, Queue, Volatile.Read(ref _inFlight));
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                var remaining = Volatile.Read(ref _inFlight);
+                LogStopped(_logger, Queue, remaining);
+            }
             if (channel.IsOpen)
             {
                 await channel.CloseAsync().ConfigureAwait(false);
@@ -369,6 +374,9 @@ public sealed partial class RabbitMqListener<TMessage> : BackgroundService
 
     [LoggerMessage(EventId = 8105, Level = LogLevel.Warning, Message = "{Setting} changed, but it names where messages live; {Queue} keeps the startup value until the service restarts")]
     private static partial void LogRestartRequired(ILogger logger, string setting, string queue);
+
+    [LoggerMessage(EventId = 8106, Level = LogLevel.Debug, Message = "Requeueing a failed delivery on {Queue} failed; the broker will redeliver unacknowledged messages")]
+    private static partial void LogNackFailed(ILogger logger, Exception exception, string queue);
 }
 
 internal static class DispatchResultExtensions

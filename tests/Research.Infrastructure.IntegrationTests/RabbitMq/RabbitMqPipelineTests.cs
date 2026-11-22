@@ -23,7 +23,7 @@ public sealed class RabbitMqPipelineTests : IAsyncLifetime
 {
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(60);
 
-    private readonly RabbitMqContainer _container = new RabbitMqBuilder().Build();
+    private readonly RabbitMqContainer _container = new RabbitMqBuilder("rabbitmq:4.0-management-alpine").Build();
     private IConnection _connection = null!;
 
     public async ValueTask InitializeAsync()
@@ -85,7 +85,7 @@ public sealed class RabbitMqPipelineTests : IAsyncLifetime
         failed.ErrorCode.ShouldBe(MessagingErrors.StepExhausted.Code);
         script.Attempts.ShouldBe(2);
 
-        await using var channel = await _connection.CreateChannelAsync();
+        await using var channel = await _connection.CreateChannelAsync(cancellationToken: TestContext.Current.CancellationToken);
         var deadLetters = await WaitForCountAsync(channel, RabbitMqTopology.DeadLetterQueueName(queue), 1);
         deadLetters.ShouldBe(1u);
         await host.StopAsync(TestContext.Current.CancellationToken);
@@ -133,7 +133,7 @@ public sealed class RabbitMqPipelineTests : IAsyncLifetime
         {
             try
             {
-                await using var channel = await _connection.CreateChannelAsync();
+                await using var channel = await _connection.CreateChannelAsync(cancellationToken: TestContext.Current.CancellationToken);
                 var declared = await channel.QueueDeclarePassiveAsync(queue);
                 if (declared.ConsumerCount > 0)
                 {

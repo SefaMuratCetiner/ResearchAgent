@@ -27,11 +27,8 @@ public sealed partial class CreateResearchJobHandler(
         ArgumentNullException.ThrowIfNull(command);
         var settings = options.Value;
         // Invisible characters are removed before anything sees the question (OWASP ASI01).
+        // Length bounds are enforced upstream by CreateResearchJobCommandValidator via ValidationBehavior.
         var question = UntrustedText.Clean(command.Question).Trim();
-        if (question.Length < settings.QuestionMinLength || question.Length > settings.QuestionMaxLength)
-        {
-            return Result<CreateResearchJobResult>.Failure(JobsErrors.QuestionInvalid);
-        }
 
         if (command.IdempotencyKey is { } key
             && await jobs.FindByIdempotencyKeyAsync(key, cancellationToken).ConfigureAwait(false) is { } earlier)

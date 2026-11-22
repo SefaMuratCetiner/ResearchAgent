@@ -1,8 +1,9 @@
+using System.Globalization;
 using Research.Search.Bootstrap.CompositionRoot;
 using Serilog;
 
 // Bootstrap logger, so startup failures still reach the console. LoggingFeature replaces it once the host is built.
-Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateBootstrapLogger();
+Log.Logger = new LoggerConfiguration().WriteTo.Console(formatProvider: CultureInfo.InvariantCulture).CreateBootstrapLogger();
 
 try
 {

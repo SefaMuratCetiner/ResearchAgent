@@ -1,6 +1,6 @@
 using System.Diagnostics.Metrics;
 
-namespace Research.Fetching.Application;
+namespace Research.Fetching.Application.Observability;
 
 /// <summary>Fetching instruments (meter <c>Research.Fetching</c>).</summary>
 public sealed class FetchingMetrics : IDisposable

@@ -27,7 +27,7 @@ public static class WebSearchResultReader
 
         foreach (var block in content.EnumerateArray())
         {
-            if (Text(block, "type") != "web_search_tool_result" || !block.TryGetProperty("content", out var result))
+            if (!string.Equals(Text(block, "type"), "web_search_tool_result", StringComparison.Ordinal) || !block.TryGetProperty("content", out var result))
             {
                 continue;
             }
@@ -36,7 +36,7 @@ public static class WebSearchResultReader
             {
                 foreach (var item in result.EnumerateArray())
                 {
-                    if (Text(item, "type") == "web_search_result" && Text(item, "url") is { Length: > 0 } url)
+                    if (string.Equals(Text(item, "type"), "web_search_result", StringComparison.Ordinal) && Text(item, "url") is { Length: > 0 } url)
                     {
                         hits.Add(new SearchHit(url, Text(item, "title") ?? url, Text(item, "page_age")));
                     }

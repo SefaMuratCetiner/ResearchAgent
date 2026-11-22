@@ -74,30 +74,7 @@ public sealed partial class PostgresOutboxStore(NpgsqlDataSource dataSource, ILo
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
-                var attempts = row.Attempts + 1;
-                var park = retry.ShouldPark(attempts);
-                var delay = retry.DelayAfter(attempts);
-                if (park)
-                {
-                    LogParked(logger, exception, row.Id, row.MessageType, attempts);
-                }
-                else
-                {
-                    LogPublishFailed(logger, exception, row.Id, row.MessageType, attempts, delay.TotalSeconds);
-                }
-
-                await connection.ExecuteAsync(new CommandDefinition(
-                    MarkFailedSql,
-                    new
-                    {
-                        row.Id,
-                        Attempts = attempts,
-                        Error = exception.GetType().Name + ": " + exception.Message,
-                        DelaySeconds = delay.TotalSeconds,
-                        Park = park,
-                    },
-                    transaction,
-                    cancellationToken: cancellationToken)).ConfigureAwait(false);
+                await RecordFailureAsync(connection, transaction, row, exception, retry, cancellationToken).ConfigureAwait(false);
                 break;
             }
         }
@@ -113,6 +90,40 @@ public sealed partial class PostgresOutboxStore(NpgsqlDataSource dataSource, ILo
 
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return published.Count;
+    }
+
+    private async Task RecordFailureAsync(
+        NpgsqlConnection connection,
+        NpgsqlTransaction transaction,
+        OutboxRow row,
+        Exception exception,
+        OutboxRetryPolicy retry,
+        CancellationToken cancellationToken)
+    {
+        var attempts = row.Attempts + 1;
+        var park = retry.ShouldPark(attempts);
+        var delay = retry.DelayAfter(attempts);
+        if (park)
+        {
+            LogParked(logger, exception, row.Id, row.MessageType, attempts);
+        }
+        else
+        {
+            LogPublishFailed(logger, exception, row.Id, row.MessageType, attempts, delay.TotalSeconds);
+        }
+
+        await connection.ExecuteAsync(new CommandDefinition(
+            MarkFailedSql,
+            new
+            {
+                row.Id,
+                Attempts = attempts,
+                Error = exception.GetType().Name + ": " + exception.Message,
+                DelaySeconds = delay.TotalSeconds,
+                Park = park,
+            },
+            transaction,
+            cancellationToken: cancellationToken)).ConfigureAwait(false);
     }
 
     public async Task WaitForSignalAsync(TimeSpan timeout, CancellationToken cancellationToken)

@@ -79,7 +79,7 @@ public sealed class ReferenceRuleTests
         foreach (var reference in project.ProjectReferences)
         {
             var allowed = reference is "Research.Shared.Core" or "Research.Shared.Messaging" or "Research.Shared.Ports" or "Research.Contracts"
-                || reference == ownDomain;
+                || string.Equals(reference, ownDomain, StringComparison.Ordinal);
             allowed.ShouldBeTrue($"{name} must not reference {reference}");
         }
 
@@ -101,8 +101,8 @@ public sealed class ReferenceRuleTests
 
         foreach (var reference in project.ProjectReferences)
         {
-            var allowed = reference == ownApp
-                || reference == "Research.Shared.Adapters"
+            var allowed = string.Equals(reference, ownApp, StringComparison.Ordinal)
+                || string.Equals(reference, "Research.Shared.Adapters", StringComparison.Ordinal)
                 || reference.StartsWith("Research.Providers.", StringComparison.Ordinal);
             allowed.ShouldBeTrue($"{name} must not reference {reference}");
         }
@@ -117,7 +117,8 @@ public sealed class ReferenceRuleTests
 
         foreach (var reference in project.ProjectReferences)
         {
-            var allowed = reference == ownApp || reference == "Research.Shared.Web";
+            var allowed = string.Equals(reference, ownApp, StringComparison.Ordinal)
+                || string.Equals(reference, "Research.Shared.Web", StringComparison.Ordinal);
             allowed.ShouldBeTrue($"{name} must not reference {reference}");
         }
     }
@@ -186,7 +187,7 @@ public sealed class ReferenceRuleTests
         {
             foreach (var reference in project.ProjectReferences)
             {
-                var target = Solution.Projects.FirstOrDefault(p => p.Name == reference);
+                var target = Solution.Projects.FirstOrDefault(p => string.Equals(p.Name, reference, StringComparison.Ordinal));
                 if (target is { IsServiceProject: true })
                 {
                     target.ServiceName.ShouldBe(project.ServiceName, $"{project.Name} must not reference {reference} of another service");
@@ -264,7 +265,8 @@ public sealed class ReferenceRuleTests
 
         foreach (var reference in project.ProjectReferences)
         {
-            var allowed = reference == "Research.SharedKernel" || reference.EndsWith(".Domain", StringComparison.Ordinal);
+            var allowed = string.Equals(reference, "Research.SharedKernel", StringComparison.Ordinal)
+                || reference.EndsWith(".Domain", StringComparison.Ordinal);
             allowed.ShouldBeTrue($"Research.Domain.UnitTests must not reference {reference}");
         }
     }

@@ -12,8 +12,7 @@ namespace Research.Infrastructure.IntegrationTests.Postgres;
 /// </summary>
 public sealed class PostgresFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
-        .WithImage("pgvector/pgvector:pg17")
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("pgvector/pgvector:pg17")
         .Build();
 
     private readonly Dictionary<string, NpgsqlDataSource> _dataSources = new(StringComparer.Ordinal);
