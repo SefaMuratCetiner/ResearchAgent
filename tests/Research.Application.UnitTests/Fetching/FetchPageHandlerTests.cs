@@ -8,7 +8,7 @@ using Research.Fetching.Application.FetchPage;
 using Research.Fetching.Application.Observability;
 using Research.Fetching.Domain;
 using Research.Shared.Core.Logging;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Application.UnitTests.Fetching;
 

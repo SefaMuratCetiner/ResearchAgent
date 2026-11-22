@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <!--
-    Pure Domain primitives shared across services: base entities and Result/Error types.
-    Zero package references and zero project references.
-  -->
-  <PropertyGroup>
-    <RootNamespace>Research.SharedKernel</RootNamespace>
-  </PropertyGroup>
-</Project>

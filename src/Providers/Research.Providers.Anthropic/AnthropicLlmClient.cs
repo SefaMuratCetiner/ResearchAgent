@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Research.Shared.Adapters.Llm;
 using Research.Shared.Ports.Llm;
 using Research.Shared.Core.Logging;
+using Research.Shared.Adapters.Llm.Observability;
 
 namespace Research.Providers.Anthropic;
 
@@ -77,8 +78,8 @@ public sealed partial class AnthropicLlmClient : ILlmClient
         var maxChars = _contentOptions.CurrentValue.MaxChars;
         if (_contentLogger.IsEnabled(LogLevel.Information))
         {
-            var systemPrompt = ContentText.Truncate(request.SystemPrompt, maxChars);
-            var userPrompt = ContentText.Truncate(request.UserPrompt, maxChars);
+            var systemPrompt = LogContentTruncator.Truncate(request.SystemPrompt, maxChars);
+            var userPrompt = LogContentTruncator.Truncate(request.UserPrompt, maxChars);
             LogPrompt(_contentLogger, request.Operation, model, request.Effort, systemPrompt, userPrompt);
         }
 
@@ -129,7 +130,7 @@ public sealed partial class AnthropicLlmClient : ILlmClient
 
         if (_contentLogger.IsEnabled(LogLevel.Information))
         {
-            var responseText = ContentText.Truncate(text, maxChars);
+            var responseText = LogContentTruncator.Truncate(text, maxChars);
             LogResponse(_contentLogger, request.Operation, model, stopReason, inputTokens, outputTokens, responseText);
         }
     }

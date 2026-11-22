@@ -6,7 +6,7 @@ using Research.Knowledge.Domain.Policies;
 using Research.Shared.Ports.Documents;
 using Research.Shared.Ports.Embeddings;
 using Research.Shared.Core.Mediation;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Knowledge.Application.IndexDocument;
 

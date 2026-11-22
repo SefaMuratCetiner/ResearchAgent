@@ -2,7 +2,7 @@ using Npgsql;
 using Research.Shared.Core.Actors;
 using Research.Shared.Core.Events;
 using Research.Shared.Core.Transactions;
-using Research.SharedKernel.Events;
+using Research.Shared.Kernel.Events;
 
 namespace Research.Providers.Postgres.Transactions;
 

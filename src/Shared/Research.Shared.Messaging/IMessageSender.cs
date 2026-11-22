@@ -1,4 +1,4 @@
-using Research.Contracts;
+using Research.Shared.Contracts;
 
 namespace Research.Shared.Messaging;
 

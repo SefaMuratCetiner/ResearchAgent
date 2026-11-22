@@ -11,10 +11,3 @@ public sealed class LlmOptions
 
     public LlmProvider Provider { get; set; } = LlmProvider.Anthropic;
 }
-
-/// <summary>The vendor behind <see cref="ILlmClient"/>.</summary>
-public enum LlmProvider
-{
-    Anthropic,
-    OpenAI,
-}

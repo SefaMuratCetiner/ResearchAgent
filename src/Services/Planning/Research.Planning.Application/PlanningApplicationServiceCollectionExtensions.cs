@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Research.Planning.Application.CreatePlan;
 using Research.Shared.Core.Mediation;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Planning.Application;
 

@@ -8,7 +8,7 @@ namespace Research.Synthesis.Bootstrap.Features;
 /// rotated; the key is never logged), wrapped by the per-replica concurrency limiter, which reads
 /// OpenAI:MaxConcurrentRequests on every request.
 /// </summary>
-internal sealed class OpenAIFeature : IResearchFeature
+internal sealed class OpenAIFeature : IHostFeature
 {
-    public void Register(ResearchBuilder app) => app.Services.AddOpenAILlm();
+    public void Register(ServiceHostBuilder app) => app.Services.AddOpenAILlm();
 }

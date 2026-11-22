@@ -37,7 +37,7 @@ using Research.Shared.Messaging;
 using Research.Shared.Ports.Embeddings;
 using Research.Shared.Ports.Llm;
 using Research.Shared.Ports.Search;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 using Research.Synthesis.Application;
 using Research.Synthesis.Application.WriteReport;
 

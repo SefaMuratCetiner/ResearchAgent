@@ -19,7 +19,7 @@ public sealed class ReferenceRuleTests
     [Fact]
     public void SharedKernelAndContracts_HaveNoReferencesAtAll()
     {
-        foreach (var name in new[] { "Research.SharedKernel", "Research.Contracts" })
+        foreach (var name in new[] { "Research.Shared.Kernel", "Research.Shared.Contracts" })
         {
             var project = Solution.Get(name);
             project.PackageReferences.ShouldBeEmpty(name);
@@ -38,7 +38,7 @@ public sealed class ReferenceRuleTests
             project.FrameworkReferences.ShouldBeEmpty(name);
             foreach (var reference in project.ProjectReferences)
             {
-                reference.ShouldBe("Research.SharedKernel", $"{name} must not reference {reference}");
+                reference.ShouldBe("Research.Shared.Kernel", $"{name} must not reference {reference}");
             }
         }
     }
@@ -51,7 +51,7 @@ public sealed class ReferenceRuleTests
         project.FrameworkReferences.ShouldBeEmpty();
         foreach (var reference in project.ProjectReferences)
         {
-            (reference is "Research.SharedKernel" or "Research.Shared.Core" or "Research.Contracts")
+            (reference is "Research.Shared.Kernel" or "Research.Shared.Core" or "Research.Shared.Contracts")
                 .ShouldBeTrue($"Research.Shared.Messaging must not reference {reference}");
         }
     }
@@ -65,7 +65,7 @@ public sealed class ReferenceRuleTests
         project.FrameworkReferences.ShouldBeEmpty($"{name} must have zero framework references");
         foreach (var reference in project.ProjectReferences)
         {
-            reference.ShouldBe("Research.SharedKernel", $"{name} must not reference {reference}");
+            reference.ShouldBe("Research.Shared.Kernel", $"{name} must not reference {reference}");
         }
     }
 
@@ -78,7 +78,7 @@ public sealed class ReferenceRuleTests
 
         foreach (var reference in project.ProjectReferences)
         {
-            var allowed = reference is "Research.Shared.Core" or "Research.Shared.Messaging" or "Research.Shared.Ports" or "Research.Contracts"
+            var allowed = reference is "Research.Shared.Core" or "Research.Shared.Messaging" or "Research.Shared.Ports" or "Research.Shared.Contracts"
                 || string.Equals(reference, ownDomain, StringComparison.Ordinal);
             allowed.ShouldBeTrue($"{name} must not reference {reference}");
         }
@@ -129,7 +129,7 @@ public sealed class ReferenceRuleTests
     {
         foreach (var reference in Solution.Get(name).ProjectReferences)
         {
-            (reference is "Research.Shared.Core" or "Research.Shared.Messaging" or "Research.Shared.Ports" or "Research.Shared.Adapters" or "Research.Contracts")
+            (reference is "Research.Shared.Core" or "Research.Shared.Messaging" or "Research.Shared.Ports" or "Research.Shared.Adapters" or "Research.Shared.Contracts")
                 .ShouldBeTrue($"{name} must not reference {reference}");
         }
     }
@@ -214,7 +214,7 @@ public sealed class ReferenceRuleTests
         var sharedWeb = Solution.Get("Research.Shared.Web");
         foreach (var reference in sharedWeb.ProjectReferences)
         {
-            (reference is "Research.SharedKernel" or "Research.Shared.Core")
+            (reference is "Research.Shared.Kernel" or "Research.Shared.Core")
                 .ShouldBeTrue($"Research.Shared.Web must not reference {reference}");
         }
 
@@ -265,7 +265,7 @@ public sealed class ReferenceRuleTests
 
         foreach (var reference in project.ProjectReferences)
         {
-            var allowed = string.Equals(reference, "Research.SharedKernel", StringComparison.Ordinal)
+            var allowed = string.Equals(reference, "Research.Shared.Kernel", StringComparison.Ordinal)
                 || reference.EndsWith(".Domain", StringComparison.Ordinal);
             allowed.ShouldBeTrue($"Research.Domain.UnitTests must not reference {reference}");
         }
@@ -278,7 +278,7 @@ public sealed class ReferenceRuleTests
 
         foreach (var reference in project.ProjectReferences)
         {
-            var allowed = reference is "Research.SharedKernel" or "Research.Shared.Core" or "Research.Shared.Messaging" or "Research.Shared.Ports" or "Research.Contracts"
+            var allowed = reference is "Research.Shared.Kernel" or "Research.Shared.Core" or "Research.Shared.Messaging" or "Research.Shared.Ports" or "Research.Shared.Contracts"
                 || reference.EndsWith(".Domain", StringComparison.Ordinal)
                 || reference.EndsWith(".Application", StringComparison.Ordinal);
             allowed.ShouldBeTrue($"Research.Application.UnitTests must not reference outer-layer project {reference}");

@@ -5,14 +5,14 @@ namespace Research.Application.UnitTests.Shared;
 public sealed class ContentTextTests
 {
     [Fact]
-    public void ShortValue_IsUnchanged() => ContentText.Truncate("abc", 10).ShouldBe("abc");
+    public void ShortValue_IsUnchanged() => LogContentTruncator.Truncate("abc", 10).ShouldBe("abc");
 
     [Fact]
-    public void Null_IsEmpty() => ContentText.Truncate(null, 10).ShouldBe(string.Empty);
+    public void Null_IsEmpty() => LogContentTruncator.Truncate(null, 10).ShouldBe(string.Empty);
 
     [Fact]
-    public void LongValue_IsCutWithMarker() => ContentText.Truncate("abcdefghij", 4).ShouldBe("abcd…[truncated 6 chars]");
+    public void LongValue_IsCutWithMarker() => LogContentTruncator.Truncate("abcdefghij", 4).ShouldBe("abcd…[truncated 6 chars]");
 
     [Fact]
-    public void NonPositiveLimit_MeansNoLimit() => ContentText.Truncate("abcdef", 0).ShouldBe("abcdef");
+    public void NonPositiveLimit_MeansNoLimit() => LogContentTruncator.Truncate("abcdef", 0).ShouldBe("abcdef");
 }

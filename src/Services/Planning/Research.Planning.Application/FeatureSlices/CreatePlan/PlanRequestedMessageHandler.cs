@@ -1,5 +1,5 @@
-using Research.Contracts.Planning;
-using Research.Contracts.Steps;
+using Research.Shared.Contracts.Planning;
+using Research.Shared.Contracts.Steps;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Messaging;
 

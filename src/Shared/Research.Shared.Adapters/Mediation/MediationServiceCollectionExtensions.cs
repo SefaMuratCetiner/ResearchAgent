@@ -3,8 +3,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Research.Shared.Adapters.Mediation.Behaviors;
 using Research.Shared.Core.Events;
 using Research.Shared.Core.Mediation;
-using Research.SharedKernel.Events;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Events;
+using Research.Shared.Kernel.Results;
+using Research.Shared.Adapters.Mediation.Observability;
 
 namespace Research.Shared.Adapters.Mediation;
 

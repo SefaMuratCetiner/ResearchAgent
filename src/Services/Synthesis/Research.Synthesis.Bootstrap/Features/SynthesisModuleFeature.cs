@@ -4,7 +4,7 @@ using Research.Synthesis.Application;
 namespace Research.Synthesis.Bootstrap.Features;
 
 /// <summary>The Synthesis module's command handler.</summary>
-internal sealed class SynthesisModuleFeature : IResearchFeature
+internal sealed class SynthesisModuleFeature : IHostFeature
 {
-    public void Register(ResearchBuilder app) => app.Services.AddSynthesisApplication();
+    public void Register(ServiceHostBuilder app) => app.Services.AddSynthesisApplication();
 }

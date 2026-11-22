@@ -8,6 +8,7 @@ using Research.Shared.Adapters.Mediation;
 using Research.Shared.Messaging;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
+using Research.Shared.Adapters.Mediation.Observability;
 
 namespace Research.Jobs.Bootstrap.CompositionRoot;
 
@@ -30,12 +31,12 @@ public sealed partial class JobsCompositionRoot
     internal JobsSettings Settings { get; }
 
     /// <summary>Every feature, in registration order, grouped by concern.</summary>
-    internal IReadOnlyList<IResearchFeature> Features { get; } =
+    internal IReadOnlyList<IHostFeature> Features { get; } =
     [
         // Platform
         new ActorsFeature(),
         new MediationFeature(),
-        new ErrorsFeature(ProblemErrors.All, MessagingErrors.All, JobsErrors.All),
+        new ErrorsFeature(ApiErrors.All, MessagingErrors.All, JobsErrors.All),
 
         // Infrastructure
         new PostgresFeature(),
@@ -55,7 +56,7 @@ public sealed partial class JobsCompositionRoot
             meters: [MediationMetrics.MeterName, JobsMetrics.MeterName]);
         _builder.Services.AddSingleton(TimeProvider.System);
 
-        var app = new ResearchBuilder(_builder);
+        var app = new ServiceHostBuilder(_builder);
         foreach (var feature in Features)
         {
             feature.Register(app);

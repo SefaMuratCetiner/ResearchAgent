@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Options;
-using Research.Contracts.Synthesis;
+using Research.Shared.Contracts.Synthesis;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
 using Research.Jobs.Domain.Events;

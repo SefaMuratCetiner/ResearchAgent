@@ -175,34 +175,34 @@
       "research.fetching.domain": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.jobs.domain": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.knowledge.domain": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.search.domain": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
-      "research.sharedkernel": {
+      "research.shared.kernel": {
         "type": "Project"
       },
       "research.synthesis.domain": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       }
     }

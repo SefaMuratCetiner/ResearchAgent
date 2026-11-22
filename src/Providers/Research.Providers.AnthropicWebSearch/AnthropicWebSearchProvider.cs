@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Shared.Ports.Search;
 using Research.Shared.Core.Logging;
-using Research.SharedKernel.Security;
+using Research.Shared.Kernel.Security;
 
 namespace Research.Providers.AnthropicWebSearch;
 
@@ -79,7 +79,7 @@ public sealed partial class AnthropicWebSearchProvider : ISearchProvider
         var results = WebSearchResultReader.Read(responseJson);
         if (_contentLogger.IsEnabled(LogLevel.Information))
         {
-            var truncatedJson = ContentText.Truncate(responseJson, _contentOptions.CurrentValue.MaxChars);
+            var truncatedJson = LogContentTruncator.Truncate(responseJson, _contentOptions.CurrentValue.MaxChars);
             LogResponse(_contentLogger, query.Text, response.Usage.InputTokens, response.Usage.OutputTokens, truncatedJson);
         }
 

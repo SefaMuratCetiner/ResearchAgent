@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Research.Contracts;
+using Research.Shared.Contracts;
 using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Consuming;
@@ -8,7 +8,8 @@ using Research.Shared.Adapters.Messaging.Outbox;
 using Research.Shared.Adapters.Messaging.Sending;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Messaging;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
+using Research.Shared.Adapters.Messaging.Observability;
 
 namespace Research.Providers.RabbitMq;
 
@@ -35,7 +36,7 @@ public static class RabbitMqServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         services.AddPublisher();
-        services.AddHostedService<OutboxBackgroundService>();
+        services.AddHostedService<OutboxPublisherWorker>();
         return services;
     }
 
@@ -50,7 +51,7 @@ public static class RabbitMqServiceCollectionExtensions
 
     /// <summary>
     /// Consumes <typeparamref name="TMessage"/> with <typeparamref name="THandler"/> (scoped, one per delivery),
-    /// wired into the unified mediation pipeline via <see cref="HandleMessage{TMessage}"/>.
+    /// wired into the unified mediation pipeline via <see cref="IncomingMessageEnvelope{TMessage}"/>.
     /// </summary>
     public static IServiceCollection AddConsumer<TMessage, THandler>(this IServiceCollection services)
         where TMessage : class, IIntegrationMessage
@@ -60,7 +61,7 @@ public static class RabbitMqServiceCollectionExtensions
         services.AddMediation();
         services.AddScoped<THandler>();
         services.AddScoped<IMessageHandler<TMessage>>(static provider => provider.GetRequiredService<THandler>());
-        services.AddScoped<IRequestHandler<HandleMessage<TMessage>, Unit>>(static provider => provider.GetRequiredService<THandler>());
+        services.AddScoped<IRequestHandler<IncomingMessageEnvelope<TMessage>, Unit>>(static provider => provider.GetRequiredService<THandler>());
         services.AddSingleton<MessageDispatcher<TMessage>>();
         services.AddHostedService<RabbitMqListener<TMessage>>();
         return services;

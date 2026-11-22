@@ -12,6 +12,7 @@ using Research.ServiceDefaults;
 using Research.Shared.Adapters.Http;
 using Research.Shared.Core.Logging;
 using Research.Shared.Web.Middleware;
+using Research.Shared.Core.Correlation;
 
 namespace Research.Infrastructure.UnitTests.ServiceDefaults;
 
@@ -65,25 +66,25 @@ public sealed class LoggingDefaultsTests
     public async Task CorrelationMiddleware_SetsAmbientContextLogScopeAndSpanTag_AndRestoresAfterRequest()
     {
         var capturedScopes = new List<IReadOnlyDictionary<string, object>>();
-        var logger = new ScopeCapturingLogger<CorrelationMiddleware>(capturedScopes);
+        var logger = new ScopeCapturingLogger<CorrelationIdMiddleware>(capturedScopes);
         string? observedInside = null;
 
-        var middleware = new CorrelationMiddleware(
+        var middleware = new CorrelationIdMiddleware(
             _ =>
             {
-                observedInside = CorrelationContext.Current;
+                observedInside = CorrelationIdContext.Current;
                 return Task.CompletedTask;
             },
             logger);
 
         var context = new DefaultHttpContext();
-        context.Request.Headers[CorrelationContext.HeaderName] = "req-42:abc";
+        context.Request.Headers[CorrelationIdContext.HeaderName] = "req-42:abc";
 
         using var activity = new Activity("test-http").Start();
         await middleware.InvokeAsync(context);
 
         observedInside.ShouldBe("req-42:abc");
-        CorrelationContext.Current.ShouldBeNull();
+        CorrelationIdContext.Current.ShouldBeNull();
         context.Features.Get<CorrelationIdFeature>()?.Value.ShouldBe("req-42:abc");
         activity.GetTagItem("research.correlation.id").ShouldBe("req-42:abc");
         capturedScopes.ShouldContain(static s => Equals(s["CorrelationId"], "req-42:abc"));
@@ -93,19 +94,19 @@ public sealed class LoggingDefaultsTests
     public async Task CorrelationMiddleware_IgnoresMalformedHeader()
     {
         var capturedScopes = new List<IReadOnlyDictionary<string, object>>();
-        var logger = new ScopeCapturingLogger<CorrelationMiddleware>(capturedScopes);
+        var logger = new ScopeCapturingLogger<CorrelationIdMiddleware>(capturedScopes);
         string? observedInside = null;
 
-        var middleware = new CorrelationMiddleware(
+        var middleware = new CorrelationIdMiddleware(
             _ =>
             {
-                observedInside = CorrelationContext.Current;
+                observedInside = CorrelationIdContext.Current;
                 return Task.CompletedTask;
             },
             logger);
 
         var context = new DefaultHttpContext();
-        context.Request.Headers[CorrelationContext.HeaderName] = "bad value with spaces!";
+        context.Request.Headers[CorrelationIdContext.HeaderName] = "bad value with spaces!";
 
         await middleware.InvokeAsync(context);
 
@@ -121,23 +122,23 @@ public sealed class LoggingDefaultsTests
         using var handler = new CorrelationIdDelegatingHandler { InnerHandler = recorder };
         using var client = new HttpClient(handler) { BaseAddress = new Uri("http://knowledge.local") };
 
-        using (CorrelationContext.Push("corr-99"))
+        using (CorrelationIdContext.Push("corr-99"))
         {
             using var response = await client.GetAsync(new Uri("/passages", UriKind.Relative), TestContext.Current.CancellationToken);
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
-        recorder.LastHeaders.ShouldContainKeyAndValue(CorrelationContext.HeaderName, "corr-99");
+        recorder.LastHeaders.ShouldContainKeyAndValue(CorrelationIdContext.HeaderName, "corr-99");
 
-        using (CorrelationContext.Push("corr-99"))
+        using (CorrelationIdContext.Push("corr-99"))
         {
             using var explicitRequest = new HttpRequestMessage(HttpMethod.Get, "/passages");
-            explicitRequest.Headers.Add(CorrelationContext.HeaderName, "explicit-1");
+            explicitRequest.Headers.Add(CorrelationIdContext.HeaderName, "explicit-1");
             using var response = await client.SendAsync(explicitRequest, TestContext.Current.CancellationToken);
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
-        recorder.LastHeaders.ShouldContainKeyAndValue(CorrelationContext.HeaderName, "explicit-1");
+        recorder.LastHeaders.ShouldContainKeyAndValue(CorrelationIdContext.HeaderName, "explicit-1");
     }
 
     private sealed class RecordingHandler : HttpMessageHandler

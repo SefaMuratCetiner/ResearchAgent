@@ -1,6 +1,6 @@
-using Research.Contracts;
-using Research.Contracts.Jobs;
-using Research.Contracts.Planning;
+using Research.Shared.Contracts;
+using Research.Shared.Contracts.Jobs;
+using Research.Shared.Contracts.Planning;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Messaging;
 

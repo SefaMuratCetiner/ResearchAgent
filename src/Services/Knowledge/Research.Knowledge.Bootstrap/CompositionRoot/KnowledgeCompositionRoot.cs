@@ -6,10 +6,11 @@ using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
-using Research.Shared.Adapters.Messaging.Tracing;
+using Research.Shared.Adapters.Messaging.Observability;
 using Research.Shared.Messaging;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
+using Research.Shared.Adapters.Mediation.Observability;
 
 namespace Research.Knowledge.Bootstrap.CompositionRoot;
 
@@ -31,12 +32,12 @@ public sealed partial class KnowledgeCompositionRoot
     internal KnowledgeSettings Settings { get; }
 
     /// <summary>Every feature, in registration order, grouped by concern.</summary>
-    internal IReadOnlyList<IResearchFeature> Features { get; } =
+    internal IReadOnlyList<IHostFeature> Features { get; } =
     [
         // Platform
         new ActorsFeature(),
         new MediationFeature(),
-        new ErrorsFeature(ProblemErrors.All, MessagingErrors.All, KnowledgeErrors.All),
+        new ErrorsFeature(ApiErrors.All, MessagingErrors.All, KnowledgeErrors.All),
 
         // Infrastructure
         new PostgresFeature(),
@@ -59,7 +60,7 @@ public sealed partial class KnowledgeCompositionRoot
             configureHttpClientDefaults: false);
         _builder.Services.AddSingleton(TimeProvider.System);
 
-        var app = new ResearchBuilder(_builder);
+        var app = new ServiceHostBuilder(_builder);
         foreach (var feature in Features)
         {
             feature.Register(app);

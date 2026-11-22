@@ -5,8 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
-using Research.Contracts.Search;
-using Research.Contracts.Steps;
+using Research.Shared.Contracts.Search;
+using Research.Shared.Contracts.Steps;
 using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Consuming;
@@ -14,8 +14,10 @@ using Research.Shared.Core.Actors;
 using Research.Shared.Core.Logging;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Messaging;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 using Research.Infrastructure.UnitTests.TestSupport;
+using Research.Shared.Core.Correlation;
+using Research.Shared.Adapters.Messaging.Observability;
 
 namespace Research.Infrastructure.UnitTests.Messaging;
 
@@ -121,7 +123,7 @@ public sealed class MessageDispatcherTests
         OutgoingEnvelope envelope;
         ActivityTraceId producerTraceId;
         using (var producerActivity = new Activity("produce").SetIdFormat(ActivityIdFormat.W3C).Start())
-        using (CorrelationContext.Push("corr-e2e-1"))
+        using (CorrelationIdContext.Push("corr-e2e-1"))
         {
             producerTraceId = producerActivity.TraceId;
             envelope = factory.Create(message);
@@ -132,7 +134,7 @@ public sealed class MessageDispatcherTests
 
         var capturedScopes = new List<IReadOnlyDictionary<string, object>>();
         string? observedCorrelationInHandler = null;
-        _handler.OnHandle = () => observedCorrelationInHandler = CorrelationContext.Current;
+        _handler.OnHandle = () => observedCorrelationInHandler = CorrelationIdContext.Current;
 
         var delivery = new IncomingDelivery(
             envelope.MessageId,
@@ -144,7 +146,7 @@ public sealed class MessageDispatcherTests
 
         result.ShouldBe(DispatchResult.Ack);
         observedCorrelationInHandler.ShouldBe("corr-e2e-1");
-        CorrelationContext.Current.ShouldBeNull();
+        CorrelationIdContext.Current.ShouldBeNull();
         var scope = capturedScopes.ShouldHaveSingleItem();
         scope["JobId"].ShouldBe(message.JobId);
         scope["StepKey"].ShouldBe("search:0");
@@ -164,10 +166,10 @@ public sealed class MessageDispatcherTests
         services.AddLogging();
         services.AddMetrics();
         services.AddMediation();
-        services.AddScoped<ScopedActor>();
-        services.AddScoped<IRequestHandler<HandleMessage<SearchRequested>, Unit>>(provider =>
+        services.AddScoped<CurrentActor>();
+        services.AddScoped<IRequestHandler<IncomingMessageEnvelope<SearchRequested>, Unit>>(provider =>
         {
-            _handler.ActorSource = provider.GetRequiredService<ScopedActor>();
+            _handler.ActorSource = provider.GetRequiredService<CurrentActor>();
             return _handler;
         });
 
@@ -205,7 +207,7 @@ public sealed class MessageDispatcherTests
 
         public Action? OnHandle { get; set; }
 
-        public ScopedActor? ActorSource { get; set; }
+        public CurrentActor? ActorSource { get; set; }
 
         public string? Actor { get; private set; }
 

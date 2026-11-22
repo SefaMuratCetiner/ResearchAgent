@@ -1,14 +1,15 @@
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Research.Contracts.Search;
+using Research.Shared.Contracts.Search;
 using Research.Shared.Adapters.Mediation;
 using Research.Shared.Core.Events;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Messaging;
 using Research.Shared.Core.Transactions;
-using Research.SharedKernel.Events;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Events;
+using Research.Shared.Kernel.Results;
+using Research.Shared.Adapters.Mediation.Observability;
 
 namespace Research.Infrastructure.UnitTests.Mediation;
 
@@ -108,7 +109,7 @@ public sealed class MediationPipelineTests
         var handled = new List<string>();
         var services = CreateBaseServices();
         services.AddScoped<IInbox>(_ => inbox);
-        services.AddScoped<IRequestHandler<HandleMessage<SearchRequested>, Unit>>(_ => new RecordingMessageHandler(handled));
+        services.AddScoped<IRequestHandler<IncomingMessageEnvelope<SearchRequested>, Unit>>(_ => new RecordingMessageHandler(handled));
 
         await using var provider = services.BuildServiceProvider();
         var seenId = Guid.NewGuid();
@@ -119,10 +120,10 @@ public sealed class MediationPipelineTests
         {
             var sender = scope.ServiceProvider.GetRequiredService<ISender>();
             var dupCtx = new MessageContext(seenId, SearchRequested.MessageType, 2, DateTimeOffset.UtcNow, "search.queue");
-            await sender.SendAsync(new HandleMessage<SearchRequested>(new SearchRequested(Guid.NewGuid(), "search:0", "dup", 5), dupCtx), CancellationToken.None);
+            await sender.SendAsync(new IncomingMessageEnvelope<SearchRequested>(new SearchRequested(Guid.NewGuid(), "search:0", "dup", 5), dupCtx), CancellationToken.None);
 
             var freshCtx = new MessageContext(freshId, SearchRequested.MessageType, 1, DateTimeOffset.UtcNow, "search.queue");
-            await sender.SendAsync(new HandleMessage<SearchRequested>(new SearchRequested(Guid.NewGuid(), "search:1", "fresh", 5), freshCtx), CancellationToken.None);
+            await sender.SendAsync(new IncomingMessageEnvelope<SearchRequested>(new SearchRequested(Guid.NewGuid(), "search:1", "fresh", 5), freshCtx), CancellationToken.None);
         }
 
         handled.ShouldBe(["fresh"]);

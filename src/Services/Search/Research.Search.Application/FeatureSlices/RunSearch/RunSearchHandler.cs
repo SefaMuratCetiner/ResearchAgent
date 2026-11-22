@@ -5,8 +5,8 @@ using Research.Search.Domain.Policies;
 using Research.Shared.Core.Logging;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Ports.Search;
-using Research.SharedKernel.Security;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Security;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Search.Application.RunSearch;
 

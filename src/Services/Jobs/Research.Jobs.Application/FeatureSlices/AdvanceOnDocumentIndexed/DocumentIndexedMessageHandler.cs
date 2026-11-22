@@ -1,4 +1,4 @@
-using Research.Contracts.Knowledge;
+using Research.Shared.Contracts.Knowledge;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
 using Research.Shared.Messaging;

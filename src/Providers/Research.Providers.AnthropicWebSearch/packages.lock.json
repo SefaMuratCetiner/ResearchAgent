@@ -61,17 +61,17 @@
       "research.shared.core": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
+      },
+      "research.shared.kernel": {
+        "type": "Project"
       },
       "research.shared.ports": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
-      },
-      "research.sharedkernel": {
-        "type": "Project"
       }
     }
   }

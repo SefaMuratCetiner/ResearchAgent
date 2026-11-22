@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Exceptions;
 using Research.Shared.Web.Problems;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Infrastructure.UnitTests.ServiceDefaults;
 
@@ -54,7 +54,7 @@ public sealed class ApiInfrastructureTests
     public async Task CustomExceptionHandler_Writes500ProblemDetails()
     {
         var writer = new RecordingProblemDetailsService();
-        var handler = new CustomExceptionHandler(writer, NullLogger<CustomExceptionHandler>.Instance);
+        var handler = new GlobalExceptionHandler(writer, NullLogger<GlobalExceptionHandler>.Instance);
         var context = new DefaultHttpContext();
         context.Request.Method = "GET";
         context.Request.Path = "/research/boom";
@@ -73,7 +73,7 @@ public sealed class ApiInfrastructureTests
     public async Task CustomExceptionHandler_IgnoresClientDisconnect()
     {
         var writer = new RecordingProblemDetailsService();
-        var handler = new CustomExceptionHandler(writer, NullLogger<CustomExceptionHandler>.Instance);
+        var handler = new GlobalExceptionHandler(writer, NullLogger<GlobalExceptionHandler>.Instance);
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
         var context = new DefaultHttpContext { RequestAborted = cts.Token };

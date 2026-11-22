@@ -8,7 +8,7 @@ namespace Research.Planning.Bootstrap.Features;
 /// the API key is rotated; the key is never logged), wrapped by the per-replica concurrency limiter, which reads
 /// Anthropic:MaxConcurrentRequests on every request.
 /// </summary>
-internal sealed class AnthropicFeature : IResearchFeature
+internal sealed class AnthropicFeature : IHostFeature
 {
-    public void Register(ResearchBuilder app) => app.Services.AddAnthropicLlm();
+    public void Register(ServiceHostBuilder app) => app.Services.AddAnthropicLlm();
 }

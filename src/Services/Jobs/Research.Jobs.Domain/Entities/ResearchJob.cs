@@ -1,6 +1,6 @@
 using Research.Jobs.Domain.Events;
-using Research.SharedKernel.Entities;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Entities;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Jobs.Domain;
 

@@ -2,7 +2,7 @@ using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Jobs.Application.CancelResearchJob;
 

@@ -45,7 +45,7 @@ internal abstract partial class PeriodicWorker(IServiceScopeFactory scopeFactory
         try
         {
             await using var scope = scopeFactory.CreateAsyncScope();
-            scope.ServiceProvider.GetRequiredService<ScopedActor>().Id = ScopedActor.System("jobs");
+            scope.ServiceProvider.GetRequiredService<CurrentActor>().Id = CurrentActor.System("jobs");
             var handled = await RunOnceAsync(scope.ServiceProvider, stoppingToken).ConfigureAwait(false);
             activity?.SetTag("research.worker.handled", handled);
             if (handled > 0)

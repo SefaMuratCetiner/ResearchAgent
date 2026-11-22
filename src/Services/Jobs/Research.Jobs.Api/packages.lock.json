@@ -28,14 +28,11 @@
         "resolved": "2.13.0",
         "contentHash": "wavlgBYnn7uU/ZGhFHNl0UlDOlwz+6KRduKkqdCCbfxxANaQ1rmBpETVGdwXanAM6twQOxsvI3CBEGF4OScbeQ=="
       },
-      "research.contracts": {
-        "type": "Project"
-      },
       "research.jobs.application": {
         "type": "Project",
         "dependencies": {
-          "Research.Contracts": "[1.0.0, )",
           "Research.Jobs.Domain": "[1.0.0, )",
+          "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
           "Research.Shared.Messaging": "[1.0.0, )"
         }
@@ -43,32 +40,35 @@
       "research.jobs.domain": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
+      },
+      "research.shared.contracts": {
+        "type": "Project"
       },
       "research.shared.core": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
+      },
+      "research.shared.kernel": {
+        "type": "Project"
       },
       "research.shared.messaging": {
         "type": "Project",
         "dependencies": {
-          "Research.Contracts": "[1.0.0, )",
+          "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.shared.web": {
         "type": "Project",
         "dependencies": {
           "Research.Shared.Core": "[1.0.0, )",
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
-      },
-      "research.sharedkernel": {
-        "type": "Project"
       }
     }
   }

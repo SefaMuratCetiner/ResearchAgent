@@ -1,6 +1,6 @@
 using Research.Shared.Core.Mediation;
 using Research.Shared.Ports.Search;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Search.Application.RunSearch;
 

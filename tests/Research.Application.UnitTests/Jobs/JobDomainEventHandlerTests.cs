@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Research.Application.UnitTests.TestSupport;
-using Research.Contracts;
-using Research.Contracts.Jobs;
-using Research.Contracts.Planning;
-using Research.Contracts.Search;
-using Research.Contracts.Synthesis;
+using Research.Shared.Contracts;
+using Research.Shared.Contracts.Jobs;
+using Research.Shared.Contracts.Planning;
+using Research.Shared.Contracts.Search;
+using Research.Shared.Contracts.Synthesis;
 using Research.Jobs.Application;
 using Research.Jobs.Application.AdvanceOnPlanReady;
 using Research.Jobs.Application.CancelResearchJob;

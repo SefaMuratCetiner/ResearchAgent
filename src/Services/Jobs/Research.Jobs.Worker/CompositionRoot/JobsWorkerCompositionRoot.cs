@@ -5,8 +5,9 @@ using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
-using Research.Shared.Adapters.Messaging.Tracing;
+using Research.Shared.Adapters.Messaging.Observability;
 using Research.Shared.Messaging;
+using Research.Shared.Adapters.Mediation.Observability;
 
 namespace Research.Jobs.Worker.CompositionRoot;
 
@@ -28,7 +29,7 @@ public sealed class JobsWorkerCompositionRoot
     internal JobsWorkerSettings Settings { get; }
 
     /// <summary>Every feature, in registration order, grouped by concern.</summary>
-    internal IReadOnlyList<IResearchFeature> Features { get; } =
+    internal IReadOnlyList<IHostFeature> Features { get; } =
     [
         // Platform
         new ActorsFeature(),
@@ -52,7 +53,7 @@ public sealed class JobsWorkerCompositionRoot
             meters: [MediationMetrics.MeterName, MessagingMetrics.MeterName, JobsMetrics.MeterName]);
         _builder.Services.AddSingleton(TimeProvider.System);
 
-        var app = new ResearchBuilder(_builder);
+        var app = new ServiceHostBuilder(_builder);
         foreach (var feature in Features)
         {
             feature.Register(app);

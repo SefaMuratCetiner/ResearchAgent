@@ -7,8 +7,8 @@ using Microsoft.Extensions.Options;
 using Research.Shared.Ports.Caching;
 using Research.Shared.Ports.Llm;
 using Research.Shared.Core.Mediation;
-using Research.SharedKernel.Security;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Security;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Planning.Application.CreatePlan;
 

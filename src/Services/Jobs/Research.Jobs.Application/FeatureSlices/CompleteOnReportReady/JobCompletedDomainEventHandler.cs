@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using Research.Contracts.Jobs;
+using Research.Shared.Contracts.Jobs;
 using Research.Jobs.Application.Observability;
 using Research.Jobs.Domain.Events;
 using Research.Shared.Core.Events;

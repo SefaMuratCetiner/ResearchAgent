@@ -14,17 +14,13 @@
         "resolved": "4.16.1",
         "contentHash": "AGzq3UZvIwTGSh9xyIna+Q9F666S8UaLlX/Pk3Iz21qIAWjL8iYporVCcX1k/oi5chrRZ8VJRahup4me4HZptw=="
       },
-      "research.contracts": {
-        "type": "Project"
-      },
       "research.shared.core": {
         "type": "Project",
         "dependencies": {
-          "Research.Contracts": "[1.0.0, )",
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
-      "research.sharedkernel": {
+      "research.shared.kernel": {
         "type": "Project"
       }
     }

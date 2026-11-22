@@ -1,5 +1,5 @@
 using Research.Shared.Core.Mediation;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Synthesis.Application.WriteReport;
 

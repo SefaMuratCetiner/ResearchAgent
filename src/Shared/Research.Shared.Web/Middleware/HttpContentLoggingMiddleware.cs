@@ -33,7 +33,7 @@ public sealed partial class HttpContentLoggingMiddleware(
         var maxChars = options.CurrentValue.MaxChars;
         var path = context.Request.Path.Value ?? string.Empty;
         var requestBody = await ReadRequestBodyAsync(context.Request, context.RequestAborted).ConfigureAwait(false);
-        var truncatedRequest = ContentText.Truncate(requestBody, maxChars);
+        var truncatedRequest = LogContentTruncator.Truncate(requestBody, maxChars);
         LogRequest(_logger, context.Request.Method, path, context.Request.QueryString.Value ?? string.Empty, truncatedRequest, requestBody.Length);
 
         var originalBody = context.Response.Body;
@@ -55,7 +55,7 @@ public sealed partial class HttpContentLoggingMiddleware(
         }
 
         var responseBody = Encoding.UTF8.GetString(tee.Captured);
-        var truncatedResponse = ContentText.Truncate(responseBody, maxChars);
+        var truncatedResponse = LogContentTruncator.Truncate(responseBody, maxChars);
         LogResponse(_logger, context.Request.Method, path, context.Response.StatusCode, truncatedResponse, tee.TotalBytes);
     }
 

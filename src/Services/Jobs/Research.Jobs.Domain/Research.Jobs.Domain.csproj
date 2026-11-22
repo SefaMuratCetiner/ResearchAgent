@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
     Jobs Domain: pure entities, enums, state machine, outcome policy and domain errors.
-    Depends ONLY on Research.SharedKernel (zero NuGet packages, zero I/O).
+    Depends ONLY on Research.Shared.Kernel (zero NuGet packages, zero I/O).
   -->
   <PropertyGroup>
     <RootNamespace>Research.Jobs.Domain</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Kernel\Research.Shared.Kernel.csproj" />
   </ItemGroup>
 </Project>

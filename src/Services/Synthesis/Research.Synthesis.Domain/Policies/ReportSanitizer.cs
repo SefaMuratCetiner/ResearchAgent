@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Research.SharedKernel.Security;
+using Research.Shared.Kernel.Security;
 
 namespace Research.Synthesis.Domain.Policies;
 

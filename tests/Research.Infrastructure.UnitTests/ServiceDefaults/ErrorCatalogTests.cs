@@ -7,7 +7,7 @@ using Research.Shared.Core.Errors;
 using Research.Shared.Messaging;
 using Research.Shared.Ports.Search;
 using Research.Shared.Web.Problems;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 using Research.Synthesis.Application;
 
 namespace Research.Infrastructure.UnitTests.ServiceDefaults;
@@ -17,7 +17,7 @@ public sealed class ErrorCatalogTests
     /// <summary>Every error set in the solution, as the Hosts register them.</summary>
     private static readonly ErrorSet[] All =
     [
-        ProblemErrors.All,
+        ApiErrors.All,
         MessagingErrors.All,
         JobsErrors.All,
         PlanningErrors.All,

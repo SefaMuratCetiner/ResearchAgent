@@ -1,9 +1,10 @@
 using Research.Shared.Core.Logging;
+using Research.Shared.Core.Correlation;
 
 namespace Research.Shared.Adapters.Http;
 
 /// <summary>
-/// Propagates the ambient <see cref="CorrelationContext.Current"/> value onto outgoing inter-service HTTP requests as
+/// Propagates the ambient <see cref="CorrelationIdContext.Current"/> value onto outgoing inter-service HTTP requests as
 /// <c>X-Correlation-ID</c> when the header is not already set.
 /// </summary>
 public sealed class CorrelationIdDelegatingHandler : DelegatingHandler
@@ -12,10 +13,10 @@ public sealed class CorrelationIdDelegatingHandler : DelegatingHandler
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (CorrelationContext.Current is { } correlationId
-            && !request.Headers.Contains(CorrelationContext.HeaderName))
+        if (CorrelationIdContext.Current is { } correlationId
+            && !request.Headers.Contains(CorrelationIdContext.HeaderName))
         {
-            request.Headers.TryAddWithoutValidation(CorrelationContext.HeaderName, correlationId);
+            request.Headers.TryAddWithoutValidation(CorrelationIdContext.HeaderName, correlationId);
         }
 
         return base.SendAsync(request, cancellationToken);

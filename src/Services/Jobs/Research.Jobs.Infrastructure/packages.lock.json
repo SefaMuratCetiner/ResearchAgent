@@ -74,9 +74,6 @@
         "resolved": "10.0.15",
         "contentHash": "NjzLiZ1/bYx8VwLqHxNnCfDTQQbCY7P1dwT7JM5FiANiaSfI6UKHi0/sla+jyRbOIbPAMJkhWQ/9pH3tMf+IrQ=="
       },
-      "research.contracts": {
-        "type": "Project"
-      },
       "research.jobs.application": {
         "type": "Project",
         "dependencies": {
@@ -84,8 +81,8 @@
           "Microsoft.Extensions.Diagnostics.Abstractions": "[10.0.15, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.15, )",
           "Microsoft.Extensions.Options": "[10.0.15, )",
-          "Research.Contracts": "[1.0.0, )",
           "Research.Jobs.Domain": "[1.0.0, )",
+          "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
           "Research.Shared.Messaging": "[1.0.0, )"
         }
@@ -93,7 +90,7 @@
       "research.jobs.domain": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.providers.postgres": {
@@ -118,35 +115,38 @@
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.15, )",
           "Microsoft.Extensions.Options": "[10.0.15, )",
           "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.15, )",
-          "Research.Contracts": "[1.0.0, )",
+          "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
+          "Research.Shared.Kernel": "[1.0.0, )",
           "Research.Shared.Messaging": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )",
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Ports": "[1.0.0, )"
         }
+      },
+      "research.shared.contracts": {
+        "type": "Project"
       },
       "research.shared.core": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
+      },
+      "research.shared.kernel": {
+        "type": "Project"
       },
       "research.shared.messaging": {
         "type": "Project",
         "dependencies": {
-          "Research.Contracts": "[1.0.0, )",
+          "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.shared.ports": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
-      },
-      "research.sharedkernel": {
-        "type": "Project"
       },
       "Microsoft.Extensions.Diagnostics.Abstractions": {
         "type": "CentralTransitive",

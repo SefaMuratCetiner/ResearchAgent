@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Http;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Shared.Web.Problems;
 

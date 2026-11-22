@@ -4,7 +4,7 @@ using Research.Knowledge.Application.Observability;
 using Research.Knowledge.Domain;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Ports.Embeddings;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Knowledge.Application.SearchPassages;
 

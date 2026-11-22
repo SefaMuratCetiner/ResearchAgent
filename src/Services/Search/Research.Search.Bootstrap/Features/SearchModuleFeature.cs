@@ -9,9 +9,9 @@ namespace Research.Search.Bootstrap.Features;
 /// cache hits never wait for a slot. Both decorators read <see cref="SearchOptions"/> on every call, so a reload applies
 /// without a restart.
 /// </summary>
-internal sealed class SearchModuleFeature : IResearchFeature
+internal sealed class SearchModuleFeature : IHostFeature
 {
-    public void Register(ResearchBuilder app)
+    public void Register(ServiceHostBuilder app)
     {
         app.Services.AddSearchApplication();
         app.Services.AddSearchInfrastructure();

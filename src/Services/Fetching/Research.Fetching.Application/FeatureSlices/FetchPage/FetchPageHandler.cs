@@ -8,8 +8,8 @@ using Research.Fetching.Domain;
 using Research.Shared.Ports.Documents;
 using Research.Shared.Core.Logging;
 using Research.Shared.Core.Mediation;
-using Research.SharedKernel.Security;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Security;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Fetching.Application.FetchPage;
 
@@ -120,7 +120,7 @@ public sealed partial class FetchPageHandler : ICommandHandler<FetchPageCommand,
 
         if (_contentLogger.IsEnabled(LogLevel.Information))
         {
-            var truncated = ContentText.Truncate(text, _contentOptions.Value.MaxChars);
+            var truncated = LogContentTruncator.Truncate(text, _contentOptions.Value.MaxChars);
             LogPageText(_contentLogger, command.JobId, command.Url, extracted.Title, truncated);
         }
 

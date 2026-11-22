@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
-using Research.Contracts.Jobs;
-using Research.Contracts.Planning;
+using Research.Shared.Contracts.Jobs;
+using Research.Shared.Contracts.Planning;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Application.Observability;
 using Research.Jobs.Domain;

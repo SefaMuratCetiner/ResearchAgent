@@ -8,6 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Research.SharedKernel\Research.SharedKernel.csproj" />
+    <ProjectReference Include="..\Research.Shared.Kernel\Research.Shared.Kernel.csproj" />
   </ItemGroup>
 </Project>

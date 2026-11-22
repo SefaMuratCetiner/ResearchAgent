@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Options;
-using Research.Contracts;
+using Research.Shared.Contracts;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Domain;
 using Research.Shared.Messaging;

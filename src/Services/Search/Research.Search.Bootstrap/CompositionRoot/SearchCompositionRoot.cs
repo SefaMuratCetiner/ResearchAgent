@@ -4,9 +4,10 @@ using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
-using Research.Shared.Adapters.Messaging.Tracing;
+using Research.Shared.Adapters.Messaging.Observability;
 using Research.Shared.Messaging;
 using Research.Shared.Ports.Search;
+using Research.Shared.Adapters.Mediation.Observability;
 
 namespace Research.Search.Bootstrap.CompositionRoot;
 
@@ -25,7 +26,7 @@ public sealed class SearchCompositionRoot
     internal SearchSettings Settings { get; }
 
     /// <summary>Every feature, in registration order. The search provider must be registered before its decorators.</summary>
-    internal IReadOnlyList<IResearchFeature> Features { get; } =
+    internal IReadOnlyList<IHostFeature> Features { get; } =
     [
         // Platform
         new ActorsFeature(),
@@ -48,7 +49,7 @@ public sealed class SearchCompositionRoot
             meters: [MediationMetrics.MeterName, MessagingMetrics.MeterName, SearchMetrics.MeterName]);
         _builder.Services.AddSingleton(TimeProvider.System);
 
-        var app = new ResearchBuilder(_builder);
+        var app = new ServiceHostBuilder(_builder);
         foreach (var feature in Features)
         {
             feature.Register(app);

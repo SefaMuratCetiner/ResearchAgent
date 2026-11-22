@@ -26,11 +26,11 @@
     <Project Path="src/Research.ServiceDefaults/Research.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/src/Shared/">
-    <Project Path="src/Shared/Research.SharedKernel/Research.SharedKernel.csproj" />
+    <Project Path="src/Shared/Research.Shared.Kernel/Research.Shared.Kernel.csproj" />
     <Project Path="src/Shared/Research.Shared.Core/Research.Shared.Core.csproj" />
     <Project Path="src/Shared/Research.Shared.Messaging/Research.Shared.Messaging.csproj" />
     <Project Path="src/Shared/Research.Shared.Ports/Research.Shared.Ports.csproj" />
-    <Project Path="src/Shared/Research.Contracts/Research.Contracts.csproj" />
+    <Project Path="src/Shared/Research.Shared.Contracts/Research.Shared.Contracts.csproj" />
     <Project Path="src/Shared/Research.Shared.Adapters/Research.Shared.Adapters.csproj" />
     <Project Path="src/Shared/Research.Shared.Web/Research.Shared.Web.csproj" />
   </Folder>

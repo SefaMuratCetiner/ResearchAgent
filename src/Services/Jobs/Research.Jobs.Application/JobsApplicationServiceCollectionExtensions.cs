@@ -16,7 +16,7 @@ using Research.Jobs.Application.StartSynthesis;
 using Research.Jobs.Domain.Events;
 using Research.Shared.Core.Events;
 using Research.Shared.Core.Mediation;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Jobs.Application;
 

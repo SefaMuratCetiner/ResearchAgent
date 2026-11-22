@@ -7,6 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Kernel\Research.Shared.Kernel.csproj" />
   </ItemGroup>
 </Project>

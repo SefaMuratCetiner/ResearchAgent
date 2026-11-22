@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Research.Shared.Core.Mediation;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 using Research.Synthesis.Application.WriteReport;
 
 namespace Research.Synthesis.Application;

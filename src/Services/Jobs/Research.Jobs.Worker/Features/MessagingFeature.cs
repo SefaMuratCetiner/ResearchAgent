@@ -1,8 +1,8 @@
-using Research.Contracts.Knowledge;
-using Research.Contracts.Planning;
-using Research.Contracts.Search;
-using Research.Contracts.Steps;
-using Research.Contracts.Synthesis;
+using Research.Shared.Contracts.Knowledge;
+using Research.Shared.Contracts.Planning;
+using Research.Shared.Contracts.Search;
+using Research.Shared.Contracts.Steps;
+using Research.Shared.Contracts.Synthesis;
 using Research.Jobs.Application.AdvanceOnDocumentIndexed;
 using Research.Jobs.Application.AdvanceOnPlanReady;
 using Research.Jobs.Application.AdvanceOnResultsFound;
@@ -17,9 +17,9 @@ namespace Research.Jobs.Worker.Features;
 /// RabbitMQ (Aspire connection <c>bus</c>): the confirmed publisher behind the outbox dispatcher, and one listener per
 /// reply Jobs consumes. Everything Jobs publishes goes through the outbox.
 /// </summary>
-internal sealed class MessagingFeature : IResearchFeature
+internal sealed class MessagingFeature : IHostFeature
 {
-    public void Register(ResearchBuilder app)
+    public void Register(ServiceHostBuilder app)
     {
         app.Host.AddRabbitMQClient("bus");
         app.Services.AddOutboxPublisher();

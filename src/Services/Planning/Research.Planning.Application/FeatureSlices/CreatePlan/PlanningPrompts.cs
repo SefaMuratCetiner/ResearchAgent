@@ -1,5 +1,5 @@
 using System.Globalization;
-using Research.SharedKernel.Security;
+using Research.Shared.Kernel.Security;
 
 namespace Research.Planning.Application.CreatePlan;
 

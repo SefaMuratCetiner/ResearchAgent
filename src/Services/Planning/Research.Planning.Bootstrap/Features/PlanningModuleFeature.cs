@@ -4,7 +4,7 @@ using Research.Shared.Adapters.Composition;
 namespace Research.Planning.Bootstrap.Features;
 
 /// <summary>The Planning module's command handler.</summary>
-internal sealed class PlanningModuleFeature : IResearchFeature
+internal sealed class PlanningModuleFeature : IHostFeature
 {
-    public void Register(ResearchBuilder app) => app.Services.AddPlanningApplication();
+    public void Register(ServiceHostBuilder app) => app.Services.AddPlanningApplication();
 }

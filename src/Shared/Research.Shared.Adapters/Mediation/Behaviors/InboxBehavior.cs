@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Messaging;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Shared.Adapters.Mediation.Behaviors;
 

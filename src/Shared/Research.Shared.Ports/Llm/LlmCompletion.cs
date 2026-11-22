@@ -15,12 +15,3 @@ public sealed record LlmCompletion(
 {
     public long TotalTokens => InputTokens + OutputTokens;
 }
-
-/// <summary>Why the model stopped.</summary>
-public enum LlmStopReason
-{
-    Completed,
-    MaxTokens,
-    Refused,
-    Other,
-}

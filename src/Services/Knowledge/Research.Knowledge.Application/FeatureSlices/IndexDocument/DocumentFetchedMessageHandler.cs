@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
-using Research.Contracts.Fetching;
-using Research.Contracts.Knowledge;
-using Research.Contracts.Steps;
+using Research.Shared.Contracts.Fetching;
+using Research.Shared.Contracts.Knowledge;
+using Research.Shared.Contracts.Steps;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Application.Observability;
 using Research.Knowledge.Domain;

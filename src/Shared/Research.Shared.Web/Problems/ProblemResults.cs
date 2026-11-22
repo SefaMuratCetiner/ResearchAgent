@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Shared.Web.Problems;
 
@@ -21,7 +21,7 @@ public static class ProblemResults
         return TypedResults.Problem(
             detail: detail,
             instance: context.Request.Path.Value,
-            statusCode: ErrorStatus.From(error.Kind),
+            statusCode: ErrorStatusCodeMapper.From(error.Kind),
             title: error.Title,
             type: TypeBase + error.Code,
             extensions: Extensions(error.Code, context));
@@ -32,7 +32,7 @@ public static class ProblemResults
         ArgumentNullException.ThrowIfNull(errors);
         ArgumentNullException.ThrowIfNull(context);
 
-        var error = ProblemErrors.ValidationFailed;
+        var error = ApiErrors.ValidationFailed;
         return TypedResults.ValidationProblem(
             errors: errors,
             detail: "One or more fields are not valid.",

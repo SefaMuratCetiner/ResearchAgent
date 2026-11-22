@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using Research.Fetching.Application;
 using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Domain;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Fetching.Infrastructure.Download;
 

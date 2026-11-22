@@ -1,6 +1,6 @@
 using Research.Fetching.Application;
 using Research.Planning.Application.CreatePlan;
-using Research.SharedKernel.Security;
+using Research.Shared.Kernel.Security;
 using Research.Synthesis.Application.WriteReport;
 using Research.Synthesis.Domain.Policies;
 

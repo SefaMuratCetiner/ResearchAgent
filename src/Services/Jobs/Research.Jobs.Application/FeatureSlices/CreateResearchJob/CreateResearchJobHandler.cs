@@ -4,9 +4,9 @@ using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
-using Research.SharedKernel.Security;
+using Research.Shared.Kernel.Security;
 using Research.Shared.Core.Transactions;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Jobs.Application.CreateResearchJob;
 

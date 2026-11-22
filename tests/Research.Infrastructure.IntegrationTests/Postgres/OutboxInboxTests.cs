@@ -22,13 +22,13 @@ public sealed class OutboxInboxTests(PostgresFixture postgres)
         var store = new PostgresOutboxStore(postgres.Fetching, NullLogger<PostgresOutboxStore>.Instance);
         await DrainAsync(store);
 
-        var rolledBack = _envelopes.Create(new Research.Contracts.Steps.StepFailed(Guid.NewGuid(), "fetch:a", "x.y", "fetching"));
+        var rolledBack = _envelopes.Create(new Research.Shared.Contracts.Steps.StepFailed(Guid.NewGuid(), "fetch:a", "x.y", "fetching"));
         await using (await unitOfWork.BeginAsync(CancellationToken.None))
         {
             await outbox.EnqueueAsync(rolledBack, CancellationToken.None);
         }
 
-        var committed = _envelopes.Create(new Research.Contracts.Steps.StepFailed(Guid.NewGuid(), "fetch:b", "x.y", "fetching"));
+        var committed = _envelopes.Create(new Research.Shared.Contracts.Steps.StepFailed(Guid.NewGuid(), "fetch:b", "x.y", "fetching"));
         await using (await unitOfWork.BeginAsync(CancellationToken.None))
         {
             await outbox.EnqueueAsync(committed, CancellationToken.None);
@@ -139,7 +139,7 @@ public sealed class OutboxInboxTests(PostgresFixture postgres)
 
     private async Task<OutgoingEnvelope> EnqueueAsync(string stepKey)
     {
-        var envelope = _envelopes.Create(new Research.Contracts.Steps.StepFailed(Guid.NewGuid(), stepKey, "x.y", "fetching"));
+        var envelope = _envelopes.Create(new Research.Shared.Contracts.Steps.StepFailed(Guid.NewGuid(), stepKey, "x.y", "fetching"));
         await using var unitOfWork = new PostgresUnitOfWork(postgres.Fetching);
         await using (await unitOfWork.BeginAsync(CancellationToken.None))
         {

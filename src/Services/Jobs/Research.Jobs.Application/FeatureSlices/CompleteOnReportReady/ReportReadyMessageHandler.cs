@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Options;
-using Research.Contracts.Synthesis;
+using Research.Shared.Contracts.Synthesis;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
 using Research.Shared.Messaging;
-using Research.SharedKernel.Security;
+using Research.Shared.Kernel.Security;
 
 namespace Research.Jobs.Application.CompleteOnReportReady;
 

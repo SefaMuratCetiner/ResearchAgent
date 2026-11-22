@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using Research.Contracts;
+using Research.Shared.Contracts;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Consuming;
 using Research.Shared.Messaging;

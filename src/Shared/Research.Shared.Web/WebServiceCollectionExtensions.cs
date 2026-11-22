@@ -9,7 +9,7 @@ namespace Research.Shared.Web;
 public static class WebServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers ProblemDetails, <see cref="CustomExceptionHandler"/>, and the shared HTTP JSON serialization defaults
+    /// Registers ProblemDetails, <see cref="GlobalExceptionHandler"/>, and the shared HTTP JSON serialization defaults
     /// (omit null properties, serialize enums as strings).
     /// </summary>
     public static IServiceCollection AddResearchHttpApiDefaults(this IServiceCollection services)
@@ -28,7 +28,7 @@ public static class WebServiceCollectionExtensions
 
     /// <summary>
     /// Registers ASP.NET Core's built-in ProblemDetails (enriching every problem with <c>instance</c> and <c>traceId</c>)
-    /// and <see cref="CustomExceptionHandler"/> as an <see cref="Microsoft.AspNetCore.Diagnostics.IExceptionHandler"/>.
+    /// and <see cref="GlobalExceptionHandler"/> as an <see cref="Microsoft.AspNetCore.Diagnostics.IExceptionHandler"/>.
     /// </summary>
     public static IServiceCollection AddResearchProblemDetails(this IServiceCollection services)
     {
@@ -45,7 +45,7 @@ public static class WebServiceCollectionExtensions
             };
         });
 
-        services.AddExceptionHandler<CustomExceptionHandler>();
+        services.AddExceptionHandler<GlobalExceptionHandler>();
         return services;
     }
 }

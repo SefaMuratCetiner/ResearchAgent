@@ -7,12 +7,12 @@ namespace Research.Knowledge.Bootstrap.Features;
 /// The <c>research_knowledge</c> database (Aspire connection <c>knowledge</c>, pgvector): scoped unit of work,
 /// outbox, inbox, and a readiness check that the schema scripts ran.
 /// </summary>
-internal sealed class PostgresFeature : IResearchFeature
+internal sealed class PostgresFeature : IHostFeature
 {
     private static readonly string[] RequiredTables =
         ["outbox_messages", "inbox_messages", "documents", "passages", "job_documents"];
 
-    public void Register(ResearchBuilder app)
+    public void Register(ServiceHostBuilder app)
     {
         app.Host.AddNpgsqlDataSource("knowledge");
         app.Services.AddPostgresProvider("knowledge-schema", RequiredTables);

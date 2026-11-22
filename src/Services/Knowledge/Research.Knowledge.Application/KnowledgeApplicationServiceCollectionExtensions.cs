@@ -4,7 +4,7 @@ using Research.Knowledge.Application.IndexDocument;
 using Research.Knowledge.Application.Observability;
 using Research.Knowledge.Application.SearchPassages;
 using Research.Shared.Core.Mediation;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Knowledge.Application;
 

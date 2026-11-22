@@ -3,8 +3,8 @@ using Microsoft.Extensions.Options;
 using Research.Shared.Ports.Llm;
 using Research.Shared.Core.Logging;
 using Research.Shared.Core.Mediation;
-using Research.SharedKernel.Results;
-using Research.SharedKernel.Security;
+using Research.Shared.Kernel.Results;
+using Research.Shared.Kernel.Security;
 using Research.Synthesis.Application.Common.Interfaces;
 using Research.Synthesis.Domain.Policies;
 
@@ -121,7 +121,7 @@ public sealed partial class WriteReportHandler : ICommandHandler<WriteReportComm
     {
         if (_reportLogger.IsEnabled(LogLevel.Information))
         {
-            var truncated = ContentText.Truncate(content, _contentOptions.CurrentValue.MaxChars);
+            var truncated = LogContentTruncator.Truncate(content, _contentOptions.CurrentValue.MaxChars);
             LogReport(_reportLogger, jobId, truncated, citationCount);
         }
     }

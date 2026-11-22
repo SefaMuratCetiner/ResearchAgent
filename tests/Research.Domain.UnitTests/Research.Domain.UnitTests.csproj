@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\src\Shared\Research.Shared.Kernel\Research.Shared.Kernel.csproj" />
     <ProjectReference Include="..\..\src\Services\Jobs\Research.Jobs.Domain\Research.Jobs.Domain.csproj" />
     <ProjectReference Include="..\..\src\Services\Fetching\Research.Fetching.Domain\Research.Fetching.Domain.csproj" />
     <ProjectReference Include="..\..\src\Services\Knowledge\Research.Knowledge.Domain\Research.Knowledge.Domain.csproj" />

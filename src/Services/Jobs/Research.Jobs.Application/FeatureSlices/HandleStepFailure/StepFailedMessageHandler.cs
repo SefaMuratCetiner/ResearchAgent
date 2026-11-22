@@ -1,4 +1,4 @@
-using Research.Contracts.Steps;
+using Research.Shared.Contracts.Steps;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;

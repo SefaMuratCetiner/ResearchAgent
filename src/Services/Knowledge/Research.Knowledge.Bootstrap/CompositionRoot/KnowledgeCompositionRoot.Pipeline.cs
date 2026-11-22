@@ -12,12 +12,12 @@ public sealed partial class KnowledgeCompositionRoot
         ArgumentNullException.ThrowIfNull(app);
 
         // 1. The caller's correlation id, before anything logs.
-        app.UseMiddleware<CorrelationMiddleware>();
+        app.UseMiddleware<CorrelationIdMiddleware>();
 
         // 2. Content log of request and response bodies (queries and returned passages).
         app.UseMiddleware<HttpContentLoggingMiddleware>();
 
-        // 3. Last resort: ASP.NET Core IExceptionHandler (CustomExceptionHandler) turns unhandled exceptions into 500 ProblemDetails.
+        // 3. Last resort: ASP.NET Core IExceptionHandler (GlobalExceptionHandler) turns unhandled exceptions into 500 ProblemDetails.
         app.UseExceptionHandler();
     }
 }

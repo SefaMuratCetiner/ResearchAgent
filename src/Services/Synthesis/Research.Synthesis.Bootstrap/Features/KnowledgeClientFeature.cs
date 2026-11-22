@@ -9,7 +9,7 @@ namespace Research.Synthesis.Bootstrap.Features;
 /// read each time a client is created (once per message scope), so a reloaded <c>Synthesis:KnowledgeBaseAddress</c>
 /// applies without a restart.
 /// </summary>
-internal sealed class KnowledgeClientFeature : IResearchFeature
+internal sealed class KnowledgeClientFeature : IHostFeature
 {
-    public void Register(ResearchBuilder app) => app.Services.AddSynthesisInfrastructure();
+    public void Register(ServiceHostBuilder app) => app.Services.AddSynthesisInfrastructure();
 }

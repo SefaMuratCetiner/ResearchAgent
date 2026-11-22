@@ -1,4 +1,4 @@
-using Research.SharedKernel.Security;
+using Research.Shared.Kernel.Security;
 using Research.Synthesis.Domain;
 using Research.Synthesis.Domain.Policies;
 

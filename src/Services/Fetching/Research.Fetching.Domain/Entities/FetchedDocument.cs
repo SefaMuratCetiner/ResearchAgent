@@ -1,4 +1,4 @@
-using Research.SharedKernel.Entities;
+using Research.Shared.Kernel.Entities;
 
 namespace Research.Fetching.Domain;
 

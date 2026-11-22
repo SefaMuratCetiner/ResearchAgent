@@ -1,5 +1,5 @@
-using Research.Contracts.Fetching;
-using Research.Contracts.Steps;
+using Research.Shared.Contracts.Fetching;
+using Research.Shared.Contracts.Steps;
 using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Domain;
 using Research.Shared.Core.Mediation;

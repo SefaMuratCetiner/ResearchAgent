@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Research.Contracts.Jobs;
-using Research.Contracts.Planning;
-using Research.Contracts.Search;
-using Research.Contracts.Steps;
+using Research.Shared.Contracts.Jobs;
+using Research.Shared.Contracts.Planning;
+using Research.Shared.Contracts.Search;
+using Research.Shared.Contracts.Steps;
 using Research.Shared.Adapters.Messaging;
 using Research.Providers.RabbitMq;
 using Research.Shared.Core.Actors;
@@ -96,7 +96,7 @@ public sealed class RabbitMqPipelineTests : IAsyncLifetime
         var builder = Host.CreateApplicationBuilder();
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddSingleton(_connection);
-        builder.Services.AddScoped<ScopedActor>();
+        builder.Services.AddScoped<CurrentActor>();
         builder.Services.AddSingleton(script);
         builder.Services.Configure<MessagingOptions>(options =>
         {
@@ -115,7 +115,7 @@ public sealed class RabbitMqPipelineTests : IAsyncLifetime
     }
 
     private static Task PublishAsync<TMessage>(IHost host, TMessage message)
-        where TMessage : Research.Contracts.IIntegrationMessage
+        where TMessage : Research.Shared.Contracts.IIntegrationMessage
     {
         var envelope = host.Services.GetRequiredService<EnvelopeFactory>().Create(message);
         return host.Services.GetRequiredService<IMessagePublisher>().PublishAsync(envelope, TestContext.Current.CancellationToken);

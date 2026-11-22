@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Research.Shared.Adapters.Llm;
 using Research.Shared.Ports.Llm;
+using Research.Shared.Adapters.Llm.Observability;
 
 namespace Research.Providers.Anthropic;
 

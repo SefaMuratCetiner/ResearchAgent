@@ -10,11 +10,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\src\Shared\Research.Shared.Kernel\Research.Shared.Kernel.csproj" />
     <ProjectReference Include="..\..\src\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
     <ProjectReference Include="..\..\src\Shared\Research.Shared.Messaging\Research.Shared.Messaging.csproj" />
     <ProjectReference Include="..\..\src\Shared\Research.Shared.Ports\Research.Shared.Ports.csproj" />
-    <ProjectReference Include="..\..\src\Shared\Research.Contracts\Research.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Shared\Research.Shared.Contracts\Research.Shared.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Services\Jobs\Research.Jobs.Application\Research.Jobs.Application.csproj" />
     <ProjectReference Include="..\..\src\Services\Planning\Research.Planning.Application\Research.Planning.Application.csproj" />
     <ProjectReference Include="..\..\src\Services\Search\Research.Search.Application\Research.Search.Application.csproj" />

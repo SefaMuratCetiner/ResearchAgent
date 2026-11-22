@@ -3,13 +3,14 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Research.Contracts;
-using Research.Contracts.Steps;
-using Research.Shared.Adapters.Messaging.Tracing;
+using Research.Shared.Contracts;
+using Research.Shared.Contracts.Steps;
+using Research.Shared.Adapters.Messaging.Observability;
 using Research.Shared.Core.Actors;
 using Research.Shared.Core.Logging;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Messaging;
+using Research.Shared.Core.Correlation;
 
 namespace Research.Shared.Adapters.Messaging.Consuming;
 
@@ -58,7 +59,7 @@ public sealed partial class MessageDispatcher<TMessage>(
             activity?.SetTag("research.correlation.id", correlationId);
         }
 
-        using var correlationScope = correlationId is not null ? CorrelationContext.Push(correlationId) : null;
+        using var correlationScope = correlationId is not null ? CorrelationIdContext.Push(correlationId) : null;
         using var logScope = BeginMessageScope(message, messageId, delivery.Attempt, producer, correlationId);
 
         var context = new MessageContext(
@@ -95,9 +96,9 @@ public sealed partial class MessageDispatcher<TMessage>(
     private async Task ExecuteInScopeAsync(TMessage message, MessageContext context, CancellationToken cancellationToken)
     {
         await using var scope = scopeFactory.CreateAsyncScope();
-        scope.ServiceProvider.GetRequiredService<ScopedActor>().Id = ScopedActor.System(Settings.ServiceName);
+        scope.ServiceProvider.GetRequiredService<CurrentActor>().Id = CurrentActor.System(Settings.ServiceName);
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-        await sender.SendAsync(new HandleMessage<TMessage>(message, context), cancellationToken).ConfigureAwait(false);
+        await sender.SendAsync(new IncomingMessageEnvelope<TMessage>(message, context), cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<DispatchResult> HandleFailureAsync(
@@ -221,7 +222,7 @@ public sealed partial class MessageDispatcher<TMessage>(
     }
 
     private static string? ExtractCorrelationId(IReadOnlyDictionary<string, string> headers) =>
-        headers.TryGetValue(MessageHeaders.CorrelationId, out var value) && CorrelationContext.IsValid(value)
+        headers.TryGetValue(MessageHeaders.CorrelationId, out var value) && CorrelationIdContext.IsValid(value)
             ? value
             : null;
 

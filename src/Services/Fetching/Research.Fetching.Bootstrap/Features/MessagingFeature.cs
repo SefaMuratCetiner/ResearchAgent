@@ -1,4 +1,4 @@
-using Research.Contracts.Fetching;
+using Research.Shared.Contracts.Fetching;
 using Research.Fetching.Application.FetchPage;
 using Research.Providers.RabbitMq;
 using Research.Shared.Adapters.Composition;
@@ -9,9 +9,9 @@ namespace Research.Fetching.Bootstrap.Features;
 /// RabbitMQ (Aspire connection <c>bus</c>): consumes <c>FetchRequested</c>; replies go through the outbox and its
 /// dispatcher.
 /// </summary>
-internal sealed class MessagingFeature : IResearchFeature
+internal sealed class MessagingFeature : IHostFeature
 {
-    public void Register(ResearchBuilder app)
+    public void Register(ServiceHostBuilder app)
     {
         app.Host.AddRabbitMQClient("bus");
         app.Services.AddOutboxPublisher();

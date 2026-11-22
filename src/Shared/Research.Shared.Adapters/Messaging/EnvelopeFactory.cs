@@ -1,10 +1,11 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
-using Research.Contracts;
-using Research.Shared.Adapters.Messaging.Tracing;
+using Research.Shared.Contracts;
+using Research.Shared.Adapters.Messaging.Observability;
 using Research.Shared.Core.Logging;
 using Research.Shared.Messaging;
+using Research.Shared.Core.Correlation;
 
 namespace Research.Shared.Adapters.Messaging;
 
@@ -36,7 +37,7 @@ public sealed class EnvelopeFactory(TimeProvider timeProvider) : IEnvelopeFactor
             [MessageHeaders.OccurredAt] = occurredAt.ToString("O", CultureInfo.InvariantCulture),
             [MessageHeaders.Attempt] = "1",
         };
-        if (CorrelationContext.Current is { } correlationId)
+        if (CorrelationIdContext.Current is { } correlationId)
         {
             headers[MessageHeaders.CorrelationId] = correlationId;
         }

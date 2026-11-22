@@ -178,14 +178,11 @@
           "xunit.v3.runner.common": "[3.2.2]"
         }
       },
-      "research.contracts": {
-        "type": "Project"
-      },
       "research.fetching.application": {
         "type": "Project",
         "dependencies": {
-          "Research.Contracts": "[1.0.0, )",
           "Research.Fetching.Domain": "[1.0.0, )",
+          "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
           "Research.Shared.Messaging": "[1.0.0, )",
           "Research.Shared.Ports": "[1.0.0, )"
@@ -194,14 +191,14 @@
       "research.fetching.domain": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.jobs.application": {
         "type": "Project",
         "dependencies": {
-          "Research.Contracts": "[1.0.0, )",
           "Research.Jobs.Domain": "[1.0.0, )",
+          "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
           "Research.Shared.Messaging": "[1.0.0, )"
         }
@@ -209,14 +206,14 @@
       "research.jobs.domain": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.knowledge.application": {
         "type": "Project",
         "dependencies": {
-          "Research.Contracts": "[1.0.0, )",
           "Research.Knowledge.Domain": "[1.0.0, )",
+          "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
           "Research.Shared.Messaging": "[1.0.0, )",
           "Research.Shared.Ports": "[1.0.0, )"
@@ -225,13 +222,13 @@
       "research.knowledge.domain": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.planning.application": {
         "type": "Project",
         "dependencies": {
-          "Research.Contracts": "[1.0.0, )",
+          "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
           "Research.Shared.Messaging": "[1.0.0, )",
           "Research.Shared.Ports": "[1.0.0, )"
@@ -240,8 +237,8 @@
       "research.search.application": {
         "type": "Project",
         "dependencies": {
-          "Research.Contracts": "[1.0.0, )",
           "Research.Search.Domain": "[1.0.0, )",
+          "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
           "Research.Shared.Messaging": "[1.0.0, )",
           "Research.Shared.Ports": "[1.0.0, )"
@@ -250,36 +247,39 @@
       "research.search.domain": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
+      },
+      "research.shared.contracts": {
+        "type": "Project"
       },
       "research.shared.core": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
+      },
+      "research.shared.kernel": {
+        "type": "Project"
       },
       "research.shared.messaging": {
         "type": "Project",
         "dependencies": {
-          "Research.Contracts": "[1.0.0, )",
+          "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.shared.ports": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
-      },
-      "research.sharedkernel": {
-        "type": "Project"
       },
       "research.synthesis.application": {
         "type": "Project",
         "dependencies": {
-          "Research.Contracts": "[1.0.0, )",
+          "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
           "Research.Shared.Messaging": "[1.0.0, )",
           "Research.Shared.Ports": "[1.0.0, )",
@@ -289,7 +289,7 @@
       "research.synthesis.domain": {
         "type": "Project",
         "dependencies": {
-          "Research.SharedKernel": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       }
     }

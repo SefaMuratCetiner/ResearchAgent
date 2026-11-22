@@ -26,7 +26,7 @@ Research.SharedKernel / Research.Contracts ──► (no references at all)
 Services never reference each other. Shared abstractions are split by capability:
 * `Research.SharedKernel`: DDD base types (`Entity`, `AggregateRoot`, `IDomainEvent`), `Result`/`Error`/`Unit`, and pure text-safety primitives (`UntrustedText`, `PromptFence`, `PromptInjectionSignals`).
 * `Research.Shared.Core`: execution primitives (`IMediator`, `ISender`, `IPublisher`, `IDomainEventHandler`, `IUnitOfWork`, `ICurrentActor`, `ErrorCatalog`, content logging).
-* `Research.Shared.Messaging`: integration messaging ports (`IMessageHandler`, `HandleMessage<T>`, `IMessagePublisher`, `IMessageSender`, `IOutbox`, `IInbox`, envelopes, headers, retry policy).
+* `Research.Shared.Messaging`: integration messaging ports (`IMessageHandler`, `IncomingMessageEnvelope<T>`, `IMessagePublisher`, `IMessageSender`, `IOutbox`, `IInbox`, envelopes, headers, retry policy).
 * `Research.Shared.Ports`: external provider ports (`ILlmClient`, `ISearchProvider`, `IEmbeddingGenerator`, `IDocumentStore`, `ICacheStore`).
 
 Service-specific ports live in `Research.<Service>.Application/Common/Interfaces/`. Pure domain rules live in `Research.<Service>.Domain/Policies/` (`JobStateMachine`, `JobOutcomePolicy`, `TextChunker`, `UrlCanonicalizer`, `CitationBuilder`, `ReportSanitizer`). `Research.Providers.*` and `Research.<Service>.Infrastructure` implement the ports. Only entry points (`*.Bootstrap`, `*.Worker`) wire concrete implementations; where a port has multiple providers (`Llm:Provider`), the host picks one from startup settings.
@@ -62,14 +62,14 @@ Research.<Service>.Bootstrap/ (or Research.Jobs.Worker/)
 
 Each service's `Research.<Service>.Application` and `Research.<Service>.Api` projects organize use cases, domain event handlers, and HTTP endpoints under `FeatureSlices/<SliceName>/` (omitted from namespaces, one top-level type per file), with each API's root `<Service>Endpoints` (`IEndpointGroup`) at the project root.
 
-Commands (`ICommand<TResponse>` / `ICommand`), queries (`IQuery<TResponse>`), integration messages (`HandleMessage<TMessage>` via `IMessageHandler<TMessage>`), and domain events (`IDomainEvent` via `IDomainEventHandler<TEvent>`) all flow through a custom, zero-third-party-package mediator (`Research.Shared.Adapters.Mediation.Mediator`) implementing `IMediator` (`ISender` + `IPublisher`) and `IDomainEventDispatcher`:
+Commands (`ICommand<TResponse>` / `ICommand`), queries (`IQuery<TResponse>`), integration messages (`IncomingMessageEnvelope<TMessage>` via `IMessageHandler<TMessage>`), and domain events (`IDomainEvent` via `IDomainEventHandler<TEvent>`) all flow through a custom, zero-third-party-package mediator (`Research.Shared.Adapters.Mediation.Mediator`) implementing `IMediator` (`ISender` + `IPublisher`) and `IDomainEventDispatcher`:
 
 ```text
 HTTP Endpoint / Worker Timer / RabbitMQ MessageDispatcher
   ──► ISender.SendAsync(...)
         ──► LoggingBehavior
           ──► TelemetryBehavior (Research.Mediation traces & metrics)
-            ──► InboxBehavior (fast-path duplicate skip for HandleMessage<T> when IInbox is registered)
+            ──► InboxBehavior (fast-path duplicate skip for IncomingMessageEnvelope<T> when IInbox is registered)
               ──► ValidationBehavior (IRequestValidator<T> strategies → typed Result failure)
                 ──► TransactionBehavior (opt-in IUnitOfWork wrapper for ITransactionalCommand)
                   ──► IRequestHandler<TRequest, TResponse>

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Core.Transactions;
-using Research.SharedKernel.Results;
+using Research.Shared.Kernel.Results;
 
 namespace Research.Shared.Adapters.Mediation.Behaviors;
 

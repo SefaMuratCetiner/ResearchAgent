@@ -6,6 +6,7 @@ using OpenAI.Chat;
 using Research.Shared.Adapters.Llm;
 using Research.Shared.Ports.Llm;
 using Research.Shared.Core.Logging;
+using Research.Shared.Adapters.Llm.Observability;
 
 namespace Research.Providers.OpenAI;
 
@@ -78,8 +79,8 @@ public sealed partial class OpenAILlmClient : ILlmClient
         var maxChars = _contentOptions.CurrentValue.MaxChars;
         if (_contentLogger.IsEnabled(LogLevel.Information))
         {
-            var systemPrompt = ContentText.Truncate(request.SystemPrompt, maxChars);
-            var userPrompt = ContentText.Truncate(request.UserPrompt, maxChars);
+            var systemPrompt = LogContentTruncator.Truncate(request.SystemPrompt, maxChars);
+            var userPrompt = LogContentTruncator.Truncate(request.UserPrompt, maxChars);
             LogPrompt(_contentLogger, request.Operation, model, request.Effort, systemPrompt, userPrompt);
         }
 
@@ -136,7 +137,7 @@ public sealed partial class OpenAILlmClient : ILlmClient
 
         if (_contentLogger.IsEnabled(LogLevel.Information))
         {
-            var responseText = ContentText.Truncate(string.IsNullOrEmpty(text) ? refusal ?? string.Empty : text, maxChars);
+            var responseText = LogContentTruncator.Truncate(string.IsNullOrEmpty(text) ? refusal ?? string.Empty : text, maxChars);
             LogResponse(_contentLogger, request.Operation, model, stopReason, inputTokens, outputTokens, responseText);
         }
     }
