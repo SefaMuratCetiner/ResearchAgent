@@ -354,10 +354,9 @@
         "type": "Project",
         "dependencies": {
           "Research.Fetching.Domain": "[1.0.0, )",
+          "Research.Shared.Bus": "[1.0.0, )",
           "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.fetching.domain": {
@@ -374,14 +373,15 @@
           "Npgsql": "[10.0.3, )",
           "Research.Fetching.Application": "[1.0.0, )",
           "Research.Providers.Postgres": "[1.0.0, )",
-          "Research.Shared.Adapters": "[1.0.0, )"
+          "Research.Shared.Bus": "[1.0.0, )",
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.providers.blobstorage": {
         "type": "Project",
         "dependencies": {
           "Azure.Storage.Blobs": "[12.30.1, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.providers.postgres": {
@@ -389,18 +389,17 @@
         "dependencies": {
           "Dapper": "[2.1.89, )",
           "Npgsql": "[10.0.3, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )"
+          "Research.Shared.Bus": "[1.0.0, )",
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.providers.rabbitmq": {
         "type": "Project",
         "dependencies": {
           "RabbitMQ.Client": "[7.2.2, )",
-          "Research.Shared.Adapters": "[1.0.0, )",
+          "Research.Shared.Bus": "[1.0.0, )",
           "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.servicedefaults": {
@@ -419,14 +418,12 @@
           "Serilog.Sinks.Console": "[6.1.1, )"
         }
       },
-      "research.shared.adapters": {
+      "research.shared.bus": {
         "type": "Project",
         "dependencies": {
           "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Kernel": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.shared.contracts": {
@@ -440,20 +437,6 @@
       },
       "research.shared.kernel": {
         "type": "Project"
-      },
-      "research.shared.messaging": {
-        "type": "Project",
-        "dependencies": {
-          "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Kernel": "[1.0.0, )"
-        }
-      },
-      "research.shared.ports": {
-        "type": "Project",
-        "dependencies": {
-          "Research.Shared.Kernel": "[1.0.0, )"
-        }
       },
       "AngleSharp": {
         "type": "CentralTransitive",

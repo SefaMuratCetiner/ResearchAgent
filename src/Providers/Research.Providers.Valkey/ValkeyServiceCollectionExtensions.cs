@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Research.Shared.Ports.Caching;
+using Research.Shared.Core.Caching;
 
 namespace Research.Providers.Valkey;
 

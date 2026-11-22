@@ -1,6 +1,6 @@
 using Research.Fetching.Application;
 using Research.Fetching.Infrastructure;
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 
 namespace Research.Fetching.Bootstrap.Features;
 

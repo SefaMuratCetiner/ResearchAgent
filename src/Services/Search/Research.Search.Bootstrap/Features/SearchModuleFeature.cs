@@ -1,6 +1,6 @@
 using Research.Search.Application;
 using Research.Search.Infrastructure;
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 
 namespace Research.Search.Bootstrap.Features;
 

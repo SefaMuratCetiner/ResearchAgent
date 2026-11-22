@@ -2,7 +2,7 @@ using Research.Shared.Contracts.Steps;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
-using Research.Shared.Messaging;
+using Research.Shared.Bus.Messaging;
 
 namespace Research.Jobs.Application.HandleStepFailure;
 

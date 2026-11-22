@@ -5,10 +5,9 @@ using Anthropic.Exceptions;
 using Anthropic.Models.Messages;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Research.Shared.Adapters.Llm;
-using Research.Shared.Ports.Llm;
+using Research.Shared.Core.Llm;
 using Research.Shared.Core.Logging;
-using Research.Shared.Adapters.Llm.Observability;
+using Research.Shared.Core.Llm.Observability;
 
 namespace Research.Providers.Anthropic;
 

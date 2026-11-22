@@ -9,32 +9,32 @@ Enforced automatically by [ReferenceRuleTests.cs](../tests/Research.Architecture
 ```text
 AppHost ──► *.Bootstrap, *.Worker, tools/Research.DbScripts
 *.Bootstrap / *.Worker ──► own *.Application, *.Infrastructure, (own *.Api), Research.ServiceDefaults,
-                           Research.Shared.Adapters, (Research.Shared.Web if HTTP), Providers.*
+                           Research.Shared.Core, Research.Shared.Bus, (Research.Shared.Web if HTTP), Providers.*
 *.Api ──► own *.Application, Research.Shared.Web                                  (never ServiceDefaults, Domain, or Infrastructure)
-*.Infrastructure ──► own *.Application, Research.Shared.Adapters, Providers.*
-*.Application ──► own *.Domain, Research.Shared.Core, Research.Shared.Messaging,
-                  Research.Shared.Ports, Research.Contracts                       (never ASP.NET Core, Aspire, or providers)
-*.Domain ──► Research.SharedKernel                                                (zero NuGet packages)
-Providers.* ──► Research.Shared.Ports / Research.Shared.Core / Research.Shared.Messaging / Research.Shared.Adapters / Research.Contracts
-Research.Shared.Web ──► Research.SharedKernel, Research.Shared.Core               (HTTP hosts and *.Api only)
+*.Infrastructure ──► own *.Application, Research.Shared.Core, Research.Shared.Bus, Providers.*
+*.Application ──► own *.Domain, Research.Shared.Core, Research.Shared.Bus,
+                  Research.Shared.Contracts                                       (never ASP.NET Core, Aspire, or providers)
+*.Domain ──► Research.Shared.Kernel                                               (zero NuGet packages)
+Providers.* ──► Research.Shared.Core / Research.Shared.Bus / Research.Shared.Contracts
+Research.Shared.Web ──► Research.Shared.Kernel, Research.Shared.Core              (HTTP hosts and *.Api only)
 Research.ServiceDefaults ──► (zero project references)                            (entry points only)
-Research.Shared.Messaging ──► Research.SharedKernel, Research.Shared.Core, Research.Contracts (zero NuGet packages)
-Research.Shared.Core / Research.Shared.Ports ──► Research.SharedKernel            (zero NuGet packages)
-Research.SharedKernel / Research.Contracts ──► (no references at all)
+Research.Shared.Bus ──► Research.Shared.Kernel, Research.Shared.Core, Research.Shared.Contracts
+Research.Shared.Core ──► Research.Shared.Kernel
+Research.Shared.Kernel / Research.Shared.Contracts ──► (no references at all)
 ```
 
-Services never reference each other. Shared abstractions are split by capability:
-* `Research.SharedKernel`: DDD base types (`Entity`, `AggregateRoot`, `IDomainEvent`), `Result`/`Error`/`Unit`, and pure text-safety primitives (`UntrustedText`, `PromptFence`, `PromptInjectionSignals`).
-* `Research.Shared.Core`: execution primitives (`IMediator`, `ISender`, `IPublisher`, `IDomainEventHandler`, `IUnitOfWork`, `ICurrentActor`, `ErrorCatalog`, content logging).
-* `Research.Shared.Messaging`: integration messaging ports (`IMessageHandler`, `IncomingMessageEnvelope<T>`, `IMessagePublisher`, `IMessageSender`, `IOutbox`, `IInbox`, envelopes, headers, retry policy).
-* `Research.Shared.Ports`: external provider ports (`ILlmClient`, `ISearchProvider`, `IEmbeddingGenerator`, `IDocumentStore`, `ICacheStore`).
+Services never reference each other. Shared libraries are split by capability:
+* `Research.Shared.Kernel`: pure DDD base types (`Entity`, `AggregateRoot`, `IDomainEvent`, `IHasDomainEvents`) and `Result`/`Error`/`Unit` primitives. Zero packages.
+* `Research.Shared.Contracts`: additive-only integration message records (`IIntegrationMessage`, `MessageKind`, `MessageCatalog`). Zero packages.
+* `Research.Shared.Core`: shared platform plumbing (`Hosting`, `Actors`, `Correlation`, `Errors`, `Logging`, `Security`, `Concurrency`, `Http`) and external capability ports (`Llm`, `Search`, `Documents`, `Embeddings`, `Caching`).
+* `Research.Shared.Bus`: unified in-process and out-of-process bus (`Mediation`, `Transactions`, `Events`, `Messaging`), exposing public abstractions and DI registration (`BusServiceCollectionExtensions`, `BusFeature`) while keeping runtime implementations (`Mediator`, pipeline behaviors, `EnvelopeFactory`, `MessageDispatcher`, `OutboxPublisherWorker`, `DirectMessageSender`) `internal`.
 
-Service-specific ports live in `Research.<Service>.Application/Common/Interfaces/`. Pure domain rules live in `Research.<Service>.Domain/Policies/` (`JobStateMachine`, `JobOutcomePolicy`, `TextChunker`, `UrlCanonicalizer`, `CitationBuilder`, `ReportSanitizer`). `Research.Providers.*` and `Research.<Service>.Infrastructure` implement the ports. Only entry points (`*.Bootstrap`, `*.Worker`) wire concrete implementations; where a port has multiple providers (`Llm:Provider`), the host picks one from startup settings.
+Service-specific ports live in `Research.<Service>.Application/Common/Interfaces/`. Pure domain rules live in `Research.<Service>.Domain/Policies/` (`JobStateMachine`, `JobOutcomePolicy`, `TextChunker`, `UrlCanonicalizer`), while stateless LLM services (`Planning`, `Synthesis`) keep their prompt/citation policies in `*.Application`. `Research.Providers.*` and `Research.<Service>.Infrastructure` implement the ports. Only entry points (`*.Bootstrap`, `*.Worker`) wire concrete implementations; where a port has multiple providers (`Llm:Provider`), the host picks one from startup settings.
 
 ## Service defaults and shared web
 
 * **`Research.ServiceDefaults`** is a standard zero-project-reference .NET Aspire shared project (`AddServiceDefaults` / `MapDefaultEndpoints`) covering structured logging (Serilog + OpenTelemetry + optional Elasticsearch), OpenTelemetry tracing and metrics over OTLP, health checks (`/health/live`, `/health/ready`), service discovery, and default HTTP client resilience.
-* **`Research.Shared.Web`** holds HTTP-only presentation primitives (`IEndpointGroup`, `IEndpoint`, `EndpointGroupExtensions`, `IEndpointValidator<T>`, `EndpointValidationFilter<T>`, `ResultHttpExtensions`, `ProblemResults`, `ProblemErrors`, `ErrorStatus`, `CustomExceptionHandler`, `CorrelationMiddleware`, `HttpContentLoggingMiddleware`, `AddResearchProblemDetails`) and is referenced only by HTTP APIs (`Research.Jobs.Api`, `Research.Knowledge.Api`) and HTTP hosts (`Research.Jobs.Bootstrap`, `Research.Knowledge.Bootstrap`).
+* **`Research.Shared.Web`** holds HTTP-only presentation primitives (`IEndpointGroup`, `IEndpoint`, `EndpointGroupExtensions`, `IEndpointValidator<T>`, `EndpointValidationFilter<T>`, `ResultHttpExtensions`, `ProblemResults`, `ApiErrors`, `ErrorStatusCodeMapper`, `GlobalExceptionHandler`, `CorrelationIdMiddleware`, `HttpContentLoggingMiddleware`, `AddResearchProblemDetails`) and is referenced only by HTTP APIs (`Research.Jobs.Api`, `Research.Knowledge.Api`) and HTTP hosts (`Research.Jobs.Bootstrap`, `Research.Knowledge.Bootstrap`).
 
 ## Endpoints and two-stage validation
 
@@ -62,7 +62,7 @@ Research.<Service>.Bootstrap/ (or Research.Jobs.Worker/)
 
 Each service's `Research.<Service>.Application` and `Research.<Service>.Api` projects organize use cases, domain event handlers, and HTTP endpoints under `FeatureSlices/<SliceName>/` (omitted from namespaces, one top-level type per file), with each API's root `<Service>Endpoints` (`IEndpointGroup`) at the project root.
 
-Commands (`ICommand<TResponse>` / `ICommand`), queries (`IQuery<TResponse>`), integration messages (`IncomingMessageEnvelope<TMessage>` via `IMessageHandler<TMessage>`), and domain events (`IDomainEvent` via `IDomainEventHandler<TEvent>`) all flow through a custom, zero-third-party-package mediator (`Research.Shared.Adapters.Mediation.Mediator`) implementing `IMediator` (`ISender` + `IPublisher`) and `IDomainEventDispatcher`:
+Commands (`ICommand<TResponse>` / `ICommand`), queries (`IQuery<TResponse>`), integration messages (`IncomingMessageEnvelope<TMessage>` via `IMessageHandler<TMessage>`), and domain events (`IDomainEvent` via `IDomainEventHandler<TEvent>`) all flow through a custom, zero-third-party-package mediator (`Research.Shared.Bus.Mediation.Mediator`) implementing `IMediator` (`ISender` + `IPublisher`) and `IDomainEventDispatcher`:
 
 ```text
 HTTP Endpoint / Worker Timer / RabbitMQ MessageDispatcher

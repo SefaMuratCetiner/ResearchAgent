@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Shared in-process and out-of-process bus: mediation (commands, queries, pipeline behaviors),
+    domain event dispatch, transaction boundaries, and integration messaging (envelopes, inbox,
+    outbox, consumer dispatch).
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Shared.Bus</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.Shared.Kernel\Research.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\Research.Shared.Core\Research.Shared.Core.csproj" />
+    <ProjectReference Include="..\Research.Shared.Contracts\Research.Shared.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+</Project>

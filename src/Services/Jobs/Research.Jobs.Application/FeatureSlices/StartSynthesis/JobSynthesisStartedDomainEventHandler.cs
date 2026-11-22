@@ -3,7 +3,7 @@ using Research.Shared.Contracts.Synthesis;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
 using Research.Jobs.Domain.Events;
-using Research.Shared.Core.Events;
+using Research.Shared.Bus.Events;
 
 namespace Research.Jobs.Application.StartSynthesis;
 

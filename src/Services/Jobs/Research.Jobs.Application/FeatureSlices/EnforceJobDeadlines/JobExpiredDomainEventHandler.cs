@@ -3,8 +3,8 @@ using Research.Shared.Contracts.Jobs;
 using Research.Jobs.Application.Observability;
 using Research.Jobs.Domain;
 using Research.Jobs.Domain.Events;
-using Research.Shared.Core.Events;
-using Research.Shared.Messaging;
+using Research.Shared.Bus.Events;
+using Research.Shared.Bus.Messaging;
 
 namespace Research.Jobs.Application.EnforceJobDeadlines;
 

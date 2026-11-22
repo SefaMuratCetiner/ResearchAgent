@@ -5,15 +5,14 @@ using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Research.Shared.Contracts;
-using Research.Shared.Adapters.Messaging;
-using Research.Shared.Adapters.Messaging.Consuming;
-using Research.Shared.Messaging;
+using Research.Shared.Bus.Messaging;
+using Research.Shared.Bus.Messaging.Consuming;
 
 namespace Research.Providers.RabbitMq;
 
 /// <summary>
 /// Consumes one contract's queue on every replica (competing consumers) with manual acknowledgement. Each delivery
-/// goes to <see cref="MessageDispatcher{TMessage}"/>; the verdict decides ack, retry through a delay queue, dead-letter
+/// goes to <see cref="IMessageDispatcher{TMessage}"/>; the verdict decides ack, retry through a delay queue, dead-letter
 /// or requeue. The acknowledgement always comes after the handler's commit. On shutdown the worker stops
 /// consuming, lets in-flight deliveries finish within <see cref="RabbitMqOptions.ShutdownDrainSeconds"/>, and
 /// requeues the rest.
@@ -29,7 +28,7 @@ public sealed partial class RabbitMqConsumerWorker<TMessage> : BackgroundService
     where TMessage : class, IIntegrationMessage
 {
     private readonly IConnection _connection;
-    private readonly MessageDispatcher<TMessage> _dispatcher;
+    private readonly IMessageDispatcher<TMessage> _dispatcher;
     private readonly RabbitMqMessagePublisher _publisher;
     private readonly IOptionsMonitor<MessagingOptions> _messagingOptions;
     private readonly IOptionsMonitor<RabbitMqOptions> _rabbitOptions;
@@ -42,7 +41,7 @@ public sealed partial class RabbitMqConsumerWorker<TMessage> : BackgroundService
 
     public RabbitMqConsumerWorker(
         IConnection connection,
-        MessageDispatcher<TMessage> dispatcher,
+        IMessageDispatcher<TMessage> dispatcher,
         RabbitMqMessagePublisher publisher,
         IOptionsMonitor<MessagingOptions> messagingOptions,
         IOptionsMonitor<RabbitMqOptions> rabbitOptions,

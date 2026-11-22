@@ -19,7 +19,7 @@ using Research.Jobs.Application.Observability;
 using Research.Jobs.Application.StartSynthesis;
 using Research.Jobs.Domain;
 using Research.Jobs.Domain.Events;
-using Research.Shared.Messaging;
+using Research.Shared.Bus.Messaging;
 
 namespace Research.Application.UnitTests.Jobs;
 

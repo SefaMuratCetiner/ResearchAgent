@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Research.Shared.Ports.Search;
+using Research.Shared.Core.Search;
 
 namespace Research.Providers.AnthropicWebSearch;
 

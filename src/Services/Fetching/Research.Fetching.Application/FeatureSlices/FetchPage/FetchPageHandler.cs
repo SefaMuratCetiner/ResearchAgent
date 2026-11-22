@@ -5,10 +5,10 @@ using Microsoft.Extensions.Options;
 using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Application.Observability;
 using Research.Fetching.Domain;
-using Research.Shared.Ports.Documents;
+using Research.Shared.Core.Documents;
 using Research.Shared.Core.Logging;
-using Research.Shared.Core.Mediation;
-using Research.Shared.Kernel.Security;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Core.Security;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Fetching.Application.FetchPage;

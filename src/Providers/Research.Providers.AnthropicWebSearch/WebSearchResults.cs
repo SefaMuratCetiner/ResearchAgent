@@ -1,4 +1,4 @@
-using Research.Shared.Ports.Search;
+using Research.Shared.Core.Search;
 
 namespace Research.Providers.AnthropicWebSearch;
 

@@ -1,6 +1,6 @@
 using Research.Shared.Contracts.Synthesis;
 using Research.Providers.RabbitMq;
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 using Research.Synthesis.Application.WriteReport;
 
 namespace Research.Synthesis.Bootstrap.Features;

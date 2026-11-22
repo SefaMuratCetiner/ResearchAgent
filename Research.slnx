@@ -28,10 +28,8 @@
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/Research.Shared.Kernel/Research.Shared.Kernel.csproj" />
     <Project Path="src/Shared/Research.Shared.Core/Research.Shared.Core.csproj" />
-    <Project Path="src/Shared/Research.Shared.Messaging/Research.Shared.Messaging.csproj" />
-    <Project Path="src/Shared/Research.Shared.Ports/Research.Shared.Ports.csproj" />
     <Project Path="src/Shared/Research.Shared.Contracts/Research.Shared.Contracts.csproj" />
-    <Project Path="src/Shared/Research.Shared.Adapters/Research.Shared.Adapters.csproj" />
+    <Project Path="src/Shared/Research.Shared.Bus/Research.Shared.Bus.csproj" />
     <Project Path="src/Shared/Research.Shared.Web/Research.Shared.Web.csproj" />
   </Folder>
   <Folder Name="/src/Providers/">
@@ -76,7 +74,6 @@
     <Project Path="src/Services/Knowledge/Research.Knowledge.Bootstrap/Research.Knowledge.Bootstrap.csproj" />
   </Folder>
   <Folder Name="/src/Services/Synthesis/">
-    <Project Path="src/Services/Synthesis/Research.Synthesis.Domain/Research.Synthesis.Domain.csproj" />
     <Project Path="src/Services/Synthesis/Research.Synthesis.Application/Research.Synthesis.Application.csproj" />
     <Project Path="src/Services/Synthesis/Research.Synthesis.Infrastructure/Research.Synthesis.Infrastructure.csproj" />
     <Project Path="src/Services/Synthesis/Research.Synthesis.Bootstrap/Research.Synthesis.Bootstrap.csproj" />

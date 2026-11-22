@@ -1,15 +1,14 @@
 using Research.ServiceDefaults;
-using Research.Shared.Adapters.Composition;
-using Research.Shared.Adapters.Llm;
-using Research.Shared.Adapters.Mediation;
-using Research.Shared.Adapters.Messaging;
-using Research.Shared.Adapters.Messaging.Observability;
-using Research.Shared.Ports.Llm;
-using Research.Shared.Messaging;
+using Research.Shared.Core.Hosting;
+using Research.Shared.Core.Llm;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Bus.Messaging;
+using Research.Shared.Bus.Messaging.Observability;
 using Research.Synthesis.Application;
 using Research.Synthesis.Bootstrap.Features;
-using Research.Shared.Adapters.Llm.Observability;
-using Research.Shared.Adapters.Mediation.Observability;
+using Research.Shared.Core.Llm.Observability;
+using Research.Shared.Bus.Mediation.Observability;
+using Research.Shared.Bus;
 
 namespace Research.Synthesis.Bootstrap.CompositionRoot;
 
@@ -27,7 +26,7 @@ public sealed class SynthesisCompositionRoot
         [
             // Platform
             new ActorsFeature(),
-            new MediationFeature(),
+            new BusFeature(),
             new ErrorsFeature(MessagingErrors.All, SynthesisErrors.All),
 
             // Infrastructure

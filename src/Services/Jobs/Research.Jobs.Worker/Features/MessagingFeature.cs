@@ -9,7 +9,7 @@ using Research.Jobs.Application.AdvanceOnResultsFound;
 using Research.Jobs.Application.CompleteOnReportReady;
 using Research.Jobs.Application.HandleStepFailure;
 using Research.Providers.RabbitMq;
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 
 namespace Research.Jobs.Worker.Features;
 

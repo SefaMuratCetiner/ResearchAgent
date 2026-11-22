@@ -2,9 +2,9 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Research.Shared.Ports.Caching;
+using Research.Shared.Core.Caching;
 
-using Research.Shared.Ports.Search;
+using Research.Shared.Core.Search;
 
 namespace Research.Search.Infrastructure.Decorators;
 

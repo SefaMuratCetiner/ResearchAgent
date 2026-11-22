@@ -1,12 +1,12 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Research.Shared.Ports.Llm;
+using Research.Shared.Core.Llm;
 using Research.Shared.Core.Logging;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Kernel.Results;
-using Research.Shared.Kernel.Security;
+using Research.Shared.Core.Security;
 using Research.Synthesis.Application.Common.Interfaces;
-using Research.Synthesis.Domain.Policies;
+using Research.Synthesis.Application.Policies;
 
 namespace Research.Synthesis.Application.WriteReport;
 

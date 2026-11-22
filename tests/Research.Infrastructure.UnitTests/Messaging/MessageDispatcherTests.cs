@@ -7,17 +7,16 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Research.Shared.Contracts.Search;
 using Research.Shared.Contracts.Steps;
-using Research.Shared.Adapters.Mediation;
-using Research.Shared.Adapters.Messaging;
-using Research.Shared.Adapters.Messaging.Consuming;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Bus.Messaging;
+using Research.Shared.Bus.Messaging.Consuming;
 using Research.Shared.Core.Actors;
 using Research.Shared.Core.Logging;
-using Research.Shared.Core.Mediation;
-using Research.Shared.Messaging;
 using Research.Shared.Kernel.Results;
 using Research.Infrastructure.UnitTests.TestSupport;
 using Research.Shared.Core.Correlation;
-using Research.Shared.Adapters.Messaging.Observability;
+using Research.Shared.Bus.Messaging.Observability;
+using Research.Shared.Bus;
 
 namespace Research.Infrastructure.UnitTests.Messaging;
 

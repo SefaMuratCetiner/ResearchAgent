@@ -229,28 +229,23 @@
         "type": "Project",
         "dependencies": {
           "Anthropic": "[13.10.0, )",
-          "Research.Shared.Adapters": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.providers.openai": {
         "type": "Project",
         "dependencies": {
           "OpenAI": "[2.15.0, )",
-          "Research.Shared.Adapters": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.providers.rabbitmq": {
         "type": "Project",
         "dependencies": {
           "RabbitMQ.Client": "[7.2.2, )",
-          "Research.Shared.Adapters": "[1.0.0, )",
+          "Research.Shared.Bus": "[1.0.0, )",
           "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.servicedefaults": {
@@ -269,14 +264,12 @@
           "Serilog.Sinks.Console": "[6.1.1, )"
         }
       },
-      "research.shared.adapters": {
+      "research.shared.bus": {
         "type": "Project",
         "dependencies": {
           "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Kernel": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.shared.contracts": {
@@ -291,40 +284,19 @@
       "research.shared.kernel": {
         "type": "Project"
       },
-      "research.shared.messaging": {
-        "type": "Project",
-        "dependencies": {
-          "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Kernel": "[1.0.0, )"
-        }
-      },
-      "research.shared.ports": {
-        "type": "Project",
-        "dependencies": {
-          "Research.Shared.Kernel": "[1.0.0, )"
-        }
-      },
       "research.synthesis.application": {
         "type": "Project",
         "dependencies": {
+          "Research.Shared.Bus": "[1.0.0, )",
           "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )",
-          "Research.Synthesis.Domain": "[1.0.0, )"
-        }
-      },
-      "research.synthesis.domain": {
-        "type": "Project",
-        "dependencies": {
-          "Research.Shared.Kernel": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.synthesis.infrastructure": {
         "type": "Project",
         "dependencies": {
-          "Research.Shared.Adapters": "[1.0.0, )",
+          "Research.Shared.Bus": "[1.0.0, )",
+          "Research.Shared.Core": "[1.0.0, )",
           "Research.Synthesis.Application": "[1.0.0, )"
         }
       },

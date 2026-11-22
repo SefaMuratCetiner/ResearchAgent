@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application;
 using Research.Jobs.Application.EnforceJobDeadlines;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 
 namespace Research.Jobs.Worker.Workers;
 

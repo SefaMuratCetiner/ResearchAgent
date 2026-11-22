@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Logging.Debug;
 using OpenTelemetry.Logs;
 using Research.ServiceDefaults;
-using Research.Shared.Adapters.Http;
+using Research.Shared.Core.Http;
 using Research.Shared.Core.Logging;
 using Research.Shared.Web.Middleware;
 using Research.Shared.Core.Correlation;

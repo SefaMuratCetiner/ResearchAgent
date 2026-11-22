@@ -1,7 +1,7 @@
 using Research.Shared.Contracts.Fetching;
 using Research.Fetching.Application.FetchPage;
 using Research.Providers.RabbitMq;
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 
 namespace Research.Fetching.Bootstrap.Features;
 

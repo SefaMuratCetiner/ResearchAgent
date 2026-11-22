@@ -1,6 +1,6 @@
 using Research.Knowledge.Application;
 using Research.Knowledge.Infrastructure;
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 
 namespace Research.Knowledge.Bootstrap.Features;
 

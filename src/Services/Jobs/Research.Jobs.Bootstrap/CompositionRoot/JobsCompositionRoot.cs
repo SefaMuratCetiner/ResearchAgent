@@ -3,12 +3,13 @@ using Research.Jobs.Application.Observability;
 using Research.Jobs.Bootstrap.Features;
 using Research.Jobs.Domain;
 using Research.ServiceDefaults;
-using Research.Shared.Adapters.Composition;
-using Research.Shared.Adapters.Mediation;
-using Research.Shared.Messaging;
+using Research.Shared.Core.Hosting;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Bus.Messaging;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
-using Research.Shared.Adapters.Mediation.Observability;
+using Research.Shared.Bus.Mediation.Observability;
+using Research.Shared.Bus;
 
 namespace Research.Jobs.Bootstrap.CompositionRoot;
 
@@ -35,7 +36,7 @@ public sealed partial class JobsCompositionRoot
     [
         // Platform
         new ActorsFeature(),
-        new MediationFeature(),
+        new BusFeature(),
         new ErrorsFeature(ApiErrors.All, MessagingErrors.All, JobsErrors.All),
 
         // Infrastructure

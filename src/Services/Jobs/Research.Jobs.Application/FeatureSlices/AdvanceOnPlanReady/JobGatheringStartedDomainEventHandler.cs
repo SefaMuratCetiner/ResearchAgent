@@ -3,7 +3,7 @@ using Research.Shared.Contracts.Search;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
 using Research.Jobs.Domain.Events;
-using Research.Shared.Core.Events;
+using Research.Shared.Bus.Events;
 
 namespace Research.Jobs.Application.AdvanceOnPlanReady;
 

@@ -2,8 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Infrastructure.Persistence;
-using Research.Shared.Adapters.Messaging;
-using Research.Shared.Messaging;
+using Research.Shared.Bus;
 
 namespace Research.Jobs.Infrastructure;
 
@@ -15,8 +14,7 @@ public static class JobsInfrastructureServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.TryAddSingleton<EnvelopeFactory>();
-        services.TryAddSingleton<IEnvelopeFactory>(static provider => provider.GetRequiredService<EnvelopeFactory>());
+        services.AddMessagingCore();
         services.TryAddScoped<IResearchJobRepository, ResearchJobRepository>();
         services.TryAddScoped<IJobStepRepository, JobStepRepository>();
         services.TryAddScoped<IResearchReportRepository, ResearchReportRepository>();

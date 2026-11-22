@@ -11,7 +11,8 @@
     <ProjectReference Include="..\Research.Search.Application\Research.Search.Application.csproj" />
     <ProjectReference Include="..\Research.Search.Infrastructure\Research.Search.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\Research.ServiceDefaults\Research.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\..\..\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Bus\Research.Shared.Bus.csproj" />
     <ProjectReference Include="..\..\..\Providers\Research.Providers.AnthropicWebSearch\Research.Providers.AnthropicWebSearch.csproj" />
     <ProjectReference Include="..\..\..\Providers\Research.Providers.RabbitMq\Research.Providers.RabbitMq.csproj" />
     <ProjectReference Include="..\..\..\Providers\Research.Providers.Valkey\Research.Providers.Valkey.csproj" />

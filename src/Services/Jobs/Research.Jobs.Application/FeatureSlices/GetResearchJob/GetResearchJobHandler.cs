@@ -1,7 +1,7 @@
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Domain;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Jobs.Application.GetResearchJob;

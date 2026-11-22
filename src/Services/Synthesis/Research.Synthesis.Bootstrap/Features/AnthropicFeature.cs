@@ -1,5 +1,5 @@
 using Research.Providers.Anthropic;
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 
 namespace Research.Synthesis.Bootstrap.Features;
 

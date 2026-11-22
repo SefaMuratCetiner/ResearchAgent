@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Research.Jobs.Api.Common.Models;
 using Research.Jobs.Application.GetResearchJob;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
 

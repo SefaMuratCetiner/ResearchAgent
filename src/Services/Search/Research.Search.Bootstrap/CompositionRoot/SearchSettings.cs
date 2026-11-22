@@ -1,8 +1,8 @@
 using Research.Providers.AnthropicWebSearch;
 using Research.Providers.RabbitMq;
 using Research.Search.Application;
-using Research.Shared.Adapters.Composition;
-using Research.Shared.Adapters.Messaging;
+using Research.Shared.Core.Hosting;
+using Research.Shared.Bus.Messaging;
 using Research.Shared.Core.Logging;
 
 namespace Research.Search.Bootstrap.CompositionRoot;

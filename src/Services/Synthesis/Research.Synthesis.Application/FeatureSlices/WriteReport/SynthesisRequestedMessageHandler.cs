@@ -1,7 +1,7 @@
 using Research.Shared.Contracts.Steps;
 using Research.Shared.Contracts.Synthesis;
-using Research.Shared.Core.Mediation;
-using Research.Shared.Messaging;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Bus.Messaging;
 
 namespace Research.Synthesis.Application.WriteReport;
 

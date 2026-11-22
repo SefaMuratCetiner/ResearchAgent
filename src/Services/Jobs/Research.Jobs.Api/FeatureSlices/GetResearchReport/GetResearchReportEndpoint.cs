@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Research.Jobs.Application.GetResearchReport;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
 

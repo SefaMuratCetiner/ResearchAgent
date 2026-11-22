@@ -3,14 +3,14 @@ using Research.Knowledge.Application;
 using Research.Knowledge.Application.Observability;
 using Research.Knowledge.Bootstrap.Features;
 using Research.ServiceDefaults;
-using Research.Shared.Adapters.Composition;
-using Research.Shared.Adapters.Mediation;
-using Research.Shared.Adapters.Messaging;
-using Research.Shared.Adapters.Messaging.Observability;
-using Research.Shared.Messaging;
+using Research.Shared.Core.Hosting;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Bus.Messaging;
+using Research.Shared.Bus.Messaging.Observability;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
-using Research.Shared.Adapters.Mediation.Observability;
+using Research.Shared.Bus.Mediation.Observability;
+using Research.Shared.Bus;
 
 namespace Research.Knowledge.Bootstrap.CompositionRoot;
 
@@ -36,7 +36,7 @@ public sealed partial class KnowledgeCompositionRoot
     [
         // Platform
         new ActorsFeature(),
-        new MediationFeature(),
+        new BusFeature(),
         new ErrorsFeature(ApiErrors.All, MessagingErrors.All, KnowledgeErrors.All),
 
         // Infrastructure

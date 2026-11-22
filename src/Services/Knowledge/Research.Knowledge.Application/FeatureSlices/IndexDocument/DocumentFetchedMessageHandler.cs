@@ -5,9 +5,9 @@ using Research.Shared.Contracts.Steps;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Application.Observability;
 using Research.Knowledge.Domain;
-using Research.Shared.Core.Mediation;
-using Research.Shared.Messaging;
-using Research.Shared.Core.Transactions;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Bus.Messaging;
+using Research.Shared.Bus.Transactions;
 
 namespace Research.Knowledge.Application.IndexDocument;
 

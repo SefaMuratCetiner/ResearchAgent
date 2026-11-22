@@ -3,9 +3,9 @@ using Microsoft.Extensions.Options;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Domain;
 using Research.Knowledge.Domain.Policies;
-using Research.Shared.Ports.Documents;
-using Research.Shared.Ports.Embeddings;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Core.Documents;
+using Research.Shared.Core.Embeddings;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Knowledge.Application.IndexDocument;

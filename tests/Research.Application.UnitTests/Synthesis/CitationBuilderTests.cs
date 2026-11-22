@@ -1,6 +1,6 @@
-using Research.Shared.Kernel.Security;
-using Research.Synthesis.Domain;
-using Research.Synthesis.Domain.Policies;
+using Research.Shared.Core.Security;
+using Research.Synthesis.Application;
+using Research.Synthesis.Application.Policies;
 
 namespace Research.Application.UnitTests.Synthesis;
 

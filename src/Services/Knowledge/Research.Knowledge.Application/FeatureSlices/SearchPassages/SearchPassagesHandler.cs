@@ -2,8 +2,8 @@ using Microsoft.Extensions.Logging;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Application.Observability;
 using Research.Knowledge.Domain;
-using Research.Shared.Core.Mediation;
-using Research.Shared.Ports.Embeddings;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Core.Embeddings;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Knowledge.Application.SearchPassages;

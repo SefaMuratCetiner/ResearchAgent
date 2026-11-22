@@ -1,5 +1,5 @@
 using Research.Jobs.Application.Common.Models;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Jobs.Application.GetResearchReport;

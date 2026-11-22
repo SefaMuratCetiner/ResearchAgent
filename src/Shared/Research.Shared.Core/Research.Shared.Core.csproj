@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
-    Shared Application-layer execution abstractions: mediation, domain events, transactions, actors,
-    error catalog, and content logging. Depends only on SharedKernel with zero NuGet packages.
+    Shared platform plumbing and external capability ports: hosting features, actors, correlation,
+    error catalog, content logging, prompt security, concurrency, and provider ports (LLM, search,
+    documents, embeddings, caching).
   -->
   <PropertyGroup>
     <RootNamespace>Research.Shared.Core</RootNamespace>
@@ -9,5 +10,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Research.Shared.Kernel\Research.Shared.Kernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
   </ItemGroup>
 </Project>

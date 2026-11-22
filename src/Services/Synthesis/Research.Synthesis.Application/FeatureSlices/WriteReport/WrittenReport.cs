@@ -1,4 +1,4 @@
-using Research.Synthesis.Domain.Policies;
+using Research.Synthesis.Application.Policies;
 
 namespace Research.Synthesis.Application.WriteReport;
 

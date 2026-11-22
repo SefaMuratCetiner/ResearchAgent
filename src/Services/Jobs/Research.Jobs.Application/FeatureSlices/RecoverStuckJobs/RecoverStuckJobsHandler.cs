@@ -4,9 +4,9 @@ using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Application.Observability;
 using Research.Jobs.Domain;
-using Research.Shared.Core.Mediation;
-using Research.Shared.Core.Transactions;
-using Research.Shared.Messaging;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Bus.Transactions;
+using Research.Shared.Bus.Messaging;
 
 namespace Research.Jobs.Application.RecoverStuckJobs;
 

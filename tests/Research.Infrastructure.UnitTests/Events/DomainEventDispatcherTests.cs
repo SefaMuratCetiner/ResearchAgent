@@ -1,7 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
-using Research.Shared.Adapters.Mediation;
-using Research.Shared.Core.Events;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Bus.Events;
 using Research.Shared.Kernel.Events;
+using Research.Shared.Bus;
 
 namespace Research.Infrastructure.UnitTests.Events;
 

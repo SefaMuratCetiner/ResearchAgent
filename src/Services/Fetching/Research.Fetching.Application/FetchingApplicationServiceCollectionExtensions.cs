@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Research.Fetching.Application.FetchPage;
 using Research.Fetching.Application.Observability;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Fetching.Application;

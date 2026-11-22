@@ -372,10 +372,9 @@
         "type": "Project",
         "dependencies": {
           "Research.Fetching.Domain": "[1.0.0, )",
+          "Research.Shared.Bus": "[1.0.0, )",
           "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.fetching.domain": {
@@ -392,16 +391,17 @@
           "Npgsql": "[10.0.3, )",
           "Research.Fetching.Application": "[1.0.0, )",
           "Research.Providers.Postgres": "[1.0.0, )",
-          "Research.Shared.Adapters": "[1.0.0, )"
+          "Research.Shared.Bus": "[1.0.0, )",
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.jobs.application": {
         "type": "Project",
         "dependencies": {
           "Research.Jobs.Domain": "[1.0.0, )",
+          "Research.Shared.Bus": "[1.0.0, )",
           "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.jobs.domain": {
@@ -414,10 +414,9 @@
         "type": "Project",
         "dependencies": {
           "Research.Knowledge.Domain": "[1.0.0, )",
+          "Research.Shared.Bus": "[1.0.0, )",
           "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.knowledge.domain": {
@@ -433,39 +432,36 @@
           "Npgsql": "[10.0.3, )",
           "Research.Knowledge.Application": "[1.0.0, )",
           "Research.Providers.Postgres": "[1.0.0, )",
-          "Research.Shared.Adapters": "[1.0.0, )"
+          "Research.Shared.Bus": "[1.0.0, )",
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.planning.application": {
         "type": "Project",
         "dependencies": {
+          "Research.Shared.Bus": "[1.0.0, )",
           "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.providers.anthropicwebsearch": {
         "type": "Project",
         "dependencies": {
           "Anthropic": "[13.10.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.providers.mockembeddings": {
         "type": "Project",
         "dependencies": {
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.providers.openai": {
         "type": "Project",
         "dependencies": {
           "OpenAI": "[2.15.0, )",
-          "Research.Shared.Adapters": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.providers.postgres": {
@@ -473,18 +469,17 @@
         "dependencies": {
           "Dapper": "[2.1.89, )",
           "Npgsql": "[10.0.3, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )"
+          "Research.Shared.Bus": "[1.0.0, )",
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.search.application": {
         "type": "Project",
         "dependencies": {
           "Research.Search.Domain": "[1.0.0, )",
+          "Research.Shared.Bus": "[1.0.0, )",
           "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.search.domain": {
@@ -497,7 +492,8 @@
         "type": "Project",
         "dependencies": {
           "Research.Search.Application": "[1.0.0, )",
-          "Research.Shared.Adapters": "[1.0.0, )"
+          "Research.Shared.Bus": "[1.0.0, )",
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "research.servicedefaults": {
@@ -516,14 +512,12 @@
           "Serilog.Sinks.Console": "[6.1.1, )"
         }
       },
-      "research.shared.adapters": {
+      "research.shared.bus": {
         "type": "Project",
         "dependencies": {
           "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Kernel": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.shared.contracts": {
@@ -538,20 +532,6 @@
       "research.shared.kernel": {
         "type": "Project"
       },
-      "research.shared.messaging": {
-        "type": "Project",
-        "dependencies": {
-          "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Kernel": "[1.0.0, )"
-        }
-      },
-      "research.shared.ports": {
-        "type": "Project",
-        "dependencies": {
-          "Research.Shared.Kernel": "[1.0.0, )"
-        }
-      },
       "research.shared.web": {
         "type": "Project",
         "dependencies": {
@@ -562,17 +542,9 @@
       "research.synthesis.application": {
         "type": "Project",
         "dependencies": {
+          "Research.Shared.Bus": "[1.0.0, )",
           "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )",
-          "Research.Synthesis.Domain": "[1.0.0, )"
-        }
-      },
-      "research.synthesis.domain": {
-        "type": "Project",
-        "dependencies": {
-          "Research.Shared.Kernel": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "AngleSharp": {

@@ -3,8 +3,8 @@ using Research.Shared.Contracts.Planning;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
-using Research.Shared.Messaging;
-using Research.Shared.Kernel.Security;
+using Research.Shared.Bus.Messaging;
+using Research.Shared.Core.Security;
 
 namespace Research.Jobs.Application.AdvanceOnPlanReady;
 

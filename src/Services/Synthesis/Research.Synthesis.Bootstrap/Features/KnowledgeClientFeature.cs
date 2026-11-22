@@ -1,4 +1,4 @@
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 using Research.Synthesis.Infrastructure;
 
 namespace Research.Synthesis.Bootstrap.Features;

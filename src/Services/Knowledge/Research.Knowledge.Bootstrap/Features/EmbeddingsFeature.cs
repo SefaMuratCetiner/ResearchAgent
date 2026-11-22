@@ -1,5 +1,5 @@
 using Research.Providers.MockEmbeddings;
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 
 namespace Research.Knowledge.Bootstrap.Features;
 

@@ -1,6 +1,6 @@
 using Dapper;
 using Research.Providers.Postgres.Transactions;
-using Research.Shared.Messaging;
+using Research.Shared.Bus.Messaging;
 
 namespace Research.Providers.Postgres.Messaging;
 

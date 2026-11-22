@@ -8,7 +8,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Research.Jobs.Application\Research.Jobs.Application.csproj" />
-    <ProjectReference Include="..\..\..\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Bus\Research.Shared.Bus.csproj" />
     <ProjectReference Include="..\..\..\Providers\Research.Providers.Postgres\Research.Providers.Postgres.csproj" />
   </ItemGroup>
 

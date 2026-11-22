@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Options;
-using Research.Shared.Ports.Llm;
+using Research.Shared.Core.Llm;
 
 namespace Research.Planning.Application;
 

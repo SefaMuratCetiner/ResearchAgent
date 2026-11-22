@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Research.Jobs.Api.Common.Models;
 using Research.Jobs.Application.CreateResearchJob;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
 

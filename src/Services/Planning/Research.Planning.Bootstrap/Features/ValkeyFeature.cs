@@ -1,5 +1,5 @@
 using Research.Providers.Valkey;
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 
 namespace Research.Planning.Bootstrap.Features;
 

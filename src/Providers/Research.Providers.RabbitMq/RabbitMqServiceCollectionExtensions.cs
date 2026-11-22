@@ -1,15 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Research.Shared.Bus;
+using Research.Shared.Bus.Messaging;
 using Research.Shared.Contracts;
-using Research.Shared.Adapters.Mediation;
-using Research.Shared.Adapters.Messaging;
-using Research.Shared.Adapters.Messaging.Consuming;
-using Research.Shared.Adapters.Messaging.Outbox;
-using Research.Shared.Adapters.Messaging.Sending;
-using Research.Shared.Core.Mediation;
-using Research.Shared.Messaging;
-using Research.Shared.Kernel.Results;
-using Research.Shared.Adapters.Messaging.Observability;
 
 namespace Research.Providers.RabbitMq;
 
@@ -19,13 +12,11 @@ namespace Research.Providers.RabbitMq;
 /// </summary>
 public static class RabbitMqServiceCollectionExtensions
 {
-    /// <summary>Envelopes, messaging metrics and the confirmed publisher.</summary>
+    /// <summary>Envelopes, messaging metrics and the confirmed RabbitMQ publisher.</summary>
     public static IServiceCollection AddPublisher(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        services.TryAddSingleton<EnvelopeFactory>();
-        services.TryAddSingleton<IEnvelopeFactory>(static provider => provider.GetRequiredService<EnvelopeFactory>());
-        services.TryAddSingleton<MessagingMetrics>();
+        services.AddMessagingCore();
         services.TryAddSingleton<RabbitMqMessagePublisher>();
         services.TryAddSingleton<IMessagePublisher>(static provider => provider.GetRequiredService<RabbitMqMessagePublisher>());
         return services;
@@ -36,7 +27,7 @@ public static class RabbitMqServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         services.AddPublisher();
-        services.AddHostedService<OutboxPublisherWorker>();
+        services.AddOutboxWorker();
         return services;
     }
 
@@ -45,7 +36,7 @@ public static class RabbitMqServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         services.AddPublisher();
-        services.TryAddSingleton<IMessageSender, DirectMessageSender>();
+        services.AddDirectMessageSender();
         return services;
     }
 
@@ -58,11 +49,7 @@ public static class RabbitMqServiceCollectionExtensions
         where THandler : class, IMessageHandler<TMessage>
     {
         ArgumentNullException.ThrowIfNull(services);
-        services.AddMediation();
-        services.AddScoped<THandler>();
-        services.AddScoped<IMessageHandler<TMessage>>(static provider => provider.GetRequiredService<THandler>());
-        services.AddScoped<IRequestHandler<IncomingMessageEnvelope<TMessage>, Unit>>(static provider => provider.GetRequiredService<THandler>());
-        services.AddSingleton<MessageDispatcher<TMessage>>();
+        services.AddMessageConsumer<TMessage, THandler>();
         services.AddHostedService<RabbitMqConsumerWorker<TMessage>>();
         return services;
     }

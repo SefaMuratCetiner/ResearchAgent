@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Options;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Knowledge.Application.SearchPassages;

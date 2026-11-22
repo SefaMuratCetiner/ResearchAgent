@@ -11,7 +11,8 @@
     <ProjectReference Include="..\Research.Synthesis.Application\Research.Synthesis.Application.csproj" />
     <ProjectReference Include="..\Research.Synthesis.Infrastructure\Research.Synthesis.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\Research.ServiceDefaults\Research.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\..\..\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Bus\Research.Shared.Bus.csproj" />
     <ProjectReference Include="..\..\..\Providers\Research.Providers.Anthropic\Research.Providers.Anthropic.csproj" />
     <ProjectReference Include="..\..\..\Providers\Research.Providers.OpenAI\Research.Providers.OpenAI.csproj" />
     <ProjectReference Include="..\..\..\Providers\Research.Providers.RabbitMq\Research.Providers.RabbitMq.csproj" />

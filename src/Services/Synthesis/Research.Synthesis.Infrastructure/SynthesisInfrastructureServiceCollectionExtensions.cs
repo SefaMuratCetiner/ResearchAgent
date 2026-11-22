@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using Research.Shared.Adapters.Http;
+using Research.Shared.Core.Http;
 using Research.Synthesis.Application;
 using Research.Synthesis.Application.Common.Interfaces;
 using Research.Synthesis.Infrastructure.Http;

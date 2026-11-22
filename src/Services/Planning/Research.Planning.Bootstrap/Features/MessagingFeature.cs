@@ -1,7 +1,7 @@
 using Research.Shared.Contracts.Planning;
 using Research.Planning.Application.CreatePlan;
 using Research.Providers.RabbitMq;
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 
 namespace Research.Planning.Bootstrap.Features;
 

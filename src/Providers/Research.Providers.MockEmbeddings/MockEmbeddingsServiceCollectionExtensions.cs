@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Research.Shared.Ports.Embeddings;
+using Research.Shared.Core.Embeddings;
 
 namespace Research.Providers.MockEmbeddings;
 

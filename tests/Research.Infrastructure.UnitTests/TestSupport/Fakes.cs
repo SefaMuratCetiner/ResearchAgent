@@ -2,8 +2,8 @@ using System.Diagnostics.Metrics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Research.Shared.Core.Actors;
-using Research.Shared.Ports.Documents;
-using Research.Shared.Messaging;
+using Research.Shared.Core.Documents;
+using Research.Shared.Bus.Messaging;
 
 namespace Research.Infrastructure.UnitTests.TestSupport;
 

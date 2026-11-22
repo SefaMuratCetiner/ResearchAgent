@@ -14,8 +14,8 @@ using Research.Jobs.Application.Observability;
 using Research.Jobs.Application.RecoverStuckJobs;
 using Research.Jobs.Application.StartSynthesis;
 using Research.Jobs.Domain.Events;
-using Research.Shared.Core.Events;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Events;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Jobs.Application;

@@ -2,9 +2,9 @@ using Research.Shared.Contracts.Fetching;
 using Research.Shared.Contracts.Steps;
 using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Domain;
-using Research.Shared.Core.Mediation;
-using Research.Shared.Messaging;
-using Research.Shared.Core.Transactions;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Bus.Messaging;
+using Research.Shared.Bus.Transactions;
 
 namespace Research.Fetching.Application.FetchPage;
 

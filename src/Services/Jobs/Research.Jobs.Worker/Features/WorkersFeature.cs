@@ -1,4 +1,4 @@
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 using Research.Jobs.Worker.Workers;
 
 namespace Research.Jobs.Worker.Features;

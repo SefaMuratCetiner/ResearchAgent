@@ -3,9 +3,9 @@ using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Domain;
-using Research.Shared.Core.Mediation;
-using Research.Shared.Kernel.Security;
-using Research.Shared.Core.Transactions;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Core.Security;
+using Research.Shared.Bus.Transactions;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Jobs.Application.CreateResearchJob;

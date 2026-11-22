@@ -5,10 +5,9 @@ using Research.Shared.Contracts.Jobs;
 using Research.Shared.Contracts.Planning;
 using Research.Shared.Contracts.Search;
 using Research.Shared.Contracts.Steps;
-using Research.Shared.Adapters.Messaging;
+using Research.Shared.Bus.Messaging;
 using Research.Providers.RabbitMq;
 using Research.Shared.Core.Actors;
-using Research.Shared.Messaging;
 using RabbitMQ.Client;
 using Testcontainers.RabbitMq;
 

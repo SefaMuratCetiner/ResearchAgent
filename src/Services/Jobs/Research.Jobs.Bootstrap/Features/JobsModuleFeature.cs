@@ -1,6 +1,6 @@
 using Research.Jobs.Application;
 using Research.Jobs.Infrastructure;
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 
 namespace Research.Jobs.Bootstrap.Features;
 

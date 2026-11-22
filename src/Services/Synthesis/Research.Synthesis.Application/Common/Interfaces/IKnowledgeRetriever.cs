@@ -1,4 +1,4 @@
-using Research.Synthesis.Domain;
+using Research.Synthesis.Application;
 
 namespace Research.Synthesis.Application.Common.Interfaces;
 

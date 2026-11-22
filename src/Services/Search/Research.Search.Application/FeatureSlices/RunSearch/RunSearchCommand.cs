@@ -1,5 +1,5 @@
-using Research.Shared.Core.Mediation;
-using Research.Shared.Ports.Search;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Core.Search;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Search.Application.RunSearch;

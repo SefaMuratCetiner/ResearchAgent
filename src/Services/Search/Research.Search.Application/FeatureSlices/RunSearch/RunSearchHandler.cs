@@ -3,9 +3,9 @@ using Microsoft.Extensions.Options;
 using Research.Search.Application.Observability;
 using Research.Search.Domain.Policies;
 using Research.Shared.Core.Logging;
-using Research.Shared.Core.Mediation;
-using Research.Shared.Ports.Search;
-using Research.Shared.Kernel.Security;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Core.Search;
+using Research.Shared.Core.Security;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Search.Application.RunSearch;

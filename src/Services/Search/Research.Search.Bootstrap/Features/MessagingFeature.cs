@@ -1,7 +1,7 @@
 using Research.Shared.Contracts.Search;
 using Research.Providers.RabbitMq;
 using Research.Search.Application.RunSearch;
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 
 namespace Research.Search.Bootstrap.Features;
 

@@ -2,14 +2,14 @@ using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Research.Shared.Contracts.Search;
-using Research.Shared.Adapters.Mediation;
-using Research.Shared.Core.Events;
-using Research.Shared.Core.Mediation;
-using Research.Shared.Messaging;
-using Research.Shared.Core.Transactions;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Bus.Events;
+using Research.Shared.Bus.Messaging;
+using Research.Shared.Bus.Transactions;
 using Research.Shared.Kernel.Events;
 using Research.Shared.Kernel.Results;
-using Research.Shared.Adapters.Mediation.Observability;
+using Research.Shared.Bus.Mediation.Observability;
+using Research.Shared.Bus;
 
 namespace Research.Infrastructure.UnitTests.Mediation;
 

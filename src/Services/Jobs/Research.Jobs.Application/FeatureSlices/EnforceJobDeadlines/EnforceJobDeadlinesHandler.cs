@@ -3,8 +3,8 @@ using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
-using Research.Shared.Core.Mediation;
-using Research.Shared.Core.Transactions;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Bus.Transactions;
 
 namespace Research.Jobs.Application.EnforceJobDeadlines;
 

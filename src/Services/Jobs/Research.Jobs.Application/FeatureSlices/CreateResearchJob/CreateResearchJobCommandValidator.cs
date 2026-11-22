@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Options;
 using Research.Jobs.Domain;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Kernel.Results;
-using Research.Shared.Kernel.Security;
+using Research.Shared.Core.Security;
 
 namespace Research.Jobs.Application.CreateResearchJob;
 

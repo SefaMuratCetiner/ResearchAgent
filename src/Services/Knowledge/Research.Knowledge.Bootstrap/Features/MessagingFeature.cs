@@ -1,7 +1,7 @@
 using Research.Shared.Contracts.Fetching;
 using Research.Knowledge.Application.IndexDocument;
 using Research.Providers.RabbitMq;
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 
 namespace Research.Knowledge.Bootstrap.Features;
 

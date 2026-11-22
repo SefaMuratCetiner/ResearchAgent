@@ -2,9 +2,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Research.Search.Application;
 using Research.Search.Infrastructure.Decorators;
-using Research.Shared.Adapters.Composition;
-using Research.Shared.Ports.Caching;
-using Research.Shared.Ports.Search;
+using Research.Shared.Core.Hosting;
+using Research.Shared.Core.Caching;
+using Research.Shared.Core.Search;
 
 namespace Research.Search.Infrastructure;
 

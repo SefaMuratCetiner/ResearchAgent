@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Research.Shared.Ports.Documents;
+using Research.Shared.Core.Documents;
 
 namespace Research.Providers.BlobStorage;
 

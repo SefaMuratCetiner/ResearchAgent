@@ -1,14 +1,14 @@
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Domain;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Jobs.Application.CancelResearchJob;
 
 /// <summary>
 /// Cancels an active job under its row lock, delegating all cancellation invariants to <see cref="ResearchJob.Cancel"/>.
-/// Runs inside a single <see cref="Research.Shared.Core.Transactions.IUnitOfWork"/> managed by <c>TransactionBehavior</c>.
+/// Runs inside a single <see cref="Research.Shared.Bus.Transactions.IUnitOfWork"/> managed by <c>TransactionBehavior</c>.
 /// </summary>
 public sealed class CancelResearchJobHandler(
     IResearchJobRepository jobs,

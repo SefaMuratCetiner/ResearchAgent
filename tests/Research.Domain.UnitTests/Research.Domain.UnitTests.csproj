@@ -10,6 +10,5 @@
     <ProjectReference Include="..\..\src\Services\Fetching\Research.Fetching.Domain\Research.Fetching.Domain.csproj" />
     <ProjectReference Include="..\..\src\Services\Knowledge\Research.Knowledge.Domain\Research.Knowledge.Domain.csproj" />
     <ProjectReference Include="..\..\src\Services\Search\Research.Search.Domain\Research.Search.Domain.csproj" />
-    <ProjectReference Include="..\..\src\Services\Synthesis\Research.Synthesis.Domain\Research.Synthesis.Domain.csproj" />
   </ItemGroup>
 </Project>

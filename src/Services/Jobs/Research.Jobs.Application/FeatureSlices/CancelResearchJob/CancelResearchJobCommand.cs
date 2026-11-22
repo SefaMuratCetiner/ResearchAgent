@@ -1,6 +1,7 @@
 using Research.Jobs.Application.Common.Models;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Kernel.Results;
+using Research.Shared.Bus.Transactions;
 
 namespace Research.Jobs.Application.CancelResearchJob;
 

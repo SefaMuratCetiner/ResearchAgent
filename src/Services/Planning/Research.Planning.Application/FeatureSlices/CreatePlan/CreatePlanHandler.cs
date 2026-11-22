@@ -4,10 +4,10 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Research.Shared.Ports.Caching;
-using Research.Shared.Ports.Llm;
-using Research.Shared.Core.Mediation;
-using Research.Shared.Kernel.Security;
+using Research.Shared.Core.Caching;
+using Research.Shared.Core.Llm;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Core.Security;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Planning.Application.CreatePlan;

@@ -2,12 +2,12 @@ using Research.Fetching.Application.Observability;
 using Research.Fetching.Bootstrap.Features;
 using Research.Fetching.Domain;
 using Research.ServiceDefaults;
-using Research.Shared.Adapters.Composition;
-using Research.Shared.Adapters.Mediation;
-using Research.Shared.Adapters.Messaging;
-using Research.Shared.Adapters.Messaging.Observability;
-using Research.Shared.Messaging;
-using Research.Shared.Adapters.Mediation.Observability;
+using Research.Shared.Core.Hosting;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Bus.Messaging;
+using Research.Shared.Bus.Messaging.Observability;
+using Research.Shared.Bus.Mediation.Observability;
+using Research.Shared.Bus;
 
 namespace Research.Fetching.Bootstrap.CompositionRoot;
 
@@ -34,7 +34,7 @@ public sealed class FetchingCompositionRoot
     [
         // Platform
         new ActorsFeature(),
-        new MediationFeature(),
+        new BusFeature(),
         new ErrorsFeature(MessagingErrors.All, FetchingErrors.All),
 
         // Infrastructure

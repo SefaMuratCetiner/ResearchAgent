@@ -29,30 +29,25 @@ public sealed class ReferenceRuleTests
     }
 
     [Fact]
-    public void SharedCoreAndPorts_DependOnlyOnSharedKernel_WithNoPackages()
+    public void SharedCore_DependsOnlyOnSharedKernel()
     {
-        foreach (var name in new[] { "Research.Shared.Core", "Research.Shared.Ports" })
+        var project = Solution.Get("Research.Shared.Core");
+        project.FrameworkReferences.ShouldBeEmpty("Research.Shared.Core");
+        foreach (var reference in project.ProjectReferences)
         {
-            var project = Solution.Get(name);
-            project.PackageReferences.ShouldBeEmpty(name);
-            project.FrameworkReferences.ShouldBeEmpty(name);
-            foreach (var reference in project.ProjectReferences)
-            {
-                reference.ShouldBe("Research.Shared.Kernel", $"{name} must not reference {reference}");
-            }
+            reference.ShouldBe("Research.Shared.Kernel", $"Research.Shared.Core must not reference {reference}");
         }
     }
 
     [Fact]
-    public void SharedMessaging_DependsOnlyOnSharedKernelSharedCoreAndContracts_WithNoPackages()
+    public void SharedBus_DependsOnlyOnSharedKernelSharedCoreAndContracts()
     {
-        var project = Solution.Get("Research.Shared.Messaging");
-        project.PackageReferences.ShouldBeEmpty();
-        project.FrameworkReferences.ShouldBeEmpty();
+        var project = Solution.Get("Research.Shared.Bus");
+        project.FrameworkReferences.ShouldBeEmpty("Research.Shared.Bus");
         foreach (var reference in project.ProjectReferences)
         {
             (reference is "Research.Shared.Kernel" or "Research.Shared.Core" or "Research.Shared.Contracts")
-                .ShouldBeTrue($"Research.Shared.Messaging must not reference {reference}");
+                .ShouldBeTrue($"Research.Shared.Bus must not reference {reference}");
         }
     }
 
@@ -71,14 +66,14 @@ public sealed class ReferenceRuleTests
 
     [Theory]
     [MemberData(nameof(Applications))]
-    public void Application_DependsOnlyOnOwnDomainSharedAbstractionsAndContracts(string name)
+    public void Application_DependsOnlyOnOwnDomainSharedCoreBusAndContracts(string name)
     {
         var project = Solution.Get(name);
         var ownDomain = $"Research.{project.ServiceName}.Domain";
 
         foreach (var reference in project.ProjectReferences)
         {
-            var allowed = reference is "Research.Shared.Core" or "Research.Shared.Messaging" or "Research.Shared.Ports" or "Research.Shared.Contracts"
+            var allowed = reference is "Research.Shared.Core" or "Research.Shared.Bus" or "Research.Shared.Contracts"
                 || string.Equals(reference, ownDomain, StringComparison.Ordinal);
             allowed.ShouldBeTrue($"{name} must not reference {reference}");
         }
@@ -94,7 +89,7 @@ public sealed class ReferenceRuleTests
 
     [Theory]
     [MemberData(nameof(Infrastructures))]
-    public void Infrastructure_DependsOnlyOnOwnApplicationSharedAdaptersAndProviders(string name)
+    public void Infrastructure_DependsOnlyOnOwnApplicationSharedCoreBusAndProviders(string name)
     {
         var project = Solution.Get(name);
         var ownApp = $"Research.{project.ServiceName}.Application";
@@ -102,7 +97,7 @@ public sealed class ReferenceRuleTests
         foreach (var reference in project.ProjectReferences)
         {
             var allowed = string.Equals(reference, ownApp, StringComparison.Ordinal)
-                || string.Equals(reference, "Research.Shared.Adapters", StringComparison.Ordinal)
+                || reference is "Research.Shared.Core" or "Research.Shared.Bus"
                 || reference.StartsWith("Research.Providers.", StringComparison.Ordinal);
             allowed.ShouldBeTrue($"{name} must not reference {reference}");
         }
@@ -125,11 +120,11 @@ public sealed class ReferenceRuleTests
 
     [Theory]
     [MemberData(nameof(Providers))]
-    public void Providers_DependOnlyOnSharedAbstractionsSharedAdaptersAndContracts(string name)
+    public void Providers_DependOnlyOnSharedCoreBusAndContracts(string name)
     {
         foreach (var reference in Solution.Get(name).ProjectReferences)
         {
-            (reference is "Research.Shared.Core" or "Research.Shared.Messaging" or "Research.Shared.Ports" or "Research.Shared.Adapters" or "Research.Shared.Contracts")
+            (reference is "Research.Shared.Core" or "Research.Shared.Bus" or "Research.Shared.Contracts")
                 .ShouldBeTrue($"{name} must not reference {reference}");
         }
     }
@@ -278,7 +273,7 @@ public sealed class ReferenceRuleTests
 
         foreach (var reference in project.ProjectReferences)
         {
-            var allowed = reference is "Research.Shared.Kernel" or "Research.Shared.Core" or "Research.Shared.Messaging" or "Research.Shared.Ports" or "Research.Shared.Contracts"
+            var allowed = reference is "Research.Shared.Kernel" or "Research.Shared.Core" or "Research.Shared.Bus" or "Research.Shared.Contracts"
                 || reference.EndsWith(".Domain", StringComparison.Ordinal)
                 || reference.EndsWith(".Application", StringComparison.Ordinal);
             allowed.ShouldBeTrue($"Research.Application.UnitTests must not reference outer-layer project {reference}");

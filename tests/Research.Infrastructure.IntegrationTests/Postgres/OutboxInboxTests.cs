@@ -2,8 +2,7 @@ using Dapper;
 using Microsoft.Extensions.Logging.Abstractions;
 using Research.Providers.Postgres.Messaging;
 using Research.Providers.Postgres.Transactions;
-using Research.Shared.Adapters.Messaging;
-using Research.Shared.Messaging;
+using Research.Shared.Bus.Messaging;
 
 namespace Research.Infrastructure.IntegrationTests.Postgres;
 

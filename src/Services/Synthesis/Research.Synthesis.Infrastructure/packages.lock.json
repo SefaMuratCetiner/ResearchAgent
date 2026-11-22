@@ -111,7 +111,7 @@
         "resolved": "10.0.15",
         "contentHash": "NjzLiZ1/bYx8VwLqHxNnCfDTQQbCY7P1dwT7JM5FiANiaSfI6UKHi0/sla+jyRbOIbPAMJkhWQ/9pH3tMf+IrQ=="
       },
-      "research.shared.adapters": {
+      "research.shared.bus": {
         "type": "Project",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.15, )",
@@ -119,12 +119,9 @@
           "Microsoft.Extensions.Hosting.Abstractions": "[10.0.15, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.15, )",
           "Microsoft.Extensions.Options": "[10.0.15, )",
-          "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.15, )",
           "Research.Shared.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Kernel": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )"
+          "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.shared.contracts": {
@@ -133,25 +130,17 @@
       "research.shared.core": {
         "type": "Project",
         "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.15, )",
+          "Microsoft.Extensions.Diagnostics.Abstractions": "[10.0.15, )",
+          "Microsoft.Extensions.Hosting.Abstractions": "[10.0.15, )",
+          "Microsoft.Extensions.Logging.Abstractions": "[10.0.15, )",
+          "Microsoft.Extensions.Options": "[10.0.15, )",
+          "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.15, )",
           "Research.Shared.Kernel": "[1.0.0, )"
         }
       },
       "research.shared.kernel": {
         "type": "Project"
-      },
-      "research.shared.messaging": {
-        "type": "Project",
-        "dependencies": {
-          "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Kernel": "[1.0.0, )"
-        }
-      },
-      "research.shared.ports": {
-        "type": "Project",
-        "dependencies": {
-          "Research.Shared.Kernel": "[1.0.0, )"
-        }
       },
       "research.synthesis.application": {
         "type": "Project",
@@ -159,17 +148,9 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.15, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.15, )",
           "Microsoft.Extensions.Options": "[10.0.15, )",
+          "Research.Shared.Bus": "[1.0.0, )",
           "Research.Shared.Contracts": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )",
-          "Research.Shared.Messaging": "[1.0.0, )",
-          "Research.Shared.Ports": "[1.0.0, )",
-          "Research.Synthesis.Domain": "[1.0.0, )"
-        }
-      },
-      "research.synthesis.domain": {
-        "type": "Project",
-        "dependencies": {
-          "Research.Shared.Kernel": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )"
         }
       },
       "Microsoft.Extensions.Diagnostics.Abstractions": {

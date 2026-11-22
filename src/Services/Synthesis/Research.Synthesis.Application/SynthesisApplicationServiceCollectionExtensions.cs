@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 using Research.Shared.Kernel.Results;
 using Research.Synthesis.Application.WriteReport;
 

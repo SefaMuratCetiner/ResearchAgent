@@ -1,13 +1,13 @@
 using Research.Search.Application.Observability;
 using Research.Search.Bootstrap.Features;
 using Research.ServiceDefaults;
-using Research.Shared.Adapters.Composition;
-using Research.Shared.Adapters.Mediation;
-using Research.Shared.Adapters.Messaging;
-using Research.Shared.Adapters.Messaging.Observability;
-using Research.Shared.Messaging;
-using Research.Shared.Ports.Search;
-using Research.Shared.Adapters.Mediation.Observability;
+using Research.Shared.Core.Hosting;
+using Research.Shared.Bus.Mediation;
+using Research.Shared.Bus.Messaging;
+using Research.Shared.Bus.Messaging.Observability;
+using Research.Shared.Core.Search;
+using Research.Shared.Bus.Mediation.Observability;
+using Research.Shared.Bus;
 
 namespace Research.Search.Bootstrap.CompositionRoot;
 
@@ -30,7 +30,7 @@ public sealed class SearchCompositionRoot
     [
         // Platform
         new ActorsFeature(),
-        new MediationFeature(),
+        new BusFeature(),
         new ErrorsFeature(MessagingErrors.All, SearchErrors.All),
 
         // Infrastructure

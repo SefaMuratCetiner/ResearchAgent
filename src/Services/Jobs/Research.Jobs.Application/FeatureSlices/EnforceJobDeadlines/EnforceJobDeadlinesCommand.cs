@@ -1,4 +1,4 @@
-using Research.Shared.Core.Mediation;
+using Research.Shared.Bus.Mediation;
 
 namespace Research.Jobs.Application.EnforceJobDeadlines;
 

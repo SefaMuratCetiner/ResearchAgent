@@ -6,8 +6,8 @@ using Research.Providers.Postgres.Dapper;
 using Research.Providers.Postgres.Health;
 using Research.Providers.Postgres.Messaging;
 using Research.Providers.Postgres.Transactions;
-using Research.Shared.Core.Transactions;
-using Research.Shared.Messaging;
+using Research.Shared.Bus.Transactions;
+using Research.Shared.Bus.Messaging;
 
 namespace Research.Providers.Postgres;
 

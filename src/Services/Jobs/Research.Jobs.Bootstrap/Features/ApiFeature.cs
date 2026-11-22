@@ -1,4 +1,4 @@
-using Research.Shared.Adapters.Composition;
+using Research.Shared.Core.Hosting;
 using Research.Shared.Web;
 
 namespace Research.Jobs.Bootstrap.Features;
