@@ -26,7 +26,7 @@ public sealed class SynthesisCompositionRoot
             // Platform
             new ActorsFeature(),
             new MediationFeature(),
-            new ErrorsFeature(new MessagingErrorCatalog(), new SynthesisErrorCatalog()),
+            new ErrorsFeature(MessagingErrors.All, SynthesisErrors.All),
 
             // Infrastructure
             LlmFeature(Settings.Llm.Provider),

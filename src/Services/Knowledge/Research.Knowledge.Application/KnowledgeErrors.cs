@@ -1,4 +1,3 @@
-using Research.Shared.Core.Errors;
 using Research.SharedKernel.Results;
 
 namespace Research.Knowledge.Application;
@@ -14,18 +13,13 @@ public static class KnowledgeErrors
     public static readonly Error EmbeddingDimensionMismatch = new("knowledge.embedding_dimension_mismatch", ErrorKind.Unexpected, "The embedding model returned vectors of the wrong size.");
 
     public static readonly Error InvalidSearch = new("knowledge.invalid_search", ErrorKind.Invalid, "The passage search request is invalid.");
-}
 
-/// <summary>Adds <see cref="KnowledgeErrors"/> to the error catalog.</summary>
-public sealed class KnowledgeErrorCatalog : IErrorCatalogContributor
-{
-    public string Prefix => "knowledge.";
-
-    public IEnumerable<Error> GetErrors() =>
-    [
-        KnowledgeErrors.DocumentMissing,
-        KnowledgeErrors.NoPassages,
-        KnowledgeErrors.EmbeddingDimensionMismatch,
-        KnowledgeErrors.InvalidSearch,
-    ];
+    public static readonly ErrorSet All = new(
+        "knowledge.",
+        [
+            DocumentMissing,
+            NoPassages,
+            EmbeddingDimensionMismatch,
+            InvalidSearch,
+        ]);
 }

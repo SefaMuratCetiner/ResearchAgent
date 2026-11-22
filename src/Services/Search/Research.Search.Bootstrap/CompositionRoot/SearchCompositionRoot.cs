@@ -6,6 +6,7 @@ using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
 using Research.Shared.Messaging;
+using Research.Shared.Ports.Search;
 
 namespace Research.Search.Bootstrap.CompositionRoot;
 
@@ -29,7 +30,7 @@ public sealed class SearchCompositionRoot
         // Platform
         new ActorsFeature(),
         new MediationFeature(),
-        new ErrorsFeature(new MessagingErrorCatalog(), new SearchErrorCatalog()),
+        new ErrorsFeature(MessagingErrors.All, SearchErrors.All),
 
         // Infrastructure
         new ValkeyFeature(),

@@ -1,4 +1,3 @@
-using Research.Shared.Core.Errors;
 using Research.SharedKernel.Results;
 
 namespace Research.Shared.Web.Problems;
@@ -15,12 +14,6 @@ public static class ProblemErrors
         "research.validation_failed",
         ErrorKind.Invalid,
         "The request is not valid.");
-}
 
-/// <summary>Adds <see cref="ProblemErrors"/> to the error catalog.</summary>
-public sealed class ProblemErrorCatalog : IErrorCatalogContributor
-{
-    public string Prefix => "research.";
-
-    public IEnumerable<Error> GetErrors() => [ProblemErrors.Unexpected, ProblemErrors.ValidationFailed];
+    public static readonly ErrorSet All = new("research.", [Unexpected, ValidationFailed]);
 }

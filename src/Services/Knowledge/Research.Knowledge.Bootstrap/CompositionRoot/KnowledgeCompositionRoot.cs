@@ -35,7 +35,7 @@ public sealed partial class KnowledgeCompositionRoot
         // Platform
         new ActorsFeature(),
         new MediationFeature(),
-        new ErrorsFeature(new ProblemErrorCatalog(), new MessagingErrorCatalog(), new KnowledgeErrorCatalog()),
+        new ErrorsFeature(ProblemErrors.All, MessagingErrors.All, KnowledgeErrors.All),
 
         // Infrastructure
         new PostgresFeature(),

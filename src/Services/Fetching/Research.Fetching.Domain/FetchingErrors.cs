@@ -29,4 +29,20 @@ public static class FetchingErrors
     public static readonly Error BlockedDomain = new("fetching.blocked_domain", ErrorKind.Forbidden, "The page is on a blocked domain.");
 
     public static readonly Error SuspectedInjection = new("fetching.suspected_injection", ErrorKind.Rule, "The page text looks written to steer the model, and such pages are rejected.");
+
+    public static readonly ErrorSet All = new(
+        "fetching.",
+        [
+            FetchDisallowed,
+            BlockedAddress,
+            InvalidUrl,
+            UnsupportedContent,
+            TooLarge,
+            ContentTooShort,
+            RedirectLimit,
+            HttpError,
+            Timeout,
+            BlockedDomain,
+            SuspectedInjection,
+        ]);
 }

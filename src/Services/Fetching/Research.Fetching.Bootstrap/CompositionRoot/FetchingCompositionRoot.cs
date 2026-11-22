@@ -1,5 +1,6 @@
 using Research.Fetching.Application;
 using Research.Fetching.Bootstrap.Features;
+using Research.Fetching.Domain;
 using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Mediation;
@@ -33,7 +34,7 @@ public sealed class FetchingCompositionRoot
         // Platform
         new ActorsFeature(),
         new MediationFeature(),
-        new ErrorsFeature(new MessagingErrorCatalog(), new FetchingErrorCatalog()),
+        new ErrorsFeature(MessagingErrors.All, FetchingErrors.All),
 
         // Infrastructure
         new PostgresFeature(),

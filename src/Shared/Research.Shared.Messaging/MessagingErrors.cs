@@ -1,4 +1,3 @@
-using Research.Shared.Core.Errors;
 using Research.SharedKernel.Results;
 
 namespace Research.Shared.Messaging;
@@ -15,12 +14,6 @@ public static class MessagingErrors
         "research.poison_message",
         ErrorKind.Invalid,
         "The message could not be read.");
-}
 
-/// <summary>Adds <see cref="MessagingErrors"/> to the error catalog.</summary>
-public sealed class MessagingErrorCatalog : IErrorCatalogContributor
-{
-    public string Prefix => "research.";
-
-    public IEnumerable<Error> GetErrors() => [MessagingErrors.StepExhausted, MessagingErrors.PoisonMessage];
+    public static readonly ErrorSet All = new("research.", [StepExhausted, PoisonMessage]);
 }

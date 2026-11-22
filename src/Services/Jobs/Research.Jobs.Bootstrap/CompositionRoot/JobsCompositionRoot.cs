@@ -1,7 +1,7 @@
 using Research.Jobs.Api;
-using Research.Jobs.Application;
 using Research.Jobs.Application.Observability;
 using Research.Jobs.Bootstrap.Features;
+using Research.Jobs.Domain;
 using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Mediation;
@@ -35,7 +35,7 @@ public sealed partial class JobsCompositionRoot
         // Platform
         new ActorsFeature(),
         new MediationFeature(),
-        new ErrorsFeature(new ProblemErrorCatalog(), new MessagingErrorCatalog(), new JobsErrorCatalog()),
+        new ErrorsFeature(ProblemErrors.All, MessagingErrors.All, JobsErrors.All),
 
         // Infrastructure
         new PostgresFeature(),

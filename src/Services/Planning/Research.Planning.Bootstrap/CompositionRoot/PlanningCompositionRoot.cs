@@ -26,7 +26,7 @@ public sealed class PlanningCompositionRoot
             // Platform
             new ActorsFeature(),
             new MediationFeature(),
-            new ErrorsFeature(new MessagingErrorCatalog(), new PlanningErrorCatalog()),
+            new ErrorsFeature(MessagingErrors.All, PlanningErrors.All),
 
             // Infrastructure
             new ValkeyFeature(),

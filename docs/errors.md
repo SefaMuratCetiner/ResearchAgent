@@ -1,7 +1,7 @@
 # Error codes
 
 Each code is owned by exactly one service and starts with that service's prefix. The `research.` prefix is shared
-platform infrastructure. Each library registers its codes through an `IErrorCatalogContributor`, and at startup
+platform infrastructure. Each library exposes its codes as an `ErrorSet` (`<Service>Errors.All`), and at startup
 `ErrorCatalog` refuses duplicate codes and codes with a foreign prefix.
 
 Errors appear in two places:

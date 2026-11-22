@@ -3,26 +3,27 @@ using Research.SharedKernel.Results;
 namespace Research.Shared.Core.Errors;
 
 /// <summary>
-/// Every error code the service can return, from all registered contributors. Built once at composition time; an
-/// invalid catalog (duplicate code, missing prefix) stops the service before it starts.
+/// Every error code the service can return, from all registered <see cref="ErrorSet"/> instances. Built once at
+/// composition time; an invalid catalog (duplicate code, foreign prefix) stops the service before it starts.
 /// </summary>
 public sealed class ErrorCatalog
 {
     private readonly Dictionary<string, Error> _errors;
 
-    public ErrorCatalog(IEnumerable<IErrorCatalogContributor> contributors)
+    public ErrorCatalog(IEnumerable<ErrorSet> sets)
     {
-        ArgumentNullException.ThrowIfNull(contributors);
+        ArgumentNullException.ThrowIfNull(sets);
         _errors = new Dictionary<string, Error>(StringComparer.Ordinal);
         var failures = new List<string>();
 
-        foreach (var contributor in contributors)
+        foreach (var set in sets)
         {
-            foreach (var error in contributor.GetErrors())
+            ArgumentNullException.ThrowIfNull(set);
+            foreach (var error in set.Errors)
             {
-                if (!error.Code.StartsWith(contributor.Prefix, StringComparison.Ordinal))
+                if (!error.Code.StartsWith(set.Prefix, StringComparison.Ordinal))
                 {
-                    failures.Add($"{error.Code} does not start with {contributor.Prefix}");
+                    failures.Add($"{error.Code} does not start with {set.Prefix}");
                 }
 
                 if (!_errors.TryAdd(error.Code, error))

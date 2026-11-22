@@ -1,4 +1,3 @@
-using Research.Shared.Core.Errors;
 using Research.SharedKernel.Results;
 
 namespace Research.Synthesis.Application;
@@ -16,13 +15,14 @@ public static class SynthesisErrors
     public static readonly Error OutputTruncated = new("synthesis.output_truncated", ErrorKind.Rule, "The report was cut at the output limit.");
 
     public static readonly Error UncitedReport = new("synthesis.uncited_report", ErrorKind.Rule, "The report cites none of the sources, so it is not kept.");
-}
 
-/// <summary>Adds <see cref="SynthesisErrors"/> to the error catalog.</summary>
-public sealed class SynthesisErrorCatalog : IErrorCatalogContributor
-{
-    public string Prefix => "synthesis.";
-
-    public IEnumerable<Error> GetErrors() =>
-        [SynthesisErrors.LlmRefused, SynthesisErrors.NoPassages, SynthesisErrors.EmptyReport, SynthesisErrors.OutputTruncated, SynthesisErrors.UncitedReport];
+    public static readonly ErrorSet All = new(
+        "synthesis.",
+        [
+            LlmRefused,
+            NoPassages,
+            EmptyReport,
+            OutputTruncated,
+            UncitedReport,
+        ]);
 }

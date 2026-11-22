@@ -1,10 +1,10 @@
-using Research.Fetching.Application;
-using Research.Jobs.Application;
+using Research.Fetching.Domain;
+using Research.Jobs.Domain;
 using Research.Knowledge.Application;
 using Research.Planning.Application;
-using Research.Search.Application;
 using Research.Shared.Core.Errors;
 using Research.Shared.Messaging;
+using Research.Shared.Ports.Search;
 using Research.Shared.Web.Problems;
 using Research.SharedKernel.Results;
 using Research.Synthesis.Application;
@@ -13,21 +13,21 @@ namespace Research.Infrastructure.UnitTests.ServiceDefaults;
 
 public sealed class ErrorCatalogTests
 {
-    /// <summary>Every contributor in the solution, as the Hosts register them.</summary>
-    private static readonly IErrorCatalogContributor[] All =
+    /// <summary>Every error set in the solution, as the Hosts register them.</summary>
+    private static readonly ErrorSet[] All =
     [
-        new ProblemErrorCatalog(),
-        new MessagingErrorCatalog(),
-        new JobsErrorCatalog(),
-        new PlanningErrorCatalog(),
-        new SearchErrorCatalog(),
-        new FetchingErrorCatalog(),
-        new KnowledgeErrorCatalog(),
-        new SynthesisErrorCatalog(),
+        ProblemErrors.All,
+        MessagingErrors.All,
+        JobsErrors.All,
+        PlanningErrors.All,
+        SearchErrors.All,
+        FetchingErrors.All,
+        KnowledgeErrors.All,
+        SynthesisErrors.All,
     ];
 
     [Fact]
-    public void AllContributors_FormAValidCatalog()
+    public void AllErrorSets_FormAValidCatalog()
     {
         var catalog = new ErrorCatalog(All);
         catalog.All.ShouldNotBeEmpty();
@@ -36,17 +36,10 @@ public sealed class ErrorCatalogTests
 
     [Fact]
     public void DuplicateCode_IsRejected() =>
-        Should.Throw<InvalidOperationException>(() => new ErrorCatalog([new JobsErrorCatalog(), new JobsErrorCatalog()]));
+        Should.Throw<InvalidOperationException>(() => new ErrorCatalog([JobsErrors.All, JobsErrors.All]));
 
     [Fact]
     public void ForeignPrefix_IsRejected() =>
-        Should.Throw<InvalidOperationException>(() => new ErrorCatalog([new Foreign()]))
+        Should.Throw<InvalidOperationException>(() => new ErrorCatalog([new ErrorSet("mine.", [new Error("other.code", ErrorKind.Rule, "x")])]))
             .Message.ShouldContain("does not start with");
-
-    private sealed class Foreign : IErrorCatalogContributor
-    {
-        public string Prefix => "mine.";
-
-        public IEnumerable<Error> GetErrors() => [new Error("other.code", ErrorKind.Rule, "x")];
-    }
 }

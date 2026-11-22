@@ -37,4 +37,24 @@ public static class JobsErrors
 
     /// <summary>The warning Synthesis' truncation becomes on the job. Owned by Synthesis; listed here as a known value.</summary>
     public const string OutputTruncatedWarning = "synthesis.output_truncated";
+
+    public static readonly ErrorSet All = new(
+        "jobs.",
+        [
+            JobNotFound,
+            JobAlreadyCompleted,
+            JobNotCancellable,
+            ReportNotReady,
+            ReportNotAvailable,
+            IdempotencyConflict,
+            QuestionInvalid,
+            CapacityReached,
+            PlanEmpty,
+            NoSourcesFound,
+            InsufficientSources,
+            DeadlineExceeded,
+            BudgetExhausted,
+            CutoffReached,
+            StepsFailed,
+        ]);
 }
