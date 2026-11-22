@@ -1,7 +1,7 @@
 using Research.Contracts.Planning;
 using Research.Contracts.Steps;
 using Research.Shared.Core.Mediation;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 
 namespace Research.Planning.Application.CreatePlan;
 

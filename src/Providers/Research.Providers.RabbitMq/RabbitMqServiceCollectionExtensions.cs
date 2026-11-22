@@ -5,7 +5,7 @@ using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Consuming;
 using Research.Shared.Core.Mediation;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 using Research.SharedKernel.Results;
 
 namespace Research.Providers.RabbitMq;

@@ -302,7 +302,9 @@
         "dependencies": {
           "Research.Contracts": "[1.0.0, )",
           "Research.Fetching.Domain": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )",
+          "Research.Shared.Messaging": "[1.0.0, )",
+          "Research.Shared.Ports": "[1.0.0, )"
         }
       },
       "research.fetching.domain": {
@@ -327,7 +329,9 @@
         "dependencies": {
           "Research.Contracts": "[1.0.0, )",
           "Research.Knowledge.Domain": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )",
+          "Research.Shared.Messaging": "[1.0.0, )",
+          "Research.Shared.Ports": "[1.0.0, )"
         }
       },
       "research.knowledge.domain": {
@@ -349,7 +353,7 @@
       "research.providers.mockembeddings": {
         "type": "Project",
         "dependencies": {
-          "Research.Shared.Core": "[1.0.0, )"
+          "Research.Shared.Ports": "[1.0.0, )"
         }
       },
       "research.providers.postgres": {
@@ -357,7 +361,8 @@
         "dependencies": {
           "Dapper": "[2.1.89, )",
           "Npgsql": "[10.0.3, )",
-          "Research.Shared.Core": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )",
+          "Research.Shared.Messaging": "[1.0.0, )"
         }
       },
       "research.providers.rabbitmq": {
@@ -366,7 +371,8 @@
           "RabbitMQ.Client": "[7.2.2, )",
           "Research.Contracts": "[1.0.0, )",
           "Research.Shared.Adapters": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )",
+          "Research.Shared.Messaging": "[1.0.0, )"
         }
       },
       "research.shared.adapters": {
@@ -374,13 +380,28 @@
         "dependencies": {
           "Research.Contracts": "[1.0.0, )",
           "Research.Shared.Core": "[1.0.0, )",
+          "Research.Shared.Messaging": "[1.0.0, )",
+          "Research.Shared.Ports": "[1.0.0, )",
           "Research.SharedKernel": "[1.0.0, )"
         }
       },
       "research.shared.core": {
         "type": "Project",
         "dependencies": {
+          "Research.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "research.shared.messaging": {
+        "type": "Project",
+        "dependencies": {
           "Research.Contracts": "[1.0.0, )",
+          "Research.Shared.Core": "[1.0.0, )",
+          "Research.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "research.shared.ports": {
+        "type": "Project",
+        "dependencies": {
           "Research.SharedKernel": "[1.0.0, )"
         }
       },

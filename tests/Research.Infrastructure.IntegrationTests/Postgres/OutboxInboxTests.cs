@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Research.Providers.Postgres.Messaging;
 using Research.Providers.Postgres.Transactions;
 using Research.Shared.Adapters.Messaging;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 
 namespace Research.Infrastructure.IntegrationTests.Postgres;
 

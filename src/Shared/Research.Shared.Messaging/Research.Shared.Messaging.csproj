@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Shared integration messaging abstractions: message handlers, envelopes, headers, outbox, inbox,
+    publisher/sender ports, and retry policy. Depends only on SharedKernel, Shared.Core, and Contracts.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Shared.Messaging</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.SharedKernel\Research.SharedKernel.csproj" />
+    <ProjectReference Include="..\Research.Shared.Core\Research.Shared.Core.csproj" />
+    <ProjectReference Include="..\Research.Contracts\Research.Contracts.csproj" />
+  </ItemGroup>
+</Project>

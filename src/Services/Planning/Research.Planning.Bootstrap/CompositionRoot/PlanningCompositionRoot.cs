@@ -6,8 +6,8 @@ using Research.Shared.Adapters.Llm;
 using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
-using Research.Shared.Core.Llm;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Ports.Llm;
+using Research.Shared.Messaging;
 
 namespace Research.Planning.Bootstrap.CompositionRoot;
 

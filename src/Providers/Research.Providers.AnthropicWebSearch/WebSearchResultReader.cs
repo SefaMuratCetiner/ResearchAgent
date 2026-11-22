@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Research.Shared.Core.Search;
+using Research.Shared.Ports.Search;
 
 namespace Research.Providers.AnthropicWebSearch;
 

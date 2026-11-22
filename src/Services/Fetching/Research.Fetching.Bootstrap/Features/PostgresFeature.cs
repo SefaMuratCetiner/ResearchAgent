@@ -5,7 +5,7 @@ using Research.Providers.Postgres.Health;
 using Research.Providers.Postgres.Messaging;
 using Research.Providers.Postgres.Transactions;
 using Research.Shared.Adapters.Composition;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 using Research.Shared.Core.Transactions;
 
 namespace Research.Fetching.Bootstrap.Features;

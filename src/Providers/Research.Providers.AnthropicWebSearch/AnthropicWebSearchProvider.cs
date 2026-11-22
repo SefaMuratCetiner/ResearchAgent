@@ -4,9 +4,9 @@ using Anthropic;
 using Anthropic.Models.Messages;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Research.Shared.Core.Search;
+using Research.Shared.Ports.Search;
 using Research.Shared.Core.Logging;
-using Research.Shared.Core.Security;
+using Research.SharedKernel.Security;
 
 namespace Research.Providers.AnthropicWebSearch;
 

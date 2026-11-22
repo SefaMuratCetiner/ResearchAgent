@@ -6,7 +6,7 @@ using Research.Providers.RabbitMq;
 using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Llm;
 using Research.Shared.Adapters.Messaging;
-using Research.Shared.Core.Llm;
+using Research.Shared.Ports.Llm;
 using Research.Shared.Core.Logging;
 
 namespace Research.Planning.Bootstrap.CompositionRoot;

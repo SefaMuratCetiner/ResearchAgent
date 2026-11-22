@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Domain;
-using Research.Shared.Core.Embeddings;
+using Research.Shared.Ports.Embeddings;
 using Research.Shared.Core.Mediation;
 using Research.SharedKernel.Results;
 

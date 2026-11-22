@@ -1,6 +1,6 @@
 using Research.Shared.Adapters.Composition;
 using Research.Providers.MockEmbeddings;
-using Research.Shared.Core.Embeddings;
+using Research.Shared.Ports.Embeddings;
 
 namespace Research.Knowledge.Bootstrap.Features;
 

@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Text.Json;
 using Research.Contracts;
 using Research.Shared.Adapters.Messaging.Tracing;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 
 namespace Research.Shared.Adapters.Messaging;
 

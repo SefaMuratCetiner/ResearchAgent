@@ -1,5 +1,5 @@
 using Research.Contracts;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 
 namespace Research.Shared.Adapters.Messaging.Sending;
 

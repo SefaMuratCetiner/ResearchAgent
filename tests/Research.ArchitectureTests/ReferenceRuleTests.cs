@@ -29,15 +29,30 @@ public sealed class ReferenceRuleTests
     }
 
     [Fact]
-    public void SharedCore_DependsOnlyOnSharedKernelAndContracts_WithNoPackages()
+    public void SharedCoreAndPorts_DependOnlyOnSharedKernel_WithNoPackages()
     {
-        var project = Solution.Get("Research.Shared.Core");
+        foreach (var name in new[] { "Research.Shared.Core", "Research.Shared.Ports" })
+        {
+            var project = Solution.Get(name);
+            project.PackageReferences.ShouldBeEmpty(name);
+            project.FrameworkReferences.ShouldBeEmpty(name);
+            foreach (var reference in project.ProjectReferences)
+            {
+                reference.ShouldBe("Research.SharedKernel", $"{name} must not reference {reference}");
+            }
+        }
+    }
+
+    [Fact]
+    public void SharedMessaging_DependsOnlyOnSharedKernelSharedCoreAndContracts_WithNoPackages()
+    {
+        var project = Solution.Get("Research.Shared.Messaging");
         project.PackageReferences.ShouldBeEmpty();
         project.FrameworkReferences.ShouldBeEmpty();
         foreach (var reference in project.ProjectReferences)
         {
-            (reference is "Research.SharedKernel" or "Research.Contracts")
-                .ShouldBeTrue($"Research.Shared.Core must not reference {reference}");
+            (reference is "Research.SharedKernel" or "Research.Shared.Core" or "Research.Contracts")
+                .ShouldBeTrue($"Research.Shared.Messaging must not reference {reference}");
         }
     }
 
@@ -56,14 +71,14 @@ public sealed class ReferenceRuleTests
 
     [Theory]
     [MemberData(nameof(Applications))]
-    public void Application_DependsOnlyOnOwnDomainSharedCoreAndContracts(string name)
+    public void Application_DependsOnlyOnOwnDomainSharedAbstractionsAndContracts(string name)
     {
         var project = Solution.Get(name);
         var ownDomain = $"Research.{project.ServiceName}.Domain";
 
         foreach (var reference in project.ProjectReferences)
         {
-            var allowed = reference is "Research.Shared.Core" or "Research.Contracts"
+            var allowed = reference is "Research.Shared.Core" or "Research.Shared.Messaging" or "Research.Shared.Ports" or "Research.Contracts"
                 || reference == ownDomain;
             allowed.ShouldBeTrue($"{name} must not reference {reference}");
         }
@@ -109,11 +124,11 @@ public sealed class ReferenceRuleTests
 
     [Theory]
     [MemberData(nameof(Providers))]
-    public void Providers_DependOnlyOnSharedCoreSharedAdaptersAndContracts(string name)
+    public void Providers_DependOnlyOnSharedAbstractionsSharedAdaptersAndContracts(string name)
     {
         foreach (var reference in Solution.Get(name).ProjectReferences)
         {
-            (reference is "Research.Shared.Core" or "Research.Shared.Adapters" or "Research.Contracts")
+            (reference is "Research.Shared.Core" or "Research.Shared.Messaging" or "Research.Shared.Ports" or "Research.Shared.Adapters" or "Research.Contracts")
                 .ShouldBeTrue($"{name} must not reference {reference}");
         }
     }
@@ -248,7 +263,7 @@ public sealed class ReferenceRuleTests
 
         foreach (var reference in project.ProjectReferences)
         {
-            var allowed = reference is "Research.SharedKernel" or "Research.Shared.Core" or "Research.Contracts"
+            var allowed = reference is "Research.SharedKernel" or "Research.Shared.Core" or "Research.Shared.Messaging" or "Research.Shared.Ports" or "Research.Contracts"
                 || reference.EndsWith(".Domain", StringComparison.Ordinal)
                 || reference.EndsWith(".Application", StringComparison.Ordinal);
             allowed.ShouldBeTrue($"Research.Application.UnitTests must not reference outer-layer project {reference}");

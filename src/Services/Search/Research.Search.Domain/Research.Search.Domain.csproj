@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Search Domain: pure deterministic URL canonicalization rules. Depends only on SharedKernel with zero packages.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Search.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

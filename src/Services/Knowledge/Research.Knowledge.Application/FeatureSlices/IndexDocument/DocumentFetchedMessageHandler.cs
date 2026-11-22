@@ -5,7 +5,7 @@ using Research.Contracts.Steps;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Domain;
 using Research.Shared.Core.Mediation;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 using Research.Shared.Core.Transactions;
 
 namespace Research.Knowledge.Application.IndexDocument;

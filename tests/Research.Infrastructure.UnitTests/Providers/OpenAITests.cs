@@ -1,7 +1,7 @@
 using OpenAI.Chat;
 using Research.Providers.OpenAI;
 using Research.Shared.Adapters.Llm;
-using Research.Shared.Core.Llm;
+using Research.Shared.Ports.Llm;
 
 // ChatReasoningEffortLevel is marked evaluation-only by the SDK (see Research.Providers.OpenAI.csproj).
 #pragma warning disable OPENAI001

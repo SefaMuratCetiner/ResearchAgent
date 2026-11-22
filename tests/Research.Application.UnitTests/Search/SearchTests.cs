@@ -1,4 +1,4 @@
-using Research.Search.Application.RunSearch;
+using Research.Search.Domain.Policies;
 
 namespace Research.Application.UnitTests.Search;
 

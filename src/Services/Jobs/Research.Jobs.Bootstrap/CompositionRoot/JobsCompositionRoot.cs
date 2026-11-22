@@ -5,7 +5,7 @@ using Research.Jobs.Bootstrap.Features;
 using Research.ServiceDefaults;
 using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Mediation;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 using Research.Shared.Web.Endpoints;
 using Research.Shared.Web.Problems;
 

@@ -1,9 +1,10 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Research.Search.Domain.Policies;
 using Research.Shared.Core.Logging;
 using Research.Shared.Core.Mediation;
-using Research.Shared.Core.Search;
-using Research.Shared.Core.Security;
+using Research.Shared.Ports.Search;
+using Research.SharedKernel.Security;
 using Research.SharedKernel.Results;
 
 namespace Research.Search.Application.RunSearch;

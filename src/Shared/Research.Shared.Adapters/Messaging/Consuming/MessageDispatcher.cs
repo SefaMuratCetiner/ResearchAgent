@@ -8,7 +8,7 @@ using Research.Contracts.Steps;
 using Research.Shared.Adapters.Messaging.Tracing;
 using Research.Shared.Core.Actors;
 using Research.Shared.Core.Mediation;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 
 namespace Research.Shared.Adapters.Messaging.Consuming;
 

@@ -3,7 +3,7 @@ using Research.Contracts.Steps;
 using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Domain;
 using Research.Shared.Core.Mediation;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 using Research.Shared.Core.Transactions;
 
 namespace Research.Fetching.Application.FetchPage;

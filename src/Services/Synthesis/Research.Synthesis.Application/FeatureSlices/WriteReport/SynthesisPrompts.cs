@@ -1,5 +1,6 @@
 using System.Text;
-using Research.Shared.Core.Security;
+using Research.SharedKernel.Security;
+using Research.Synthesis.Domain.Policies;
 
 namespace Research.Synthesis.Application.WriteReport;
 

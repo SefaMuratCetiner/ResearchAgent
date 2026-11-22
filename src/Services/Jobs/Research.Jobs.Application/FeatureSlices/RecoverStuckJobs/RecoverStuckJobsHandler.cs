@@ -5,7 +5,7 @@ using Research.Jobs.Application.Lifecycle;
 using Research.Jobs.Application.Observability;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 using Research.Shared.Core.Transactions;
 
 namespace Research.Jobs.Application.RecoverStuckJobs;

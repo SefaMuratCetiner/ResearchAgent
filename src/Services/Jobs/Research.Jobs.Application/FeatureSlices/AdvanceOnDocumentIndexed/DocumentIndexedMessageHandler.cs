@@ -1,7 +1,7 @@
 using Research.Contracts.Knowledge;
 using Research.Jobs.Domain;
 using Research.Jobs.Application.Lifecycle;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 
 namespace Research.Jobs.Application.AdvanceOnDocumentIndexed;
 

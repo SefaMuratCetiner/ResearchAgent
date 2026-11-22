@@ -1,6 +1,6 @@
 using Research.Shared.Adapters.Concurrency;
 
-using Research.Shared.Core.Search;
+using Research.Shared.Ports.Search;
 
 namespace Research.Search.Infrastructure.Decorators;
 

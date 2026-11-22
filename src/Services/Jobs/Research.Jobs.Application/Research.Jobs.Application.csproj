@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Research.Jobs.Domain\Research.Jobs.Domain.csproj" />
     <ProjectReference Include="..\..\..\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Messaging\Research.Shared.Messaging.csproj" />
     <ProjectReference Include="..\..\..\Shared\Research.Contracts\Research.Contracts.csproj" />
   </ItemGroup>
 

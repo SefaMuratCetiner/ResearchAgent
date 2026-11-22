@@ -4,10 +4,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Domain;
-using Research.Shared.Core.Documents;
+using Research.Shared.Ports.Documents;
 using Research.Shared.Core.Logging;
 using Research.Shared.Core.Mediation;
-using Research.Shared.Core.Security;
+using Research.SharedKernel.Security;
 using Research.SharedKernel.Results;
 
 namespace Research.Fetching.Application.FetchPage;

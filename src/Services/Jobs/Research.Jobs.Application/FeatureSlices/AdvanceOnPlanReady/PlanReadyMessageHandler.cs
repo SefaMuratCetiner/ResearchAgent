@@ -2,8 +2,8 @@ using Microsoft.Extensions.Options;
 using Research.Contracts.Planning;
 using Research.Jobs.Domain;
 using Research.Jobs.Application.Lifecycle;
-using Research.Shared.Core.Messaging;
-using Research.Shared.Core.Security;
+using Research.Shared.Messaging;
+using Research.SharedKernel.Security;
 
 namespace Research.Jobs.Application.AdvanceOnPlanReady;
 

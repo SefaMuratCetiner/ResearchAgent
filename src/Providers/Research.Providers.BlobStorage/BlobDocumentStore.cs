@@ -1,6 +1,6 @@
 using Azure;
 using Azure.Storage.Blobs;
-using Research.Shared.Core.Documents;
+using Research.Shared.Ports.Documents;
 
 namespace Research.Providers.BlobStorage;
 

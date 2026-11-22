@@ -10,6 +10,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Research.SharedKernel\Research.SharedKernel.csproj" />
     <ProjectReference Include="..\Research.Shared.Core\Research.Shared.Core.csproj" />
+    <ProjectReference Include="..\Research.Shared.Messaging\Research.Shared.Messaging.csproj" />
+    <ProjectReference Include="..\Research.Shared.Ports\Research.Shared.Ports.csproj" />
     <ProjectReference Include="..\Research.Contracts\Research.Contracts.csproj" />
   </ItemGroup>
 

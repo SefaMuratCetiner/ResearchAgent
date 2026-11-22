@@ -1,6 +1,6 @@
 using Research.Contracts.Search;
 using Research.Shared.Adapters.Composition;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 using Research.Providers.RabbitMq;
 using Research.Search.Application.RunSearch;
 

@@ -10,18 +10,26 @@ Enforced automatically by [ReferenceRuleTests.cs](../tests/Research.Architecture
 AppHost ──► *.Bootstrap, *.Worker, tools/Research.DbScripts
 *.Bootstrap / *.Worker ──► own *.Application, *.Infrastructure, (own *.Api), Research.ServiceDefaults,
                            Research.Shared.Adapters, (Research.Shared.Web if HTTP), Providers.*
-*.Api ──► own *.Application, Research.Shared.Web                       (never ServiceDefaults or Infrastructure)
+*.Api ──► own *.Application, Research.Shared.Web                                  (never ServiceDefaults, Domain, or Infrastructure)
 *.Infrastructure ──► own *.Application, Research.Shared.Adapters, Providers.*
-*.Application ──► own *.Domain, Research.Shared.Core, Research.Contracts (never ASP.NET Core, Aspire, or providers)
-*.Domain ──► Research.SharedKernel                                     (zero NuGet packages)
-Providers.* ──► Research.Shared.Core, Research.Shared.Adapters, Research.Contracts
-Research.Shared.Web ──► Research.SharedKernel, Research.Shared.Core    (HTTP hosts and *.Api only)
-Research.ServiceDefaults ──► (zero project references)                 (entry points only)
-Research.Shared.Core ──► Research.SharedKernel, Research.Contracts     (zero NuGet packages)
+*.Application ──► own *.Domain, Research.Shared.Core, Research.Shared.Messaging,
+                  Research.Shared.Ports, Research.Contracts                       (never ASP.NET Core, Aspire, or providers)
+*.Domain ──► Research.SharedKernel                                                (zero NuGet packages)
+Providers.* ──► Research.Shared.Ports / Research.Shared.Core / Research.Shared.Messaging / Research.Shared.Adapters / Research.Contracts
+Research.Shared.Web ──► Research.SharedKernel, Research.Shared.Core               (HTTP hosts and *.Api only)
+Research.ServiceDefaults ──► (zero project references)                            (entry points only)
+Research.Shared.Messaging ──► Research.SharedKernel, Research.Shared.Core, Research.Contracts (zero NuGet packages)
+Research.Shared.Core / Research.Shared.Ports ──► Research.SharedKernel            (zero NuGet packages)
 Research.SharedKernel / Research.Contracts ──► (no references at all)
 ```
 
-Services never reference each other. Shared ports (`ILlmClient`, `ISearchProvider`, `ICacheStore`, `IDocumentStore`, `IEmbeddingGenerator`, `IMessagePublisher`, `IUnitOfWork`, `IInbox`, `IOutbox`, `IMediator`) live in `Research.Shared.Core`; service-specific ports live in `Research.<Service>.Application/Common/Interfaces/`. `Research.Providers.*` and `Research.<Service>.Infrastructure` implement them. Only entry points (`*.Bootstrap`, `*.Worker`) wire concrete implementations; where a port has multiple providers (`Llm:Provider`), the host picks one from startup settings.
+Services never reference each other. Shared abstractions are split by capability:
+* `Research.SharedKernel`: DDD base types (`Entity`, `AggregateRoot`, `IDomainEvent`), `Result`/`Error`/`Unit`, and pure text-safety primitives (`UntrustedText`, `PromptFence`, `PromptInjectionSignals`).
+* `Research.Shared.Core`: execution primitives (`IMediator`, `ISender`, `IPublisher`, `IDomainEventHandler`, `IUnitOfWork`, `ICurrentActor`, `ErrorCatalog`, content logging).
+* `Research.Shared.Messaging`: integration messaging ports (`IMessageHandler`, `HandleMessage<T>`, `IMessagePublisher`, `IMessageSender`, `IOutbox`, `IInbox`, envelopes, headers, retry policy).
+* `Research.Shared.Ports`: external provider ports (`ILlmClient`, `ISearchProvider`, `IEmbeddingGenerator`, `IDocumentStore`, `ICacheStore`).
+
+Service-specific ports live in `Research.<Service>.Application/Common/Interfaces/`. Pure domain rules live in `Research.<Service>.Domain/Policies/` (`JobStateMachine`, `JobOutcomePolicy`, `TextChunker`, `UrlCanonicalizer`, `CitationBuilder`, `ReportSanitizer`). `Research.Providers.*` and `Research.<Service>.Infrastructure` implement the ports. Only entry points (`*.Bootstrap`, `*.Worker`) wire concrete implementations; where a port has multiple providers (`Llm:Provider`), the host picks one from startup settings.
 
 ## Service defaults and shared web
 

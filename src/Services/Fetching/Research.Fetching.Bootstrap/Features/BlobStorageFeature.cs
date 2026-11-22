@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Research.Shared.Adapters.Composition;
 using Research.Providers.BlobStorage;
-using Research.Shared.Core.Documents;
+using Research.Shared.Ports.Documents;
 
 namespace Research.Fetching.Bootstrap.Features;
 

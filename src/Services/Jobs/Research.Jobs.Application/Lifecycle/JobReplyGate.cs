@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Domain;
 using Research.Jobs.Application.Observability;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 using Research.Shared.Core.Transactions;
 
 namespace Research.Jobs.Application.Lifecycle;

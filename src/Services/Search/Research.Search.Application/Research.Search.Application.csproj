@@ -7,7 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Research.Search.Domain\Research.Search.Domain.csproj" />
     <ProjectReference Include="..\..\..\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Messaging\Research.Shared.Messaging.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Research.Shared.Ports\Research.Shared.Ports.csproj" />
     <ProjectReference Include="..\..\..\Shared\Research.Contracts\Research.Contracts.csproj" />
   </ItemGroup>
 

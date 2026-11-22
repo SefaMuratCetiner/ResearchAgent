@@ -2,7 +2,7 @@ using Research.Contracts;
 using Research.Contracts.Jobs;
 using Research.Contracts.Planning;
 using Research.Shared.Adapters.Messaging;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 
 namespace Research.Infrastructure.UnitTests.Messaging;
 

@@ -2,7 +2,7 @@ using Microsoft.Extensions.Options;
 using Research.Shared.Adapters.Composition;
 using Research.Providers.OpenAI;
 using Research.Shared.Adapters.Llm;
-using Research.Shared.Core.Llm;
+using Research.Shared.Ports.Llm;
 
 namespace Research.Planning.Bootstrap.Features;
 

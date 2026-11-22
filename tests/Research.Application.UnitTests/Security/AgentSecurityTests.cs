@@ -1,7 +1,8 @@
 using Research.Fetching.Application;
 using Research.Planning.Application.CreatePlan;
-using Research.Shared.Core.Security;
+using Research.SharedKernel.Security;
 using Research.Synthesis.Application.WriteReport;
+using Research.Synthesis.Domain.Policies;
 
 namespace Research.Application.UnitTests.Security;
 

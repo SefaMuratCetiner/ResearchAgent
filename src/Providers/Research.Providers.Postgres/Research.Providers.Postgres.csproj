@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
+    <ProjectReference Include="..\..\Shared\Research.Shared.Messaging\Research.Shared.Messaging.csproj" />
   </ItemGroup>
 
   <ItemGroup>

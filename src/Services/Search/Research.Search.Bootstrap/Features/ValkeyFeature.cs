@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Research.Shared.Adapters.Composition;
 using Research.Providers.Valkey;
-using Research.Shared.Core.Caching;
+using Research.Shared.Ports.Caching;
 
 namespace Research.Search.Bootstrap.Features;
 

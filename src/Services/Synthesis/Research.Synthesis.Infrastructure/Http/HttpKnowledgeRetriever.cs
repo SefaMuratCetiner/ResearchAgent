@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Research.Synthesis.Application.Common.Interfaces;
+using Research.Synthesis.Domain;
 
 namespace Research.Synthesis.Infrastructure.Http;
 

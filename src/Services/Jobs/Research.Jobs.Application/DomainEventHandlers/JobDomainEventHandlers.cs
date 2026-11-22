@@ -9,7 +9,7 @@ using Research.Jobs.Domain.Events;
 using Research.Jobs.Application.Lifecycle;
 using Research.Jobs.Application.Observability;
 using Research.Shared.Core.Events;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 
 namespace Research.Jobs.Application.DomainEventHandlers;
 

@@ -2,7 +2,7 @@ using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
-using Research.Shared.Core.Security;
+using Research.SharedKernel.Security;
 using Research.SharedKernel.Results;
 
 namespace Research.Jobs.Application.CreateResearchJob;

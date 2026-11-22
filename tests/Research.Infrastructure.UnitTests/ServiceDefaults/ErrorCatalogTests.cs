@@ -4,7 +4,7 @@ using Research.Knowledge.Application;
 using Research.Planning.Application;
 using Research.Search.Application;
 using Research.Shared.Core.Errors;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 using Research.Shared.Web.Problems;
 using Research.SharedKernel.Results;
 using Research.Synthesis.Application;

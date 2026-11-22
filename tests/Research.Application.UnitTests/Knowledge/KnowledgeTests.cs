@@ -4,6 +4,7 @@ using Research.Application.UnitTests.TestSupport;
 using Research.Knowledge.Application;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Domain;
+using Research.Knowledge.Domain.Policies;
 using Research.Knowledge.Application.IndexDocument;
 using Research.Knowledge.Application.SearchPassages;
 

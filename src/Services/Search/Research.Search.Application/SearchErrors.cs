@@ -1,5 +1,5 @@
 using Research.Shared.Core.Errors;
-using Research.Shared.Core.Search;
+using Research.Shared.Ports.Search;
 using Research.SharedKernel.Results;
 
 namespace Research.Search.Application;

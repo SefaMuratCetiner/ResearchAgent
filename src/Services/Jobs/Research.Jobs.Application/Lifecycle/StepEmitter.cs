@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using Research.Contracts;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Domain;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 
 namespace Research.Jobs.Application.Lifecycle;
 

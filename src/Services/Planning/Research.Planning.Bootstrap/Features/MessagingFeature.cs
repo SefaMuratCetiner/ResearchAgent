@@ -1,6 +1,6 @@
 using Research.Contracts.Planning;
 using Research.Shared.Adapters.Composition;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 using Research.Planning.Application.CreatePlan;
 using Research.Providers.RabbitMq;
 

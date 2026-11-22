@@ -1,3 +1,5 @@
+using Research.Synthesis.Domain;
+
 namespace Research.Synthesis.Application.Common.Interfaces;
 
 /// <summary>
@@ -12,5 +14,3 @@ public interface IKnowledgeRetriever
         int topK,
         CancellationToken cancellationToken);
 }
-
-public sealed record RetrievedPassage(Guid DocumentId, string Url, string Title, string Text, double Score);

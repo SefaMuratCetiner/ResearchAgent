@@ -8,7 +8,7 @@ using Research.Contracts.Steps;
 using Research.Shared.Adapters.Messaging;
 using Research.Providers.RabbitMq;
 using Research.Shared.Core.Actors;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 using RabbitMQ.Client;
 using Testcontainers.RabbitMq;
 

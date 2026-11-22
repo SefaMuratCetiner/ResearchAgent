@@ -2,7 +2,7 @@ using System.Text;
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
 using Research.Fetching.Application.Common.Interfaces;
-using Research.Shared.Core.Security;
+using Research.SharedKernel.Security;
 
 namespace Research.Fetching.Infrastructure.Extraction;
 

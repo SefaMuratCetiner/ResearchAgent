@@ -1,4 +1,4 @@
-using Research.Shared.Core.Llm;
+using Research.Shared.Ports.Llm;
 using Research.Shared.Adapters.Concurrency;
 
 namespace Research.Shared.Adapters.Llm;

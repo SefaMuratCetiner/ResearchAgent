@@ -50,13 +50,9 @@
         "resolved": "10.0.2",
         "contentHash": "AKJknIFi9O3+rGExxTry188JPvUoZAPcCtS2qdqyFhIzsxQ1Ap94BeGDG0VzVEHakhmRxmJtVih6TsHoghIt/g=="
       },
-      "research.contracts": {
-        "type": "Project"
-      },
-      "research.shared.core": {
+      "research.shared.ports": {
         "type": "Project",
         "dependencies": {
-          "Research.Contracts": "[1.0.0, )",
           "Research.SharedKernel": "[1.0.0, )"
         }
       },

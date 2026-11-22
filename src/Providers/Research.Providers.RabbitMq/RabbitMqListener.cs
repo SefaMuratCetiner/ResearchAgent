@@ -7,7 +7,7 @@ using RabbitMQ.Client.Events;
 using Research.Contracts;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Consuming;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 
 namespace Research.Providers.RabbitMq;
 

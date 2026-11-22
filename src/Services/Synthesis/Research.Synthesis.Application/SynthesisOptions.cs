@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Options;
-using Research.Shared.Core.Llm;
+using Research.Shared.Ports.Llm;
 
 namespace Research.Synthesis.Application;
 

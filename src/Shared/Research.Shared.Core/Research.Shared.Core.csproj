@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
-    Shared Application-layer contracts and ports: LLM, search, caching, documents, embeddings, messaging,
-    transactions, actor, logging categories and security helpers. Depends only on SharedKernel and Contracts.
+    Shared Application-layer execution abstractions: mediation, domain events, transactions, actors,
+    error catalog, and content logging. Depends only on SharedKernel with zero NuGet packages.
   -->
   <PropertyGroup>
     <RootNamespace>Research.Shared.Core</RootNamespace>
@@ -9,6 +9,5 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Research.SharedKernel\Research.SharedKernel.csproj" />
-    <ProjectReference Include="..\Research.Contracts\Research.Contracts.csproj" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Shared external provider ports: LLM, web search, embeddings, blob document storage, and caching.
+    Depends only on SharedKernel with zero NuGet packages and no messaging or contracts coupling.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Shared.Ports</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Research.SharedKernel\Research.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

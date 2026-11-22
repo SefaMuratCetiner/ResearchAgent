@@ -36,7 +36,8 @@
         "dependencies": {
           "Research.Contracts": "[1.0.0, )",
           "Research.Jobs.Domain": "[1.0.0, )",
-          "Research.Shared.Core": "[1.0.0, )"
+          "Research.Shared.Core": "[1.0.0, )",
+          "Research.Shared.Messaging": "[1.0.0, )"
         }
       },
       "research.jobs.domain": {
@@ -48,7 +49,14 @@
       "research.shared.core": {
         "type": "Project",
         "dependencies": {
+          "Research.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "research.shared.messaging": {
+        "type": "Project",
+        "dependencies": {
           "Research.Contracts": "[1.0.0, )",
+          "Research.Shared.Core": "[1.0.0, )",
           "Research.SharedKernel": "[1.0.0, )"
         }
       },

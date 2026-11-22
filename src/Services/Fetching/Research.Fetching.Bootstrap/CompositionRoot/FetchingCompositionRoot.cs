@@ -5,7 +5,7 @@ using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Tracing;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 
 namespace Research.Fetching.Bootstrap.CompositionRoot;
 

@@ -4,7 +4,7 @@ using Research.Contracts.Search;
 using Research.Shared.Adapters.Mediation;
 using Research.Shared.Core.Events;
 using Research.Shared.Core.Mediation;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 using Research.Shared.Core.Transactions;
 using Research.SharedKernel.Events;
 using Research.SharedKernel.Results;

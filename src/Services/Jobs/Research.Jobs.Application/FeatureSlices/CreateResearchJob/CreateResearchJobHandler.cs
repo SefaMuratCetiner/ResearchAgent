@@ -4,7 +4,7 @@ using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Models;
 using Research.Jobs.Domain;
 using Research.Shared.Core.Mediation;
-using Research.Shared.Core.Security;
+using Research.SharedKernel.Security;
 using Research.Shared.Core.Transactions;
 using Research.SharedKernel.Results;
 

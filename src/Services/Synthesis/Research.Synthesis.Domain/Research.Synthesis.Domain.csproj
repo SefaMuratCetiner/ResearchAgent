@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Synthesis Domain: retrieved passage model, citation building, and report sanitization rules.
+    Depends only on SharedKernel with zero packages.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Research.Synthesis.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

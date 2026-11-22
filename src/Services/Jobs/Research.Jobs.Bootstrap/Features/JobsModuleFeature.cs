@@ -12,7 +12,7 @@ using Research.Jobs.Infrastructure.Persistence;
 using Research.Shared.Adapters.Composition;
 using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
-using Research.Shared.Core.Messaging;
+using Research.Shared.Messaging;
 using Research.SharedKernel.Results;
 
 namespace Research.Jobs.Bootstrap.Features;

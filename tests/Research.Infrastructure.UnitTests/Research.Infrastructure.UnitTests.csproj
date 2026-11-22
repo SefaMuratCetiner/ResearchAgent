@@ -12,6 +12,8 @@
     <ProjectReference Include="..\..\src\Research.ServiceDefaults\Research.ServiceDefaults.csproj" />
     <ProjectReference Include="..\..\src\Shared\Research.SharedKernel\Research.SharedKernel.csproj" />
     <ProjectReference Include="..\..\src\Shared\Research.Shared.Core\Research.Shared.Core.csproj" />
+    <ProjectReference Include="..\..\src\Shared\Research.Shared.Messaging\Research.Shared.Messaging.csproj" />
+    <ProjectReference Include="..\..\src\Shared\Research.Shared.Ports\Research.Shared.Ports.csproj" />
     <ProjectReference Include="..\..\src\Shared\Research.Contracts\Research.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Shared\Research.Shared.Adapters\Research.Shared.Adapters.csproj" />
     <ProjectReference Include="..\..\src\Shared\Research.Shared.Web\Research.Shared.Web.csproj" />

@@ -1,7 +1,7 @@
 using Research.Shared.Adapters.Composition;
 using Research.Providers.AnthropicWebSearch;
 using Research.Search.Infrastructure.Decorators;
-using Research.Shared.Core.Search;
+using Research.Shared.Ports.Search;
 
 namespace Research.Search.Bootstrap.Features;
 
