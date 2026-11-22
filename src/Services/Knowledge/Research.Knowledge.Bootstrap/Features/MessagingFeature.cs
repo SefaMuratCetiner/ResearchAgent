@@ -1,8 +1,7 @@
 using Research.Contracts.Fetching;
-using Research.Shared.Adapters.Composition;
 using Research.Knowledge.Application.IndexDocument;
-using Research.Shared.Adapters.Messaging.Outbox;
 using Research.Providers.RabbitMq;
+using Research.Shared.Adapters.Composition;
 
 namespace Research.Knowledge.Bootstrap.Features;
 
@@ -15,10 +14,7 @@ internal sealed class MessagingFeature : IResearchFeature
     public void Register(ResearchBuilder app)
     {
         app.Host.AddRabbitMQClient("bus");
-
-        RabbitMqServiceCollectionExtensions.AddPublisher(app.Services);
-        app.Services.AddHostedService<OutboxBackgroundService>();
-
-        RabbitMqServiceCollectionExtensions.AddConsumer<DocumentFetched, DocumentFetchedMessageHandler>(app.Services);
+        app.Services.AddOutboxPublisher();
+        app.Services.AddConsumer<DocumentFetched, DocumentFetchedMessageHandler>();
     }
 }

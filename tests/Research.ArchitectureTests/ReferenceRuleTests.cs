@@ -133,6 +133,19 @@ public sealed class ReferenceRuleTests
         }
     }
 
+    [Theory]
+    [MemberData(nameof(Providers))]
+    [MemberData(nameof(Applications))]
+    [MemberData(nameof(Infrastructures))]
+    public void ProvidersAndServiceLayers_OwnTheirServiceCollectionExtensions(string name)
+    {
+        var directory = Path.GetDirectoryName(Solution.Get(name).Path)!;
+        Directory.EnumerateFiles(directory, "*ServiceCollectionExtensions.cs", SearchOption.AllDirectories)
+            .Where(static f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
+                && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+            .ShouldNotBeEmpty($"{name} should own its DI registration via a *ServiceCollectionExtensions class");
+    }
+
     [Fact]
     public void OnlyEntryPointsAndAppHostReferenceAspireClientIntegrations()
     {

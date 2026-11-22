@@ -1,8 +1,5 @@
-using Microsoft.Extensions.Options;
 using Research.Shared.Adapters.Composition;
-using Research.Synthesis.Application;
-using Research.Synthesis.Application.Common.Interfaces;
-using Research.Synthesis.Infrastructure.Http;
+using Research.Synthesis.Infrastructure;
 
 namespace Research.Synthesis.Bootstrap.Features;
 
@@ -14,7 +11,5 @@ namespace Research.Synthesis.Bootstrap.Features;
 /// </summary>
 internal sealed class KnowledgeClientFeature : IResearchFeature
 {
-    public void Register(ResearchBuilder app) =>
-        app.Services.AddHttpClient<IKnowledgeRetriever, HttpKnowledgeRetriever>(static (provider, client) =>
-            client.BaseAddress = provider.GetRequiredService<IOptionsMonitor<SynthesisOptions>>().CurrentValue.KnowledgeBaseAddress);
+    public void Register(ResearchBuilder app) => app.Services.AddSynthesisInfrastructure();
 }

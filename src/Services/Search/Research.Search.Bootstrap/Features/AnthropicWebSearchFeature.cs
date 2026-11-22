@@ -1,7 +1,5 @@
-using Research.Shared.Adapters.Composition;
 using Research.Providers.AnthropicWebSearch;
-using Research.Search.Infrastructure.Decorators;
-using Research.Shared.Ports.Search;
+using Research.Shared.Adapters.Composition;
 
 namespace Research.Search.Bootstrap.Features;
 
@@ -11,6 +9,5 @@ namespace Research.Search.Bootstrap.Features;
 /// </summary>
 internal sealed class AnthropicWebSearchFeature : IResearchFeature
 {
-    public void Register(ResearchBuilder app) =>
-        app.Services.AddSingleton<ISearchProvider, AnthropicWebSearchProvider>();
+    public void Register(ResearchBuilder app) => app.Services.AddAnthropicWebSearch();
 }

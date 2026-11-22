@@ -1,6 +1,5 @@
-using Research.Shared.Adapters.Composition;
 using Research.Providers.MockEmbeddings;
-using Research.Shared.Ports.Embeddings;
+using Research.Shared.Adapters.Composition;
 
 namespace Research.Knowledge.Bootstrap.Features;
 
@@ -10,6 +9,5 @@ namespace Research.Knowledge.Bootstrap.Features;
 /// </summary>
 internal sealed class EmbeddingsFeature : IResearchFeature
 {
-    public void Register(ResearchBuilder app) =>
-        app.Services.AddSingleton<IEmbeddingGenerator, HashingEmbeddingGenerator>();
+    public void Register(ResearchBuilder app) => app.Services.AddMockEmbeddings();
 }

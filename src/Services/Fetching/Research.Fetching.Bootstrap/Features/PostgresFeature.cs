@@ -1,12 +1,5 @@
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Npgsql;
-using Research.Providers.Postgres.Dapper;
-using Research.Providers.Postgres.Health;
-using Research.Providers.Postgres.Messaging;
-using Research.Providers.Postgres.Transactions;
+using Research.Providers.Postgres;
 using Research.Shared.Adapters.Composition;
-using Research.Shared.Messaging;
-using Research.Shared.Core.Transactions;
 
 namespace Research.Fetching.Bootstrap.Features;
 
@@ -21,18 +14,6 @@ internal sealed class PostgresFeature : IResearchFeature
     public void Register(ResearchBuilder app)
     {
         app.Host.AddNpgsqlDataSource("fetching");
-        DapperTypeHandlers.Register();
-
-        app.Services.AddScoped<PostgresUnitOfWork>();
-        app.Services.AddScoped<IUnitOfWork>(static provider => provider.GetRequiredService<PostgresUnitOfWork>());
-        app.Services.AddScoped<IOutbox, PostgresOutbox>();
-        app.Services.AddScoped<IInbox, PostgresInbox>();
-        app.Services.AddSingleton<IOutboxStore, PostgresOutboxStore>();
-
-        app.Services.AddHealthChecks().Add(new HealthCheckRegistration(
-            "fetching-schema",
-            static provider => new PostgresSchemaHealthCheck(provider.GetRequiredService<NpgsqlDataSource>(), RequiredTables),
-            failureStatus: null,
-            tags: ["ready"]));
+        app.Services.AddPostgresProvider("fetching-schema", RequiredTables);
     }
 }

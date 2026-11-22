@@ -1,7 +1,6 @@
 using Research.Contracts.Synthesis;
-using Research.Shared.Adapters.Composition;
-using Research.Shared.Messaging;
 using Research.Providers.RabbitMq;
+using Research.Shared.Adapters.Composition;
 using Research.Synthesis.Application.WriteReport;
 
 namespace Research.Synthesis.Bootstrap.Features;
@@ -15,10 +14,7 @@ internal sealed class MessagingFeature : IResearchFeature
     public void Register(ResearchBuilder app)
     {
         app.Host.AddRabbitMQClient("bus");
-
-        RabbitMqServiceCollectionExtensions.AddPublisher(app.Services);
-        app.Services.AddSingleton<IMessageSender, Research.Shared.Adapters.Messaging.Sending.DirectMessageSender>();
-
-        RabbitMqServiceCollectionExtensions.AddConsumer<SynthesisRequested, SynthesisRequestedMessageHandler>(app.Services);
+        app.Services.AddDirectPublisher();
+        app.Services.AddConsumer<SynthesisRequested, SynthesisRequestedMessageHandler>();
     }
 }

@@ -1,8 +1,5 @@
-using Microsoft.Extensions.Options;
-using Research.Shared.Adapters.Composition;
 using Research.Providers.OpenAI;
-using Research.Shared.Adapters.Llm;
-using Research.Shared.Ports.Llm;
+using Research.Shared.Adapters.Composition;
 
 namespace Research.Planning.Bootstrap.Features;
 
@@ -13,17 +10,5 @@ namespace Research.Planning.Bootstrap.Features;
 /// </summary>
 internal sealed class OpenAIFeature : IResearchFeature
 {
-    public void Register(ResearchBuilder app)
-    {
-        app.Services.AddSingleton<OpenAIClientSource>();
-        app.Services.AddSingleton<LlmMetrics>();
-        app.Services.AddSingleton<OpenAILlmClient>();
-        app.Services.AddSingleton<ILlmClient>(static provider =>
-        {
-            var options = provider.GetRequiredService<IOptionsMonitor<OpenAIOptions>>();
-            return new RateLimitedLlmClient(
-                provider.GetRequiredService<OpenAILlmClient>(),
-                () => options.CurrentValue.MaxConcurrentRequests);
-        });
-    }
+    public void Register(ResearchBuilder app) => app.Services.AddOpenAILlm();
 }

@@ -1,8 +1,5 @@
-using Microsoft.Extensions.Options;
-using Research.Shared.Adapters.Composition;
 using Research.Providers.Anthropic;
-using Research.Shared.Adapters.Llm;
-using Research.Shared.Ports.Llm;
+using Research.Shared.Adapters.Composition;
 
 namespace Research.Synthesis.Bootstrap.Features;
 
@@ -13,17 +10,5 @@ namespace Research.Synthesis.Bootstrap.Features;
 /// </summary>
 internal sealed class AnthropicFeature : IResearchFeature
 {
-    public void Register(ResearchBuilder app)
-    {
-        app.Services.AddSingleton<AnthropicClientSource>();
-        app.Services.AddSingleton<LlmMetrics>();
-        app.Services.AddSingleton<AnthropicLlmClient>();
-        app.Services.AddSingleton<ILlmClient>(static provider =>
-        {
-            var options = provider.GetRequiredService<IOptionsMonitor<AnthropicOptions>>();
-            return new RateLimitedLlmClient(
-                provider.GetRequiredService<AnthropicLlmClient>(),
-                () => options.CurrentValue.MaxConcurrentRequests);
-        });
-    }
+    public void Register(ResearchBuilder app) => app.Services.AddAnthropicLlm();
 }

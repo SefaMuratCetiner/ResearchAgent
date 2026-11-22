@@ -1,7 +1,5 @@
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Research.Shared.Adapters.Composition;
 using Research.Providers.BlobStorage;
-using Research.Shared.Ports.Documents;
+using Research.Shared.Adapters.Composition;
 
 namespace Research.Fetching.Bootstrap.Features;
 
@@ -14,7 +12,6 @@ internal sealed class BlobStorageFeature : IResearchFeature
     public void Register(ResearchBuilder app)
     {
         app.Host.AddAzureBlobServiceClient("blobs", static settings => settings.DisableHealthChecks = true);
-        app.Services.AddSingleton<IDocumentStore, BlobDocumentStore>();
-        app.Services.AddHealthChecks().AddCheck<BlobStorageHealthCheck>("blobs", failureStatus: HealthStatus.Degraded);
+        app.Services.AddBlobDocumentStore();
     }
 }

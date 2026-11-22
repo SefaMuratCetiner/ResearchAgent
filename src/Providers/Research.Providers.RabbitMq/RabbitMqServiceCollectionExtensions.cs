@@ -4,6 +4,8 @@ using Research.Contracts;
 using Research.Shared.Adapters.Mediation;
 using Research.Shared.Adapters.Messaging;
 using Research.Shared.Adapters.Messaging.Consuming;
+using Research.Shared.Adapters.Messaging.Outbox;
+using Research.Shared.Adapters.Messaging.Sending;
 using Research.Shared.Core.Mediation;
 using Research.Shared.Messaging;
 using Research.SharedKernel.Results;
@@ -17,7 +19,7 @@ namespace Research.Providers.RabbitMq;
 public static class RabbitMqServiceCollectionExtensions
 {
     /// <summary>Envelopes, messaging metrics and the confirmed publisher.</summary>
-    public static void AddPublisher(IServiceCollection services)
+    public static IServiceCollection AddPublisher(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
         services.TryAddSingleton<EnvelopeFactory>();
@@ -25,13 +27,32 @@ public static class RabbitMqServiceCollectionExtensions
         services.TryAddSingleton<MessagingMetrics>();
         services.TryAddSingleton<RabbitMqMessagePublisher>();
         services.TryAddSingleton<IMessagePublisher>(static provider => provider.GetRequiredService<RabbitMqMessagePublisher>());
+        return services;
+    }
+
+    /// <summary>Confirmed publisher plus the transactional outbox background dispatcher (for DB-backed services).</summary>
+    public static IServiceCollection AddOutboxPublisher(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.AddPublisher();
+        services.AddHostedService<OutboxBackgroundService>();
+        return services;
+    }
+
+    /// <summary>Confirmed publisher plus direct <see cref="IMessageSender"/> (for stateless services without an outbox).</summary>
+    public static IServiceCollection AddDirectPublisher(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.AddPublisher();
+        services.TryAddSingleton<IMessageSender, DirectMessageSender>();
+        return services;
     }
 
     /// <summary>
     /// Consumes <typeparamref name="TMessage"/> with <typeparamref name="THandler"/> (scoped, one per delivery),
     /// wired into the unified mediation pipeline via <see cref="HandleMessage{TMessage}"/>.
     /// </summary>
-    public static void AddConsumer<TMessage, THandler>(IServiceCollection services)
+    public static IServiceCollection AddConsumer<TMessage, THandler>(this IServiceCollection services)
         where TMessage : class, IIntegrationMessage
         where THandler : class, IMessageHandler<TMessage>
     {
@@ -42,5 +63,6 @@ public static class RabbitMqServiceCollectionExtensions
         services.AddScoped<IRequestHandler<HandleMessage<TMessage>, Unit>>(static provider => provider.GetRequiredService<THandler>());
         services.AddSingleton<MessageDispatcher<TMessage>>();
         services.AddHostedService<RabbitMqListener<TMessage>>();
+        return services;
     }
 }

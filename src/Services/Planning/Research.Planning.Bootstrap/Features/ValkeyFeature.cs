@@ -1,7 +1,5 @@
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Research.Shared.Adapters.Composition;
 using Research.Providers.Valkey;
-using Research.Shared.Ports.Caching;
+using Research.Shared.Adapters.Composition;
 
 namespace Research.Planning.Bootstrap.Features;
 
@@ -14,7 +12,6 @@ internal sealed class ValkeyFeature : IResearchFeature
     public void Register(ResearchBuilder app)
     {
         app.Host.AddRedisClient("cache", static settings => settings.DisableHealthChecks = true);
-        app.Services.AddSingleton<ICacheStore, ValkeyCacheStore>();
-        app.Services.AddHealthChecks().AddCheck<ValkeyHealthCheck>("cache", failureStatus: HealthStatus.Degraded);
+        app.Services.AddValkeyCache();
     }
 }

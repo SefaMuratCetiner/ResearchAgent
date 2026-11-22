@@ -21,20 +21,6 @@ public sealed class ResearchBuilder(IHostApplicationBuilder builder)
 
     /// <summary>Decorates the existing registration of <typeparamref name="TService"/> in place, keeping its lifetime.</summary>
     public void Decorate<TService>(Func<IServiceProvider, TService, TService> decorate)
-        where TService : class
-    {
-        ArgumentNullException.ThrowIfNull(decorate);
-        var descriptor = Services.LastOrDefault(static d => d.ServiceType == typeof(TService) && !d.IsKeyedService)
-            ?? throw new InvalidOperationException($"No registration of {typeof(TService).Name} to decorate.");
-
-        Services[Services.IndexOf(descriptor)] = ServiceDescriptor.Describe(
-            typeof(TService),
-            provider => decorate(provider, (TService)CreateInner(provider, descriptor)),
-            descriptor.Lifetime);
-    }
-
-    private static object CreateInner(IServiceProvider provider, ServiceDescriptor descriptor) =>
-        descriptor.ImplementationInstance
-        ?? descriptor.ImplementationFactory?.Invoke(provider)
-        ?? ActivatorUtilities.CreateInstance(provider, descriptor.ImplementationType!);
+        where TService : class =>
+        Services.Decorate(decorate);
 }

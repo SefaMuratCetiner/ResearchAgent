@@ -3,14 +3,13 @@ using Research.Contracts.Planning;
 using Research.Contracts.Search;
 using Research.Contracts.Steps;
 using Research.Contracts.Synthesis;
-using Research.Shared.Adapters.Composition;
 using Research.Jobs.Application.AdvanceOnDocumentIndexed;
 using Research.Jobs.Application.AdvanceOnPlanReady;
 using Research.Jobs.Application.AdvanceOnResultsFound;
 using Research.Jobs.Application.CompleteOnReportReady;
 using Research.Jobs.Application.HandleStepFailure;
-using Research.Shared.Adapters.Messaging.Outbox;
 using Research.Providers.RabbitMq;
+using Research.Shared.Adapters.Composition;
 
 namespace Research.Jobs.Worker.Features;
 
@@ -23,14 +22,12 @@ internal sealed class MessagingFeature : IResearchFeature
     public void Register(ResearchBuilder app)
     {
         app.Host.AddRabbitMQClient("bus");
+        app.Services.AddOutboxPublisher();
 
-        RabbitMqServiceCollectionExtensions.AddPublisher(app.Services);
-        app.Services.AddHostedService<OutboxBackgroundService>();
-
-        RabbitMqServiceCollectionExtensions.AddConsumer<PlanReady, PlanReadyMessageHandler>(app.Services);
-        RabbitMqServiceCollectionExtensions.AddConsumer<ResultsFound, ResultsFoundMessageHandler>(app.Services);
-        RabbitMqServiceCollectionExtensions.AddConsumer<DocumentIndexed, DocumentIndexedMessageHandler>(app.Services);
-        RabbitMqServiceCollectionExtensions.AddConsumer<ReportReady, ReportReadyMessageHandler>(app.Services);
-        RabbitMqServiceCollectionExtensions.AddConsumer<StepFailed, StepFailedMessageHandler>(app.Services);
+        app.Services.AddConsumer<PlanReady, PlanReadyMessageHandler>();
+        app.Services.AddConsumer<ResultsFound, ResultsFoundMessageHandler>();
+        app.Services.AddConsumer<DocumentIndexed, DocumentIndexedMessageHandler>();
+        app.Services.AddConsumer<ReportReady, ReportReadyMessageHandler>();
+        app.Services.AddConsumer<StepFailed, StepFailedMessageHandler>();
     }
 }
