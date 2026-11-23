@@ -1,10 +1,8 @@
-using Research.Shared.Kernel.Events;
-
 namespace Research.Shared.Bus.Transactions;
 
 /// <summary>
 /// Scoped unit of work for a service's database. Coordinates one active transaction at a time across repositories,
-/// inbox, outbox and domain event handlers without leaking transaction handles into domain or application ports.
+/// inbox and outbox without leaking transaction handles into domain or application ports.
 /// </summary>
 public interface IUnitOfWork : IAsyncDisposable
 {
@@ -15,9 +13,6 @@ public interface IUnitOfWork : IAsyncDisposable
     /// </summary>
     Task<IAsyncDisposable> BeginAsync(CancellationToken cancellationToken);
 
-    /// <summary>Registers <paramref name="entity"/> so its uncommitted domain events are dispatched before commit.</summary>
-    void Track(IHasDomainEvents entity);
-
-    /// <summary>Dispatches domain events of tracked entities inside the active transaction and commits.</summary>
+    /// <summary>Commits the active transaction.</summary>
     Task CommitAsync(CancellationToken cancellationToken);
 }

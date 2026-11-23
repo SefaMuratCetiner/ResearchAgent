@@ -48,6 +48,7 @@ public static class JobsApplicationServiceCollectionExtensions
 
         services.TryAddScoped<StepReplyProcessor>();
         services.TryAddScoped<GatheringPhaseCompleter>();
+        services.TryAddScoped<FetchStepService>();
         services.AddScoped<IRequestHandler<RecoverStuckJobsCommand, int>, RecoverStuckJobsHandler>();
         services.AddScoped<IRequestHandler<EnforceJobDeadlinesCommand, int>, EnforceJobDeadlinesHandler>();
 
@@ -58,6 +59,7 @@ public static class JobsApplicationServiceCollectionExtensions
     {
         services.TryAddSingleton<JobsMetrics>();
         services.TryAddScoped<StepDispatcher>();
+        services.TryAddScoped<ResearchJobService>();
 
         services.AddScoped<IDomainEventHandler<JobCreatedDomainEvent>, JobCreatedDomainEventHandler>();
         services.AddScoped<IDomainEventHandler<JobGatheringStartedDomainEvent>, JobGatheringStartedDomainEventHandler>();

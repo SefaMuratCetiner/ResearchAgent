@@ -66,7 +66,6 @@ public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IRese
         if (inserted == 1)
         {
             RecordSnapshot(job);
-            unitOfWork.Track(job);
             return true;
         }
 
@@ -137,7 +136,6 @@ public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IRese
         {
             job.MarkPersisted(nextVersion, now, actor);
             RecordSnapshot(job);
-            unitOfWork.Track(job);
             return true;
         }
 

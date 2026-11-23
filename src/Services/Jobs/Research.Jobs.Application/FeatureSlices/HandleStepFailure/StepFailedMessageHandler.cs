@@ -1,5 +1,4 @@
 using Research.Shared.Contracts.Steps;
-using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
 using Research.Shared.Bus.Messaging;
@@ -12,7 +11,6 @@ namespace Research.Jobs.Application.HandleStepFailure;
 /// </summary>
 public sealed class StepFailedMessageHandler(
     StepReplyProcessor replyProcessor,
-    IResearchJobRepository jobs,
     GatheringPhaseCompleter gatheringCompleter,
     TimeProvider timeProvider) : IMessageHandler<StepFailed>
 {
@@ -27,19 +25,13 @@ public sealed class StepFailedMessageHandler(
             context,
             async job =>
             {
-                switch (JobStepKeys.KindOf(message.StepKey))
+                if (JobStepKeys.KindOf(message.StepKey) is StepKind.Plan or StepKind.Synthesize)
                 {
-                    case StepKind.Plan or StepKind.Synthesize:
-                        if (job.Fail(message.ErrorCode, timeProvider.GetUtcNow()))
-                        {
-                            await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false);
-                        }
-
-                        break;
-                    default:
-                        await gatheringCompleter.TryCompleteAsync(job, forcedReason: null, cancellationToken).ConfigureAwait(false);
-                        break;
+                    job.Fail(message.ErrorCode, timeProvider.GetUtcNow());
+                    return;
                 }
+
+                await gatheringCompleter.TryCompleteAsync(job, forcedReason: null, cancellationToken).ConfigureAwait(false);
             },
             cancellationToken);
     }

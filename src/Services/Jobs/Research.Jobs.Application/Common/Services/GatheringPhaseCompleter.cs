@@ -8,16 +8,14 @@ namespace Research.Jobs.Application.Common.Services;
 
 /// <summary>
 /// Checks whether a job's <see cref="JobStatus.Gathering"/> phase has reached a stopping condition and, if so,
-/// transitions and persists the job within the active unit of work.
+/// transitions the job. The caller saves it.
 /// </summary>
 /// <remarks>
 /// Gathering ends when any of the following holds: a forced reason is supplied (such as the synthesis cutoff),
 /// the job's token budget is exhausted, or all search and fetch steps have finished. The aggregate decides whether
-/// enough sources were indexed to enter <see cref="JobStatus.Synthesizing"/> or to fail the job; domain event
-/// handlers enqueue the resulting follow-up messages before commit.
+/// enough sources were indexed to enter <see cref="JobStatus.Synthesizing"/> or to fail the job.
 /// </remarks>
 public sealed partial class GatheringPhaseCompleter(
-    IResearchJobRepository jobs,
     IJobStepRepository steps,
     JobsMetrics metrics,
     IOptionsSnapshot<JobsOptions> options,
@@ -25,12 +23,12 @@ public sealed partial class GatheringPhaseCompleter(
     ILogger<GatheringPhaseCompleter> logger)
 {
     /// <summary>
-    /// Completes gathering for <paramref name="job"/> if a stopping condition is met and saves the transition.
+    /// Completes gathering for <paramref name="job"/> if a stopping condition is met.
     /// </summary>
     /// <param name="job">The locked job aggregate to inspect and update.</param>
     /// <param name="forcedReason">An explicit cutoff or override reason, or <see langword="null"/> to check budget and open step counts.</param>
     /// <param name="cancellationToken">Token to cancel the database operations.</param>
-    /// <returns><see langword="true"/> if gathering ended and the updated job was persisted; otherwise <see langword="false"/>.</returns>
+    /// <returns><see langword="true"/> if gathering ended; otherwise <see langword="false"/>.</returns>
     public async Task<bool> TryCompleteAsync(
         ResearchJob job,
         GatheringEndReason? forcedReason,
@@ -62,23 +60,8 @@ public sealed partial class GatheringPhaseCompleter(
         metrics.GatheringEnded(counts.FetchSucceeded);
         LogGatheringEnded(logger, job.Id, reason.Value, counts.FetchSucceeded, counts.GatheringFailed);
 
-        if (!job.EndGathering(reason.Value, counts.FetchSucceeded, options.Value.MinSources, timeProvider.GetUtcNow()))
-        {
-            return false;
-        }
-
-        var saved = await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false);
-        if (!saved)
-        {
-            LogTransitionLost(logger, job.Id, job.Status);
-            return false;
-        }
-
-        return true;
+        return job.EndGathering(reason.Value, counts.FetchSucceeded, options.Value.MinSources, timeProvider.GetUtcNow());
     }
-
-    [LoggerMessage(EventId = 2000, Level = LogLevel.Information, Message = "Job {JobId} transition to {To} lost a race; nothing changed")]
-    private static partial void LogTransitionLost(ILogger logger, Guid jobId, JobStatus to);
 
     [LoggerMessage(EventId = 2001, Level = LogLevel.Information, Message = "Job {JobId} gathering ended ({Reason}) with {Sources} sources and {FailedSteps} failed steps")]
     private static partial void LogGatheringEnded(ILogger logger, Guid jobId, GatheringEndReason reason, int sources, int failedSteps);

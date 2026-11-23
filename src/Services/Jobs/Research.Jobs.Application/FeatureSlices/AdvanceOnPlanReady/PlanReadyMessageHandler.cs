@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Options;
 using Research.Shared.Contracts.Planning;
-using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
 using Research.Shared.Bus.Messaging;
@@ -9,12 +8,11 @@ using Research.Shared.Core.Security;
 namespace Research.Jobs.Application.AdvanceOnPlanReady;
 
 /// <summary>
-/// The plan arrived: record its tokens and sub-questions on <see cref="ResearchJob"/>. On commit, domain event
-/// handlers emit one <c>SearchRequested</c> step per sub-question (or enqueue <c>JobFailed</c> for an empty plan).
+/// The plan arrived: record its tokens and sub-questions on <see cref="ResearchJob"/>. Saving the job publishes
+/// <c>JobGatheringStarted</c> (one <c>SearchRequested</c> step per sub-question) or <c>JobFailed</c> for an empty plan.
 /// </summary>
 public sealed class PlanReadyMessageHandler(
     StepReplyProcessor replyProcessor,
-    IResearchJobRepository jobs,
     TimeProvider timeProvider,
     IOptionsSnapshot<JobsOptions> options) : IMessageHandler<PlanReady>
 {
@@ -27,23 +25,17 @@ public sealed class PlanReadyMessageHandler(
             StepStatus.Succeeded,
             stepErrorCode: null,
             context,
-            async job =>
+            job =>
             {
-                if (job.RecordTokens(message.InputTokens + message.OutputTokens)
-                    && !await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false))
+                job.RecordTokens(message.InputTokens + message.OutputTokens);
+                if (job.Status == JobStatus.Planning)
                 {
-                    return;
+                    var settings = options.Value;
+                    var subQuestions = Normalize(message.SubQuestions, settings.MaxSubQuestions, settings.MaxSubQuestionLength);
+                    job.StartGathering(subQuestions, timeProvider.GetUtcNow());
                 }
 
-                if (job.Status != JobStatus.Planning)
-                {
-                    return;
-                }
-
-                var settings = options.Value;
-                var subQuestions = Normalize(message.SubQuestions, settings.MaxSubQuestions, settings.MaxSubQuestionLength);
-                job.StartGathering(subQuestions, timeProvider.GetUtcNow());
-                await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false);
+                return Task.CompletedTask;
             },
             cancellationToken);
     }

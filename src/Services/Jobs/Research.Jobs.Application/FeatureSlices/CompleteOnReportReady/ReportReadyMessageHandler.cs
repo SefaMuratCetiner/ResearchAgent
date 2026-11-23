@@ -15,7 +15,6 @@ namespace Research.Jobs.Application.CompleteOnReportReady;
 /// </summary>
 public sealed class ReportReadyMessageHandler(
     StepReplyProcessor replyProcessor,
-    IResearchJobRepository jobs,
     IJobStepRepository steps,
     IResearchReportRepository reports,
     IOptionsSnapshot<JobsOptions> options,
@@ -37,11 +36,7 @@ public sealed class ReportReadyMessageHandler(
                     return;
                 }
 
-                if (job.RecordTokens(message.InputTokens + message.OutputTokens)
-                    && !await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false))
-                {
-                    return;
-                }
+                job.RecordTokens(message.InputTokens + message.OutputTokens);
 
                 // Another service's message is input like any other (OWASP ASI07, LLM05): bounded text, citations
                 // with web URLs only.
@@ -63,10 +58,7 @@ public sealed class ReportReadyMessageHandler(
                 await reports.InsertAsync(report, cancellationToken).ConfigureAwait(false);
 
                 var counts = await steps.CountAsync(job.Id, cancellationToken).ConfigureAwait(false);
-                if (job.Complete(counts.GatheringFailed, report.Truncated, timeProvider.GetUtcNow()))
-                {
-                    await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false);
-                }
+                job.Complete(counts.GatheringFailed, report.Truncated, timeProvider.GetUtcNow());
             },
             cancellationToken);
     }

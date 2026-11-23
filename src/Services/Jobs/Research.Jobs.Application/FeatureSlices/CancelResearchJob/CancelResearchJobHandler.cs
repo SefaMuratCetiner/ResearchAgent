@@ -1,5 +1,6 @@
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Models;
+using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
 using Research.Shared.Bus.Mediation;
 using Research.Shared.Bus.Transactions;
@@ -13,6 +14,7 @@ namespace Research.Jobs.Application.CancelResearchJob;
 public sealed class CancelResearchJobHandler(
     IUnitOfWork unitOfWork,
     IResearchJobRepository jobs,
+    ResearchJobService jobService,
     TimeProvider timeProvider) : ICommandHandler<CancelResearchJobCommand, Result<ResearchJobDto>>
 {
     public async Task<Result<ResearchJobDto>> HandleAsync(CancelResearchJobCommand command, CancellationToken cancellationToken)
@@ -36,7 +38,7 @@ public sealed class CancelResearchJobHandler(
 
         if (!wasCancelled)
         {
-            if (!await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false))
+            if (!await jobService.SaveAsync(job, cancellationToken).ConfigureAwait(false))
             {
                 throw new InvalidOperationException("The cancel transition failed although the job row is locked.");
             }

@@ -19,6 +19,7 @@ namespace Research.Jobs.Application.RecoverStuckJobs;
 public sealed partial class RecoverStuckJobsHandler(
     IUnitOfWork unitOfWork,
     IResearchJobRepository jobs,
+    ResearchJobService jobService,
     IJobStepRepository steps,
     GatheringPhaseCompleter gatheringCompleter,
     IOutbox outbox,
@@ -88,7 +89,7 @@ public sealed partial class RecoverStuckJobsHandler(
             {
                 if (job.Fail(code, now))
                 {
-                    await jobs.UpdateAsync(job, cancellationToken).ConfigureAwait(false);
+                    await jobService.SaveAsync(job, cancellationToken).ConfigureAwait(false);
                 }
 
                 await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -98,9 +99,10 @@ public sealed partial class RecoverStuckJobsHandler(
             gatheringStepFailed = true;
         }
 
-        if (gatheringStepFailed)
+        if (gatheringStepFailed
+            && await gatheringCompleter.TryCompleteAsync(job, forcedReason: null, cancellationToken).ConfigureAwait(false))
         {
-            await gatheringCompleter.TryCompleteAsync(job, forcedReason: null, cancellationToken).ConfigureAwait(false);
+            await jobService.SaveAsync(job, cancellationToken).ConfigureAwait(false);
         }
 
         await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);

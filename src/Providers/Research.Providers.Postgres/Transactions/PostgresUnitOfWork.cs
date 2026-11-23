@@ -1,22 +1,17 @@
 using Npgsql;
 using Research.Shared.Core.Actors;
-using Research.Shared.Bus.Events;
 using Research.Shared.Bus.Transactions;
-using Research.Shared.Kernel.Events;
 
 namespace Research.Providers.Postgres.Transactions;
 
 /// <summary>
 /// Scoped Postgres unit of work. Holds the active connection/transaction, provides automatic audit timestamps and
-/// actor identity to Postgres repositories, tracks modified aggregates, and dispatches uncommitted domain events
-/// inside the transaction right before committing.
+/// actor identity to Postgres repositories.
 /// </summary>
 public sealed class PostgresUnitOfWork : IUnitOfWork
 {
-    private readonly IDomainEventDispatcher? _dispatcher;
     private readonly TimeProvider _timeProvider;
     private readonly ICurrentActor? _actor;
-    private readonly List<IHasDomainEvents> _tracked = [];
     private NpgsqlConnection? _connection;
     private NpgsqlTransaction? _transaction;
     private bool _committed;
@@ -24,14 +19,12 @@ public sealed class PostgresUnitOfWork : IUnitOfWork
     public PostgresUnitOfWork(
         NpgsqlDataSource dataSource,
         TimeProvider? timeProvider = null,
-        ICurrentActor? actor = null,
-        IDomainEventDispatcher? dispatcher = null)
+        ICurrentActor? actor = null)
     {
         ArgumentNullException.ThrowIfNull(dataSource);
         DataSource = dataSource;
         _timeProvider = timeProvider ?? TimeProvider.System;
         _actor = actor;
-        _dispatcher = dispatcher;
     }
 
     public NpgsqlDataSource DataSource { get; }
@@ -75,7 +68,6 @@ public sealed class PostgresUnitOfWork : IUnitOfWork
             _connection = connection;
             _transaction = transaction;
             _committed = false;
-            _tracked.Clear();
             return new TransactionLease(this);
         }
         catch
@@ -85,27 +77,9 @@ public sealed class PostgresUnitOfWork : IUnitOfWork
         }
     }
 
-    public void Track(IHasDomainEvents entity)
-    {
-        ArgumentNullException.ThrowIfNull(entity);
-        if (!_tracked.Contains(entity))
-        {
-            _tracked.Add(entity);
-        }
-    }
-
     public async Task CommitAsync(CancellationToken cancellationToken)
     {
-        var transaction = ActiveTransaction;
-        if (_dispatcher is not null)
-        {
-            while (DrainEvents() is { Count: > 0 } events)
-            {
-                await _dispatcher.DispatchAsync(events, cancellationToken).ConfigureAwait(false);
-            }
-        }
-
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        await ActiveTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         _committed = true;
     }
 
@@ -120,7 +94,6 @@ public sealed class PostgresUnitOfWork : IUnitOfWork
         _transaction = null;
         _connection = null;
         _committed = false;
-        _tracked.Clear();
 
         if (transaction is not null)
         {
@@ -147,21 +120,6 @@ public sealed class PostgresUnitOfWork : IUnitOfWork
         {
             await connection.DisposeAsync().ConfigureAwait(false);
         }
-    }
-
-    private List<IDomainEvent> DrainEvents()
-    {
-        var events = new List<IDomainEvent>();
-        foreach (var entity in _tracked)
-        {
-            if (entity.DomainEvents.Count > 0)
-            {
-                events.AddRange(entity.DomainEvents);
-                entity.ClearDomainEvents();
-            }
-        }
-
-        return events;
     }
 
     public readonly struct ConnectionLease : IAsyncDisposable

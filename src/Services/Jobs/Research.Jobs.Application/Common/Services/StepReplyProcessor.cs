@@ -9,8 +9,8 @@ namespace Research.Jobs.Application.Common.Services;
 
 /// <summary>
 /// Executes a worker reply handler inside a single idempotent transaction: records the message in the inbox, locks the
-/// target <see cref="ResearchJob"/> row, marks the corresponding <see cref="JobStep"/> finished, and invokes the
-/// slice's state-transition callback.
+/// target <see cref="ResearchJob"/> row, marks the corresponding <see cref="JobStep"/> finished, invokes the slice's
+/// state-transition callback, and saves the job once through <see cref="ResearchJobService"/>.
 /// </summary>
 /// <remarks>
 /// Duplicate deliveries, replies for unknown or already-terminal jobs (late results), and replies for already-finished
@@ -21,12 +21,13 @@ public sealed partial class StepReplyProcessor(
     IInbox inbox,
     IResearchJobRepository jobs,
     IJobStepRepository steps,
+    ResearchJobService jobService,
     JobsMetrics metrics,
     ILogger<StepReplyProcessor> logger)
 {
     /// <summary>
-    /// Processes a single step reply atomically and invokes <paramref name="onStepFinished"/> with the locked job
-    /// when the reply is new and transitions the step to a finished state.
+    /// Processes a single step reply atomically: when the reply is new and finishes its step, invokes
+    /// <paramref name="onStepFinished"/> with the locked job, then saves the job and publishes its domain events.
     /// </summary>
     public async Task ProcessAsync(
         Guid jobId,
@@ -79,8 +80,16 @@ public sealed partial class StepReplyProcessor(
 
         metrics.StepFinished(JobStepKeys.KindOf(stepKey), stepStatus, stepErrorCode);
         await onStepFinished(job).ConfigureAwait(false);
+        if (!await jobService.SaveAsync(job, cancellationToken).ConfigureAwait(false))
+        {
+            LogTransitionLost(logger, job.Id, job.Status);
+        }
+
         await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
+
+    [LoggerMessage(EventId = 2000, Level = LogLevel.Information, Message = "Job {JobId} transition to {To} lost a race; nothing changed")]
+    private static partial void LogTransitionLost(ILogger logger, Guid jobId, JobStatus to);
 
     [LoggerMessage(EventId = 2010, Level = LogLevel.Debug, Message = "Message {MessageId} ({MessageType}) was already processed")]
     private static partial void LogDuplicate(ILogger logger, Guid messageId, string messageType);

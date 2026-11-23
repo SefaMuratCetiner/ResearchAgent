@@ -16,6 +16,7 @@ namespace Research.Jobs.Application.EnforceJobDeadlines;
 public sealed class EnforceJobDeadlinesHandler(
     IUnitOfWork unitOfWork,
     IResearchJobRepository jobs,
+    ResearchJobService jobService,
     GatheringPhaseCompleter gatheringCompleter,
     IOptionsSnapshot<JobsOptions> options,
     TimeProvider timeProvider,
@@ -40,7 +41,7 @@ public sealed class EnforceJobDeadlinesHandler(
             changed += await WithLockedJobAsync(
                 jobId,
                 job => job.Status.IsTerminal() || job.DeadlineAt > now,
-                job => job.Expire(now) ? jobs.UpdateAsync(job, cancellationToken) : Task.FromResult(false),
+                job => Task.FromResult(job.Expire(now)),
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -70,7 +71,8 @@ public sealed class EnforceJobDeadlinesHandler(
             return 0;
         }
 
-        var changed = await change(job).ConfigureAwait(false);
+        var changed = await change(job).ConfigureAwait(false)
+            && await jobService.SaveAsync(job, cancellationToken).ConfigureAwait(false);
         await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
         return changed ? 1 : 0;
     }

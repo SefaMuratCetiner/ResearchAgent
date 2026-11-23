@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Jobs.Application.Common.Interfaces;
 using Research.Jobs.Application.Common.Models;
+using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
 using Research.Shared.Bus.Mediation;
 using Research.Shared.Core.Security;
@@ -11,13 +12,13 @@ using Research.Shared.Kernel.Results;
 namespace Research.Jobs.Application.CreateResearchJob;
 
 /// <summary>
-/// Creates the job in <see cref="JobStatus.Planning"/> with both clocks set. On commit,
-/// <c>JobCreatedDomainEventHandler</c> starts the plan step (<c>PlanRequested</c>) and enqueues <c>JobCreated</c>
-/// inside the same transaction (§16.1).
+/// Creates the job in <see cref="JobStatus.Planning"/> with both clocks set. <see cref="ResearchJobService"/> publishes
+/// <c>JobCreated</c>, whose handler starts the plan step (<c>PlanRequested</c>) inside the same transaction (§16.1).
 /// </summary>
 public sealed partial class CreateResearchJobHandler(
     IUnitOfWork unitOfWork,
     IResearchJobRepository jobs,
+    ResearchJobService jobService,
     IOptionsSnapshot<JobsOptions> options,
     TimeProvider timeProvider,
     ILogger<CreateResearchJobHandler> logger) : ICommandHandler<CreateResearchJobCommand, Result<CreateResearchJobResult>>
@@ -55,7 +56,7 @@ public sealed partial class CreateResearchJobHandler(
 
         await using (await unitOfWork.BeginAsync(cancellationToken).ConfigureAwait(false))
         {
-            if (!await jobs.InsertAsync(job, cancellationToken).ConfigureAwait(false))
+            if (!await jobService.CreateAsync(job, cancellationToken).ConfigureAwait(false))
             {
                 // Another request with the same key won the insert race; answer with its job.
                 var winner = await jobs.FindByIdempotencyKeyAsync(command.IdempotencyKey!, cancellationToken).ConfigureAwait(false)
