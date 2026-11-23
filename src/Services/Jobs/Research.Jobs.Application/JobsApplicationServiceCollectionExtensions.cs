@@ -30,6 +30,8 @@ public static class JobsApplicationServiceCollectionExtensions
 
         services.AddJobsApplicationCore();
 
+        services.AddScoped<ResearchJobCreationService>();
+        services.AddScoped<ResearchJobCancellationService>();
         services.AddScoped<IRequestHandler<CreateResearchJobCommand, Result<CreateResearchJobResult>>, CreateResearchJobHandler>();
         services.AddScoped<IRequestValidator<CreateResearchJobCommand>, CreateResearchJobCommandValidator>();
         services.AddScoped<IRequestHandler<GetResearchJobQuery, Result<ResearchJobView>>, GetResearchJobHandler>();
@@ -49,6 +51,9 @@ public static class JobsApplicationServiceCollectionExtensions
         services.TryAddScoped<StepReplyProcessor>();
         services.TryAddScoped<GatheringPhaseCompleter>();
         services.TryAddScoped<FetchStepService>();
+        services.TryAddScoped<JobProgressService>();
+        services.AddScoped<StuckJobRecoveryService>();
+        services.AddScoped<JobDeadlineService>();
         services.AddScoped<IRequestHandler<RecoverStuckJobsCommand, int>, RecoverStuckJobsHandler>();
         services.AddScoped<IRequestHandler<EnforceJobDeadlinesCommand, int>, EnforceJobDeadlinesHandler>();
 
@@ -60,13 +65,14 @@ public static class JobsApplicationServiceCollectionExtensions
         services.TryAddSingleton<JobsMetrics>();
         services.TryAddScoped<StepDispatcher>();
         services.TryAddScoped<ResearchJobService>();
+        services.TryAddScoped<JobTerminationService>();
 
-        services.AddScoped<IDomainEventHandler<JobCreatedDomainEvent>, JobCreatedDomainEventHandler>();
-        services.AddScoped<IDomainEventHandler<JobGatheringStartedDomainEvent>, JobGatheringStartedDomainEventHandler>();
-        services.AddScoped<IDomainEventHandler<JobSynthesisStartedDomainEvent>, JobSynthesisStartedDomainEventHandler>();
-        services.AddScoped<IDomainEventHandler<JobCompletedDomainEvent>, JobCompletedDomainEventHandler>();
-        services.AddScoped<IDomainEventHandler<JobCancelledDomainEvent>, JobCancelledDomainEventHandler>();
-        services.AddScoped<IDomainEventHandler<JobFailedDomainEvent>, JobFailedDomainEventHandler>();
-        services.AddScoped<IDomainEventHandler<JobExpiredDomainEvent>, JobExpiredDomainEventHandler>();
+        services.AddScoped<IDomainEventHandler<ResearchJobCreatedDomainEvent>, ResearchJobCreatedEventHandler>();
+        services.AddScoped<IDomainEventHandler<GatheringStartedDomainEvent>, GatheringStartedEventHandler>();
+        services.AddScoped<IDomainEventHandler<SynthesisStartedDomainEvent>, SynthesisStartedEventHandler>();
+        services.AddScoped<IDomainEventHandler<CompletedDomainEvent>, CompletedEventHandler>();
+        services.AddScoped<IDomainEventHandler<CancelledDomainEvent>, CancelledEventHandler>();
+        services.AddScoped<IDomainEventHandler<FailedDomainEvent>, FailedEventHandler>();
+        services.AddScoped<IDomainEventHandler<ExpiredDomainEvent>, ExpiredEventHandler>();
     }
 }

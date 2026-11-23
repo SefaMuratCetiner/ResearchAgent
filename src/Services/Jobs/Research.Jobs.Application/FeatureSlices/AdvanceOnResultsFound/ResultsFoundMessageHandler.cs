@@ -1,38 +1,12 @@
-using Research.Shared.Contracts.Search;
 using Research.Jobs.Application.Common.Services;
-using Research.Jobs.Domain;
 using Research.Shared.Bus.Messaging;
+using Research.Shared.Contracts.Search;
 
 namespace Research.Jobs.Application.AdvanceOnResultsFound;
 
-/// <summary>
-/// A search answered: record its tokens, start a fetch step per new URL, then check whether gathering ended.
-/// </summary>
-public sealed class ResultsFoundMessageHandler(
-    StepReplyProcessor replyProcessor,
-    FetchStepService fetchSteps,
-    GatheringPhaseCompleter gatheringCompleter) : IMessageHandler<ResultsFound>
+/// <summary>A search answered: fetch steps start for its new URLs.</summary>
+public sealed class ResultsFoundMessageHandler(StepReplyProcessor replies, JobProgressService progress) : IMessageHandler<ResultsFound>
 {
-    public Task HandleAsync(ResultsFound message, MessageContext context, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(message);
-        return replyProcessor.ProcessAsync(
-            message.JobId,
-            message.StepKey,
-            StepStatus.Succeeded,
-            stepErrorCode: null,
-            context,
-            async job =>
-            {
-                job.RecordTokens(message.InputTokens + message.OutputTokens);
-                if (job.Status != JobStatus.Gathering)
-                {
-                    return;
-                }
-
-                await fetchSteps.StartFetchesAsync(job, message.Hits, cancellationToken).ConfigureAwait(false);
-                await gatheringCompleter.TryCompleteAsync(job, forcedReason: null, cancellationToken).ConfigureAwait(false);
-            },
-            cancellationToken);
-    }
+    public Task HandleAsync(ResultsFound message, MessageContext context, CancellationToken cancellationToken) =>
+        replies.ProcessAsync(message, context, job => progress.ApplyResultsAsync(job, message, cancellationToken), cancellationToken);
 }

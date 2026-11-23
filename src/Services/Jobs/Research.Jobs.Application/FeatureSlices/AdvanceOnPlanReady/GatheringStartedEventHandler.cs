@@ -1,18 +1,18 @@
 using Microsoft.Extensions.Options;
-using Research.Shared.Contracts.Search;
 using Research.Jobs.Application.Common.Services;
 using Research.Jobs.Domain;
 using Research.Jobs.Domain.Events;
 using Research.Shared.Bus.Events;
+using Research.Shared.Contracts.Search;
 
 namespace Research.Jobs.Application.AdvanceOnPlanReady;
 
-/// <summary>Emits one <c>SearchRequested</c> step per sub-question when a job enters Gathering.</summary>
-public sealed class JobGatheringStartedDomainEventHandler(
+/// <summary>Starts one <c>SearchRequested</c> step per sub-question when a job enters Gathering.</summary>
+public sealed class GatheringStartedEventHandler(
     StepDispatcher stepDispatcher,
-    IOptionsSnapshot<JobsOptions> options) : IDomainEventHandler<JobGatheringStartedDomainEvent>
+    IOptionsSnapshot<JobsOptions> options) : IDomainEventHandler<GatheringStartedDomainEvent>
 {
-    public async Task HandleAsync(JobGatheringStartedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task HandleAsync(GatheringStartedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
         var resultsPerSearch = options.Value.ResultsPerSearch;

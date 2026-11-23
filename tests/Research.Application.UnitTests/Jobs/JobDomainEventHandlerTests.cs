@@ -6,7 +6,6 @@ using Research.Shared.Contracts.Jobs;
 using Research.Shared.Contracts.Planning;
 using Research.Shared.Contracts.Search;
 using Research.Shared.Contracts.Synthesis;
-using Research.Jobs.Application;
 using Research.Jobs.Application.AdvanceOnPlanReady;
 using Research.Jobs.Application.CancelResearchJob;
 using Research.Jobs.Application.Common.Interfaces;
@@ -17,6 +16,7 @@ using Research.Jobs.Application.EnforceJobDeadlines;
 using Research.Jobs.Application.FailResearchJob;
 using Research.Jobs.Application.Observability;
 using Research.Jobs.Application.StartSynthesis;
+using Research.Jobs.Application;
 using Research.Jobs.Domain;
 using Research.Jobs.Domain.Events;
 using Research.Shared.Bus.Messaging;
@@ -32,7 +32,7 @@ public sealed class JobDomainEventHandlerTests
     {
         var steps = new FakeStepRepository();
         var outbox = new FakeOutbox();
-        var handler = new JobCreatedDomainEventHandler(
+        var handler = new ResearchJobCreatedEventHandler(
             CreateStepDispatcher(steps, outbox),
             outbox,
             new FakeEnvelopeFactory(),
@@ -40,7 +40,7 @@ public sealed class JobDomainEventHandlerTests
             TestOptions.Of(new JobsOptions()));
 
         var jobId = Guid.NewGuid();
-        await handler.HandleAsync(new JobCreatedDomainEvent(jobId, "What is pgvector?", T0), CancellationToken.None);
+        await handler.HandleAsync(new ResearchJobCreatedDomainEvent(jobId, "What is pgvector?", T0), CancellationToken.None);
 
         steps.Inserted.Select(static s => s.StepKey).ShouldBe([JobStepKeys.Plan]);
         outbox.Enqueued.Select(static e => e.MessageType).ShouldBe([PlanRequested.MessageType, JobCreated.MessageType]);
@@ -51,9 +51,9 @@ public sealed class JobDomainEventHandlerTests
     {
         var steps = new FakeStepRepository();
         var outbox = new FakeOutbox();
-        var handler = new JobGatheringStartedDomainEventHandler(CreateStepDispatcher(steps, outbox), TestOptions.Of(new JobsOptions()));
+        var handler = new GatheringStartedEventHandler(CreateStepDispatcher(steps, outbox), TestOptions.Of(new JobsOptions()));
 
-        await handler.HandleAsync(new JobGatheringStartedDomainEvent(Guid.NewGuid(), ["Q1", "Q2"], T0), CancellationToken.None);
+        await handler.HandleAsync(new GatheringStartedDomainEvent(Guid.NewGuid(), ["Q1", "Q2"], T0), CancellationToken.None);
 
         steps.Inserted.Select(static s => s.StepKey).ShouldBe([JobStepKeys.Search(0), JobStepKeys.Search(1)]);
         outbox.Enqueued.Select(static e => e.MessageType).ShouldBe([SearchRequested.MessageType, SearchRequested.MessageType]);
@@ -64,9 +64,9 @@ public sealed class JobDomainEventHandlerTests
     {
         var steps = new FakeStepRepository();
         var outbox = new FakeOutbox();
-        var handler = new JobSynthesisStartedDomainEventHandler(CreateStepDispatcher(steps, outbox), TestOptions.Of(new JobsOptions()));
+        var handler = new SynthesisStartedEventHandler(CreateStepDispatcher(steps, outbox), TestOptions.Of(new JobsOptions()));
 
-        await handler.HandleAsync(new JobSynthesisStartedDomainEvent(Guid.NewGuid(), "Question", ["Q1"], T0), CancellationToken.None);
+        await handler.HandleAsync(new SynthesisStartedDomainEvent(Guid.NewGuid(), "Question", ["Q1"], T0), CancellationToken.None);
 
         steps.Inserted.Select(static s => s.StepKey).ShouldBe([JobStepKeys.Synthesize]);
         outbox.Enqueued.Select(static e => e.MessageType).ShouldBe([SynthesisRequested.MessageType]);
@@ -76,18 +76,17 @@ public sealed class JobDomainEventHandlerTests
     public async Task TerminalHandlers_EnqueueExpectedOutboxEvents()
     {
         var outbox = new FakeOutbox();
-        var envelopes = new FakeEnvelopeFactory();
-        var metrics = new JobsMetrics(TestMeters.Create());
+        var termination = new JobTerminationService(
+            outbox,
+            new FakeEnvelopeFactory(),
+            new JobsMetrics(TestMeters.Create()),
+            NullLogger<JobTerminationService>.Instance);
         var jobId = Guid.NewGuid();
 
-        await new JobCompletedDomainEventHandler(outbox, envelopes, metrics, NullLogger<JobCompletedDomainEventHandler>.Instance)
-            .HandleAsync(new JobCompletedDomainEvent(jobId, JobStatus.Completed, [], T0, T0.AddSeconds(10)), CancellationToken.None);
-        await new JobCancelledDomainEventHandler(outbox, envelopes, metrics, NullLogger<JobCancelledDomainEventHandler>.Instance)
-            .HandleAsync(new JobCancelledDomainEvent(jobId, T0, T0.AddSeconds(10)), CancellationToken.None);
-        await new JobFailedDomainEventHandler(outbox, envelopes, metrics, NullLogger<JobFailedDomainEventHandler>.Instance)
-            .HandleAsync(new JobFailedDomainEvent(jobId, JobsErrors.NoSourcesFound.Code, T0, T0.AddSeconds(10)), CancellationToken.None);
-        await new JobExpiredDomainEventHandler(outbox, envelopes, metrics, NullLogger<JobExpiredDomainEventHandler>.Instance)
-            .HandleAsync(new JobExpiredDomainEvent(jobId, T0, T0.AddSeconds(10)), CancellationToken.None);
+        await new CompletedEventHandler(termination).HandleAsync(new CompletedDomainEvent(jobId, JobStatus.Completed, [], T0, T0.AddSeconds(10)), CancellationToken.None);
+        await new CancelledEventHandler(termination).HandleAsync(new CancelledDomainEvent(jobId, T0, T0.AddSeconds(10)), CancellationToken.None);
+        await new FailedEventHandler(termination).HandleAsync(new FailedDomainEvent(jobId, JobsErrors.NoSourcesFound.Code, T0, T0.AddSeconds(10)), CancellationToken.None);
+        await new ExpiredEventHandler(termination).HandleAsync(new ExpiredDomainEvent(jobId, T0, T0.AddSeconds(10)), CancellationToken.None);
 
         outbox.Enqueued.Select(static e => e.MessageType).ShouldBe([
             JobCompleted.MessageType,

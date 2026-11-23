@@ -78,7 +78,7 @@ public sealed class ServiceRegistrationTests
         apiServices.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<GetResearchJobQuery, Result<ResearchJobView>>));
         apiServices.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<GetResearchReportQuery, Result<ResearchReportDto>>));
         apiServices.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<CancelResearchJobCommand, Result<ResearchJobDto>>));
-        apiServices.ShouldContain(static d => d.ServiceType == typeof(IDomainEventHandler<JobCreatedDomainEvent>));
+        apiServices.ShouldContain(static d => d.ServiceType == typeof(IDomainEventHandler<ResearchJobCreatedDomainEvent>));
         apiServices.ShouldNotContain(static d => d.ServiceType == typeof(StepReplyProcessor));
         apiServices.ShouldNotContain(static d => d.ServiceType == typeof(GatheringPhaseCompleter));
 
@@ -89,7 +89,10 @@ public sealed class ServiceRegistrationTests
         workerServices.ShouldContain(static d => d.ServiceType == typeof(GatheringPhaseCompleter));
         workerServices.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<RecoverStuckJobsCommand, int>));
         workerServices.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<EnforceJobDeadlinesCommand, int>));
-        workerServices.ShouldContain(static d => d.ServiceType == typeof(IDomainEventHandler<JobCompletedDomainEvent>));
+        workerServices.ShouldContain(static d => d.ServiceType == typeof(JobProgressService));
+        workerServices.ShouldContain(static d => d.ServiceType == typeof(StuckJobRecoveryService));
+        workerServices.ShouldContain(static d => d.ServiceType == typeof(JobDeadlineService));
+        workerServices.ShouldContain(static d => d.ServiceType == typeof(IDomainEventHandler<CompletedDomainEvent>));
         workerServices.ShouldNotContain(static d => d.ServiceType == typeof(IRequestHandler<CreateResearchJobCommand, Result<CreateResearchJobResult>>));
     }
 

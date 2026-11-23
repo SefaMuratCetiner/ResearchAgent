@@ -1,5 +1,5 @@
 using Research.Jobs.Application;
-using Research.Jobs.Application.AdvanceOnPlanReady;
+using Research.Jobs.Application.Common.Services;
 
 namespace Research.Application.UnitTests.Jobs;
 
@@ -8,7 +8,7 @@ public sealed class PlanNormalizationTests
     [Fact]
     public void Normalize_TrimsDropsBlanksDeduplicatesAndCaps()
     {
-        var result = PlanReadyMessageHandler.Normalize(
+        var result = JobProgressService.Normalize(
             ["  What is A? ", "", "what is a?", "   ", "What is B?", "What is C?"],
             max: 2);
 
@@ -16,12 +16,12 @@ public sealed class PlanNormalizationTests
     }
 
     [Fact]
-    public void Normalize_NullPlan_IsEmpty() => PlanReadyMessageHandler.Normalize(null, 5).ShouldBeEmpty();
+    public void Normalize_NullPlan_IsEmpty() => JobProgressService.Normalize(null, 5).ShouldBeEmpty();
 
     [Fact]
     public void Normalize_MakesOneCleanLineAndCutsLongOnes()
     {
-        var result = PlanReadyMessageHandler.Normalize(
+        var result = JobProgressService.Normalize(
             ["What\u200B is\nA?\u202E", new string('x', 500)],
             max: 5,
             maxLength: 50);

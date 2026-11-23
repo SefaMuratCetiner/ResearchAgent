@@ -4,6 +4,8 @@ using Research.Jobs.Application.Observability;
 using Research.Jobs.Domain;
 using Research.Shared.Bus.Transactions;
 using Research.Shared.Bus.Messaging;
+using Research.Shared.Contracts;
+using Research.Shared.Contracts.Steps;
 
 namespace Research.Jobs.Application.Common.Services;
 
@@ -28,18 +30,22 @@ public sealed partial class StepReplyProcessor(
     /// <summary>
     /// Processes a single step reply atomically: when the reply is new and finishes its step, invokes
     /// <paramref name="onStepFinished"/> with the locked job, then saves the job and publishes its domain events.
+    /// A <see cref="StepFailed"/> reply finishes its step as failed with the worker's code; any other reply as succeeded.
     /// </summary>
-    public async Task ProcessAsync(
-        Guid jobId,
-        string stepKey,
-        StepStatus stepStatus,
-        string? stepErrorCode,
+    public async Task ProcessAsync<TReply>(
+        TReply reply,
         MessageContext context,
         Func<ResearchJob, Task> onStepFinished,
         CancellationToken cancellationToken)
+        where TReply : IIntegrationMessage
     {
+        ArgumentNullException.ThrowIfNull(reply);
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(onStepFinished);
+        var (jobId, stepKey) = (reply.JobId, reply.StepKey);
+        var (stepStatus, stepErrorCode) = reply is StepFailed failed
+            ? (StepStatus.Failed, failed.ErrorCode)
+            : (StepStatus.Succeeded, (string?)null);
 
         await using var _ = await unitOfWork.BeginAsync(cancellationToken).ConfigureAwait(false);
 

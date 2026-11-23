@@ -47,7 +47,7 @@ public sealed class ResearchJob : AggregateRoot
 
     public bool BudgetExhausted => TokensUsed >= TokenBudget;
 
-    /// <summary>Creates a new job in <see cref="JobStatus.Planning"/> with both clocks set and raises <see cref="JobCreatedDomainEvent"/>.</summary>
+    /// <summary>Creates a new job in <see cref="JobStatus.Planning"/> with both clocks set and raises <see cref="ResearchJobCreatedDomainEvent"/>.</summary>
     public static ResearchJob Create(
         Guid id,
         string question,
@@ -83,7 +83,7 @@ public sealed class ResearchJob : AggregateRoot
             job.StampCreated(now, createdBy);
         }
 
-        job.Raise(new JobCreatedDomainEvent(id, question, now));
+        job.Raise(new ResearchJobCreatedDomainEvent(id, question, now));
         return job;
     }
 
@@ -165,7 +165,7 @@ public sealed class ResearchJob : AggregateRoot
 
         Status = JobStatus.Gathering;
         Plan = [.. subQuestions];
-        Raise(new JobGatheringStartedDomainEvent(Id, Plan, now));
+        Raise(new GatheringStartedDomainEvent(Id, Plan, now));
         return true;
     }
 
@@ -189,7 +189,7 @@ public sealed class ResearchJob : AggregateRoot
         }
 
         Status = JobStatus.Synthesizing;
-        Raise(new JobSynthesisStartedDomainEvent(Id, Question, Plan, now));
+        Raise(new SynthesisStartedDomainEvent(Id, Question, Plan, now));
         return true;
     }
 
@@ -214,7 +214,7 @@ public sealed class ResearchJob : AggregateRoot
         ErrorCode = null;
         Warnings = [];
         CompletedAt = now;
-        Raise(new JobCancelledDomainEvent(Id, CreatedAt, now));
+        Raise(new CancelledDomainEvent(Id, CreatedAt, now));
         return Result.Success();
     }
 
@@ -231,7 +231,7 @@ public sealed class ResearchJob : AggregateRoot
         ErrorCode = null;
         Warnings = warnings;
         CompletedAt = now;
-        Raise(new JobCompletedDomainEvent(Id, status, warnings, CreatedAt, now));
+        Raise(new CompletedDomainEvent(Id, status, warnings, CreatedAt, now));
         return true;
     }
 
@@ -248,7 +248,7 @@ public sealed class ResearchJob : AggregateRoot
         ErrorCode = errorCode;
         Warnings = [];
         CompletedAt = now;
-        Raise(new JobFailedDomainEvent(Id, errorCode, CreatedAt, now));
+        Raise(new FailedDomainEvent(Id, errorCode, CreatedAt, now));
         return true;
     }
 
@@ -264,7 +264,7 @@ public sealed class ResearchJob : AggregateRoot
         ErrorCode = JobsErrors.DeadlineExceeded.Code;
         Warnings = [];
         CompletedAt = now;
-        Raise(new JobExpiredDomainEvent(Id, CreatedAt, now));
+        Raise(new ExpiredDomainEvent(Id, CreatedAt, now));
         return true;
     }
 

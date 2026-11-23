@@ -27,7 +27,7 @@ public sealed class ResearchJobAggregateTests
         job.DeadlineAt.ShouldBe(T0 + TimeSpan.FromMinutes(5));
         job.CreatedAt.ShouldBe(T0);
         job.CreatedBy.ShouldBe("api");
-        var created = job.DomainEvents.OfType<JobCreatedDomainEvent>().ShouldHaveSingleItem();
+        var created = job.DomainEvents.OfType<ResearchJobCreatedDomainEvent>().ShouldHaveSingleItem();
         created.JobId.ShouldBe(id);
         created.Question.ShouldBe("What is pgvector?");
     }
@@ -61,7 +61,7 @@ public sealed class ResearchJobAggregateTests
         started.ShouldBeTrue();
         job.Status.ShouldBe(JobStatus.Gathering);
         job.Plan.ShouldBe(["Q1", "Q2"]);
-        var startedEvent = job.DomainEvents.OfType<JobGatheringStartedDomainEvent>().ShouldHaveSingleItem();
+        var startedEvent = job.DomainEvents.OfType<GatheringStartedDomainEvent>().ShouldHaveSingleItem();
         startedEvent.SubQuestions.Count.ShouldBe(2);
     }
 
@@ -76,7 +76,7 @@ public sealed class ResearchJobAggregateTests
         started.ShouldBeFalse();
         job.Status.ShouldBe(JobStatus.Failed);
         job.ErrorCode.ShouldBe(JobsErrors.PlanEmpty.Code);
-        var failed = job.DomainEvents.OfType<JobFailedDomainEvent>().ShouldHaveSingleItem();
+        var failed = job.DomainEvents.OfType<FailedDomainEvent>().ShouldHaveSingleItem();
         failed.ErrorCode.ShouldBe(JobsErrors.PlanEmpty.Code);
     }
 
@@ -92,7 +92,7 @@ public sealed class ResearchJobAggregateTests
         changed.ShouldBeTrue();
         job.Status.ShouldBe(JobStatus.Synthesizing);
         job.GatheringEndReason.ShouldBe(GatheringEndReason.AllStepsDone);
-        job.DomainEvents.ShouldContain(e => e is JobSynthesisStartedDomainEvent);
+        job.DomainEvents.ShouldContain(e => e is SynthesisStartedDomainEvent);
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public sealed class ResearchJobAggregateTests
         changed.ShouldBeTrue();
         job.Status.ShouldBe(JobStatus.Failed);
         job.ErrorCode.ShouldBe(JobsErrors.InsufficientSources.Code);
-        var failed = job.DomainEvents.OfType<JobFailedDomainEvent>().ShouldHaveSingleItem();
+        var failed = job.DomainEvents.OfType<FailedDomainEvent>().ShouldHaveSingleItem();
         failed.ErrorCode.ShouldBe(JobsErrors.InsufficientSources.Code);
     }
 
@@ -121,7 +121,7 @@ public sealed class ResearchJobAggregateTests
         first.IsSuccess.ShouldBeTrue();
         job.Status.ShouldBe(JobStatus.Cancelled);
         job.DomainEvents.Count.ShouldBe(1);
-        job.DomainEvents.Single().ShouldBeOfType<JobCancelledDomainEvent>();
+        job.DomainEvents.Single().ShouldBeOfType<CancelledDomainEvent>();
 
         var second = job.Cancel(T0.AddSeconds(15));
         second.IsSuccess.ShouldBeTrue();
@@ -167,7 +167,7 @@ public sealed class ResearchJobAggregateTests
         completed.ShouldBeTrue();
         job.Status.ShouldBe(JobStatus.CompletedWithWarnings);
         job.Warnings.ShouldBe([JobsErrors.CutoffReached.Code, JobsErrors.StepsFailed.Code, JobsErrors.OutputTruncatedWarning]);
-        var completedEvent = job.DomainEvents.OfType<JobCompletedDomainEvent>().ShouldHaveSingleItem();
+        var completedEvent = job.DomainEvents.OfType<CompletedDomainEvent>().ShouldHaveSingleItem();
         completedEvent.Status.ShouldBe(JobStatus.CompletedWithWarnings);
     }
 
