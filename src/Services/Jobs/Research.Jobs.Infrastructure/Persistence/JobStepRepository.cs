@@ -98,30 +98,33 @@ public sealed class JobStepRepository(PostgresUnitOfWork unitOfWork) : IJobStepR
 
     public async Task<StepCounts> CountAsync(Guid jobId, CancellationToken cancellationToken)
     {
-        var row = await unitOfWork.ActiveConnection.QuerySingleAsync<CountRow>(new CommandDefinition(
+        await using var db = await unitOfWork.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var row = await db.Connection.QuerySingleAsync<CountRow>(new CommandDefinition(
             CountSql,
             new { JobId = jobId },
-            unitOfWork.ActiveTransaction,
+            db.Transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return new StepCounts((int)row.GatheringRunning, (int)row.FetchSucceeded, (int)row.GatheringFailed, (int)row.FetchTotal);
     }
 
     public async Task<IReadOnlyList<JobStep>> ListAsync(Guid jobId, CancellationToken cancellationToken)
     {
-        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        var rows = await connection.QueryAsync<StepRow>(new CommandDefinition(
+        await using var db = await unitOfWork.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var rows = await db.Connection.QueryAsync<StepRow>(new CommandDefinition(
             $"SELECT {Columns} FROM job_steps WHERE job_id = @JobId ORDER BY created_at, id",
             new { JobId = jobId },
+            db.Transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return rows.Select(static r => r.ToDomain()).ToList();
     }
 
     public async Task<IReadOnlyList<JobStep>> ListExpiredAsync(Guid jobId, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        var rows = await unitOfWork.ActiveConnection.QueryAsync<StepRow>(new CommandDefinition(
+        await using var db = await unitOfWork.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var rows = await db.Connection.QueryAsync<StepRow>(new CommandDefinition(
             $"SELECT {Columns} FROM job_steps WHERE job_id = @JobId AND status = 'Running' AND lease_until <= @Now ORDER BY created_at, id",
             new { JobId = jobId, Now = now },
-            unitOfWork.ActiveTransaction,
+            db.Transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return rows.Select(static r => r.ToDomain()).ToList();
     }

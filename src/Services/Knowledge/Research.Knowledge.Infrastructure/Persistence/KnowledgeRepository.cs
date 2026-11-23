@@ -46,10 +46,11 @@ public sealed class KnowledgeRepository(PostgresUnitOfWork unitOfWork) : IKnowle
 
     public async Task<StoredDocument?> FindDocumentAsync(string contentHash, string embeddingModel, CancellationToken cancellationToken)
     {
-        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        var row = await connection.QuerySingleOrDefaultAsync<DocumentRow>(new CommandDefinition(
+        await using var db = await unitOfWork.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var row = await db.Connection.QuerySingleOrDefaultAsync<DocumentRow>(new CommandDefinition(
             FindSql,
             new { ContentHash = contentHash, EmbeddingModel = embeddingModel },
+            db.Transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return row is null ? null : new StoredDocument(row.Id, row.PassageCount);
     }
@@ -143,10 +144,11 @@ public sealed class KnowledgeRepository(PostgresUnitOfWork unitOfWork) : IKnowle
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(embedding);
-        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        var rows = await connection.QueryAsync<MatchRow>(new CommandDefinition(
+        await using var db = await unitOfWork.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var rows = await db.Connection.QueryAsync<MatchRow>(new CommandDefinition(
             SearchSql,
             new { JobId = jobId, Embedding = ToVectorLiteral(embedding), EmbeddingModel = embeddingModel, TopK = topK },
+            db.Transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return rows.Select(static r => new PassageMatch(r.PassageId, r.DocumentId, r.Url, r.Title, r.Text, r.Score)).ToList();
     }

@@ -75,20 +75,22 @@ public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IRese
 
     public async Task<ResearchJob?> GetAsync(Guid id, CancellationToken cancellationToken)
     {
-        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        var row = await connection.QuerySingleOrDefaultAsync<JobRow>(new CommandDefinition(
+        await using var db = await unitOfWork.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var row = await db.Connection.QuerySingleOrDefaultAsync<JobRow>(new CommandDefinition(
             $"SELECT {Columns} FROM research_jobs WHERE id = @Id",
             new { Id = id },
+            db.Transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return RehydrateAndTrack(row);
     }
 
     public async Task<ResearchJob?> FindByIdempotencyKeyAsync(string idempotencyKey, CancellationToken cancellationToken)
     {
-        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        var row = await connection.QuerySingleOrDefaultAsync<JobRow>(new CommandDefinition(
+        await using var db = await unitOfWork.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var row = await db.Connection.QuerySingleOrDefaultAsync<JobRow>(new CommandDefinition(
             $"SELECT {Columns} FROM research_jobs WHERE idempotency_key = @Key",
             new { Key = idempotencyKey },
+            db.Transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return RehydrateAndTrack(row);
     }
@@ -171,10 +173,11 @@ public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IRese
     public async Task<int> CountActiveAsync(int limit, CancellationToken cancellationToken)
     {
         // Counting a LIMITed subquery stops early, so the check stays cheap however many jobs are active.
-        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        return await connection.ExecuteScalarAsync<int>(new CommandDefinition(
+        await using var db = await unitOfWork.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        return await db.Connection.ExecuteScalarAsync<int>(new CommandDefinition(
             $"SELECT count(*)::int FROM (SELECT 1 FROM research_jobs WHERE status IN {ActiveStatuses} LIMIT @Limit) active",
             new { Limit = limit },
+            db.Transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
     }
 
@@ -211,10 +214,11 @@ public sealed class ResearchJobRepository(PostgresUnitOfWork unitOfWork) : IRese
 
     private async Task<IReadOnlyList<Guid>> ListIdsAsync(string sql, DateTimeOffset now, int limit, CancellationToken cancellationToken)
     {
-        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        var ids = await connection.QueryAsync<Guid>(new CommandDefinition(
+        await using var db = await unitOfWork.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var ids = await db.Connection.QueryAsync<Guid>(new CommandDefinition(
             sql,
             new { Now = now, Limit = limit },
+            db.Transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return ids.AsList();
     }

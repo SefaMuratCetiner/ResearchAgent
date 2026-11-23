@@ -10,7 +10,6 @@ using Research.Shared.Bus.Messaging.Consuming;
 using Research.Shared.Bus.Messaging.Observability;
 using Research.Shared.Bus.Messaging.Outbox;
 using Research.Shared.Bus.Messaging.Sending;
-using Research.Shared.Bus.Transactions;
 using Research.Shared.Contracts;
 using Research.Shared.Kernel.Events;
 using Research.Shared.Kernel.Results;
@@ -23,7 +22,7 @@ public static class BusServiceCollectionExtensions
     /// <summary>
     /// Registers the unified mediator (<see cref="IMediator"/>, <see cref="ISender"/>,
     /// <see cref="IPublisher"/>, <see cref="IDomainEventDispatcher"/>) and the standard cross-cutting pipeline behaviors
-    /// in order: Telemetry → Logging → Inbox → Validation → Transaction.
+    /// in order: Telemetry → Logging → Inbox → Validation.
     /// </summary>
     public static IServiceCollection AddMediation(this IServiceCollection services)
     {
@@ -39,13 +38,12 @@ public static class BusServiceCollectionExtensions
         services.TryAddScoped<IDomainEventDispatcher>(static sp => sp.GetRequiredService<Mediator>());
 
         // Request pipeline (outermost to innermost):
-        // 1. Telemetry → 2. Logging → 3. Inbox → 4. Validation → 5. Transaction → Handler
+        // 1. Telemetry → 2. Logging → 3. Inbox → 4. Validation → Handler
         // Telemetry sits outside Logging so mediation logs carry the mediation span id.
         services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IPipelineBehavior<,>), typeof(TelemetryBehavior<,>)));
         services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>)));
         services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IPipelineBehavior<,>), typeof(InboxBehavior<,>)));
         services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>)));
-        services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>)));
 
         // Domain event pipeline (outermost to innermost):
         // 1. Telemetry → 2. Logging → 0..N Domain Event Handlers

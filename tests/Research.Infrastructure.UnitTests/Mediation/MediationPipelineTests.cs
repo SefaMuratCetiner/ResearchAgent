@@ -5,7 +5,6 @@ using Research.Shared.Contracts.Search;
 using Research.Shared.Bus.Mediation;
 using Research.Shared.Bus.Events;
 using Research.Shared.Bus.Messaging;
-using Research.Shared.Bus.Transactions;
 using Research.Shared.Kernel.Events;
 using Research.Shared.Kernel.Results;
 using Research.Shared.Bus.Mediation.Observability;
@@ -16,7 +15,6 @@ namespace Research.Infrastructure.UnitTests.Mediation;
 public sealed class MediationPipelineTests
 {
     private static readonly Error ValidationError = new("test.invalid", ErrorKind.Invalid, "Invalid input.");
-    private static readonly Error BusinessFailure = new("test.rejected", ErrorKind.Rule, "Rejected.");
 
     [Fact]
     public async Task Behaviors_ExecuteInRegistrationOrder_AroundCommandHandler()
@@ -55,51 +53,6 @@ public sealed class MediationPipelineTests
         result.IsSuccess.ShouldBeFalse();
         result.Error.ShouldBe(ValidationError);
         trace.ShouldBeEmpty();
-    }
-
-    [Fact]
-    public async Task TransactionBehavior_CommitsOnSuccess_AndSkipsCommitOnBusinessFailureOrException()
-    {
-        var uow = new RecordingUnitOfWork();
-        var services = CreateBaseServices();
-        services.AddScoped<IUnitOfWork>(_ => uow);
-        services.AddScoped<IRequestHandler<TransactionalCommand, Result>, TransactionalHandler>();
-
-        await using var provider = services.BuildServiceProvider();
-
-        await using (var scope = provider.CreateAsyncScope())
-        {
-            var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-            var ok = await sender.SendAsync(new TransactionalCommand(ShouldFail: false, ShouldThrow: false), CancellationToken.None);
-            ok.IsSuccess.ShouldBeTrue();
-        }
-
-        uow.Begun.ShouldBe(1);
-        uow.Committed.ShouldBe(1);
-        uow.Disposed.ShouldBe(1);
-
-        await using (var scope = provider.CreateAsyncScope())
-        {
-            var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-            var failed = await sender.SendAsync(new TransactionalCommand(ShouldFail: true, ShouldThrow: false), CancellationToken.None);
-            failed.IsSuccess.ShouldBeFalse();
-            failed.Error.ShouldBe(BusinessFailure);
-        }
-
-        uow.Begun.ShouldBe(2);
-        uow.Committed.ShouldBe(1);
-        uow.Disposed.ShouldBe(2);
-
-        await using (var scope = provider.CreateAsyncScope())
-        {
-            var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-            await Should.ThrowAsync<InvalidOperationException>(() =>
-                sender.SendAsync(new TransactionalCommand(ShouldFail: false, ShouldThrow: true), CancellationToken.None));
-        }
-
-        uow.Begun.ShouldBe(3);
-        uow.Committed.ShouldBe(1);
-        uow.Disposed.ShouldBe(3);
     }
 
     [Fact]
@@ -231,58 +184,6 @@ public sealed class MediationPipelineTests
             var response = await next(cancellationToken);
             trace.Add(name + ":after");
             return response;
-        }
-    }
-
-    private sealed record TransactionalCommand(bool ShouldFail, bool ShouldThrow)
-        : ICommand<Result>, ITransactionalCommand;
-
-    private sealed class TransactionalHandler : ICommandHandler<TransactionalCommand, Result>
-    {
-        public Task<Result> HandleAsync(TransactionalCommand request, CancellationToken cancellationToken)
-        {
-            if (request.ShouldThrow)
-            {
-                throw new InvalidOperationException("boom");
-            }
-
-            return Task.FromResult(request.ShouldFail ? Result.Failure(BusinessFailure) : Result.Success());
-        }
-    }
-
-    private sealed class RecordingUnitOfWork : IUnitOfWork
-    {
-        public int Begun { get; private set; }
-
-        public int Committed { get; private set; }
-
-        public int Disposed { get; private set; }
-
-        public Task<IAsyncDisposable> BeginAsync(CancellationToken cancellationToken)
-        {
-            Begun++;
-            return Task.FromResult<IAsyncDisposable>(new Lease(this));
-        }
-
-        public Task CommitAsync(CancellationToken cancellationToken)
-        {
-            Committed++;
-            return Task.CompletedTask;
-        }
-
-        public void Track(IHasDomainEvents entity)
-        {
-        }
-
-        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
-
-        private sealed class Lease(RecordingUnitOfWork owner) : IAsyncDisposable
-        {
-            public ValueTask DisposeAsync()
-            {
-                owner.Disposed++;
-                return ValueTask.CompletedTask;
-            }
         }
     }
 

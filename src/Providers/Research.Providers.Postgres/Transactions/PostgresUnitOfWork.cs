@@ -46,6 +46,21 @@ public sealed class PostgresUnitOfWork : IUnitOfWork
     public NpgsqlTransaction ActiveTransaction =>
         _transaction ?? throw new InvalidOperationException("No active transaction. Call IUnitOfWork.BeginAsync first.");
 
+    /// <summary>
+    /// Returns the active transaction's connection when a transaction is open, or opens a short-lived connection from
+    /// <see cref="DataSource"/> otherwise. Disposing the lease closes only connections it opened.
+    /// </summary>
+    public async ValueTask<ConnectionLease> OpenConnectionAsync(CancellationToken cancellationToken)
+    {
+        if (_transaction is not null && _connection is not null)
+        {
+            return new ConnectionLease(_connection, _transaction, owned: false);
+        }
+
+        var connection = await DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        return new ConnectionLease(connection, transaction: null, owned: true);
+    }
+
     public async Task<IAsyncDisposable> BeginAsync(CancellationToken cancellationToken)
     {
         if (_transaction is not null)
@@ -147,6 +162,24 @@ public sealed class PostgresUnitOfWork : IUnitOfWork
         }
 
         return events;
+    }
+
+    public readonly struct ConnectionLease : IAsyncDisposable
+    {
+        private readonly bool _owned;
+
+        internal ConnectionLease(NpgsqlConnection connection, NpgsqlTransaction? transaction, bool owned)
+        {
+            Connection = connection;
+            Transaction = transaction;
+            _owned = owned;
+        }
+
+        public NpgsqlConnection Connection { get; }
+
+        public NpgsqlTransaction? Transaction { get; }
+
+        public ValueTask DisposeAsync() => _owned ? Connection.DisposeAsync() : ValueTask.CompletedTask;
     }
 
     private sealed class TransactionLease(PostgresUnitOfWork owner) : IAsyncDisposable

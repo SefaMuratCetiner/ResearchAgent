@@ -28,10 +28,11 @@ public sealed class PostgresInbox(PostgresUnitOfWork unitOfWork) : IInbox
 
     public async Task<bool> HasProcessedAsync(Guid messageId, string consumer, CancellationToken cancellationToken)
     {
-        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        return await connection.ExecuteScalarAsync<bool>(new CommandDefinition(
+        await using var db = await unitOfWork.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        return await db.Connection.ExecuteScalarAsync<bool>(new CommandDefinition(
             ExistsSql,
             new { MessageId = messageId, Consumer = consumer },
+            db.Transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
     }
 }

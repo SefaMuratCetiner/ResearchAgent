@@ -50,10 +50,11 @@ public sealed class ResearchReportRepository(PostgresUnitOfWork unitOfWork) : IR
 
     public async Task<ResearchReport?> GetAsync(Guid jobId, CancellationToken cancellationToken)
     {
-        await using var connection = await unitOfWork.DataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        var row = await connection.QuerySingleOrDefaultAsync<ReportRow>(new CommandDefinition(
+        await using var db = await unitOfWork.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var row = await db.Connection.QuerySingleOrDefaultAsync<ReportRow>(new CommandDefinition(
             SelectSql,
             new { JobId = jobId },
+            db.Transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);
         return row?.ToDomain();
     }
