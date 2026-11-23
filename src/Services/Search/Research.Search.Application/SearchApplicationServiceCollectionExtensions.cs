@@ -2,9 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Research.Search.Application.Observability;
 using Research.Search.Application.RunSearch;
-using Research.Shared.Bus.Mediation;
-using Research.Shared.Core.Search;
-using Research.Shared.Kernel.Results;
 
 namespace Research.Search.Application;
 
@@ -16,7 +13,7 @@ public static class SearchApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.TryAddSingleton<SearchMetrics>();
-        services.AddScoped<IRequestHandler<RunSearchCommand, Result<SearchResponse>>, RunSearchHandler>();
+        services.AddScoped<WebSearchService>();
 
         return services;
     }

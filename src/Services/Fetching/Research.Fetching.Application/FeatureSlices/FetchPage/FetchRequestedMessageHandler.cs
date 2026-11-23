@@ -2,7 +2,6 @@ using Research.Shared.Contracts.Fetching;
 using Research.Shared.Contracts.Steps;
 using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Domain;
-using Research.Shared.Bus.Mediation;
 using Research.Shared.Bus.Messaging;
 using Research.Shared.Bus.Transactions;
 
@@ -15,7 +14,7 @@ namespace Research.Fetching.Application.FetchPage;
 /// the outbox. Transient failures throw and the message is retried.
 /// </summary>
 public sealed class FetchRequestedMessageHandler(
-    ISender sender,
+    PageFetchService fetchService,
     IFetchedDocumentRepository documents,
     IUnitOfWork unitOfWork,
     IInbox inbox,
@@ -30,8 +29,7 @@ public sealed class FetchRequestedMessageHandler(
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(context);
 
-        var result = await sender.SendAsync(new FetchPageCommand(message.JobId, message.Url, message.Title), cancellationToken)
-            .ConfigureAwait(false);
+        var result = await fetchService.FetchAsync(message, cancellationToken).ConfigureAwait(false);
 
         await using var _ = await unitOfWork.BeginAsync(cancellationToken).ConfigureAwait(false);
         if (!await inbox.TryRecordAsync(context.MessageId, context.Consumer, cancellationToken).ConfigureAwait(false))

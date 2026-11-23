@@ -4,9 +4,9 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Research.Shared.Contracts.Planning;
 using Research.Shared.Core.Caching;
 using Research.Shared.Core.Llm;
-using Research.Shared.Bus.Mediation;
 using Research.Shared.Core.Security;
 using Research.Shared.Kernel.Results;
 
@@ -17,23 +17,23 @@ namespace Research.Planning.Application.CreatePlan;
 /// produces it. A refusal, a truncated answer or an empty plan is a business failure; transport errors throw so the
 /// pipeline retries.
 /// </summary>
-public sealed partial class CreatePlanHandler(
+public sealed partial class ResearchPlanningService(
     ILlmClient llm,
     ICacheStore cache,
     IOptionsSnapshot<PlanningOptions> options,
-    ILogger<CreatePlanHandler> logger) : ICommandHandler<CreatePlanCommand, Result<ResearchPlan>>
+    ILogger<ResearchPlanningService> logger)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    public async Task<Result<ResearchPlan>> HandleAsync(CreatePlanCommand command, CancellationToken cancellationToken)
+    public async Task<Result<ResearchPlan>> PlanAsync(PlanRequested message, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(message);
         var settings = options.Value;
-        var cacheKey = CacheKey(command);
+        var cacheKey = CacheKey(message);
 
         if (settings.CacheTimeToLive > TimeSpan.Zero
             && await cache.GetAsync(cacheKey, cancellationToken).ConfigureAwait(false) is { } cached
-            && TryParse(cached, command.MaxSubQuestions) is { Count: > 0 } cachedPlan)
+            && TryParse(cached, message.MaxSubQuestions) is { Count: > 0 } cachedPlan)
         {
             LogCacheHit(logger, cachedPlan.Count);
             return Result<ResearchPlan>.Success(new ResearchPlan(cachedPlan, 0, 0, FromCache: true));
@@ -45,7 +45,7 @@ public sealed partial class CreatePlanHandler(
                 settings.Model,
                 settings.Effort,
                 PlanningPrompts.System,
-                PlanningPrompts.User(command.Question, command.MaxSubQuestions, new PromptFence()),
+                PlanningPrompts.User(message.Question, message.MaxSubQuestions, new PromptFence()),
                 settings.MaxTokens,
                 PlanningPrompts.Schema),
             cancellationToken).ConfigureAwait(false);
@@ -56,7 +56,7 @@ public sealed partial class CreatePlanHandler(
         }
 
         var subQuestions = completion.StopReason == LlmStopReason.Completed
-            ? TryParse(completion.Text, command.MaxSubQuestions)
+            ? TryParse(completion.Text, message.MaxSubQuestions)
             : null;
         if (subQuestions is not { Count: > 0 })
         {
@@ -94,9 +94,9 @@ public sealed partial class CreatePlanHandler(
         }
     }
 
-    private static string CacheKey(CreatePlanCommand command)
+    private static string CacheKey(PlanRequested message)
     {
-        var normalized = command.Question.Trim().ToUpperInvariant() + "|" + command.MaxSubQuestions.ToString(CultureInfo.InvariantCulture);
+        var normalized = message.Question.Trim().ToUpperInvariant() + "|" + message.MaxSubQuestions.ToString(CultureInfo.InvariantCulture);
         return "planning:v1:" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(normalized)));
     }
 

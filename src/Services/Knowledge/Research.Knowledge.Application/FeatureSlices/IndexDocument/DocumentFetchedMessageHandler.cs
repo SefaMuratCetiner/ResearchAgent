@@ -5,7 +5,6 @@ using Research.Shared.Contracts.Steps;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Application.Observability;
 using Research.Knowledge.Domain;
-using Research.Shared.Bus.Mediation;
 using Research.Shared.Bus.Messaging;
 using Research.Shared.Bus.Transactions;
 
@@ -18,7 +17,7 @@ namespace Research.Knowledge.Application.IndexDocument;
 /// indexed), the job link and the reply in the outbox.
 /// </summary>
 public sealed partial class DocumentFetchedMessageHandler(
-    ISender sender,
+    DocumentEmbeddingService embeddingService,
     IKnowledgeRepository repository,
     IUnitOfWork unitOfWork,
     IInbox inbox,
@@ -34,9 +33,7 @@ public sealed partial class DocumentFetchedMessageHandler(
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(context);
 
-        var prepared = await sender.SendAsync(
-            new PrepareDocumentCommand(message.Url, message.Title, message.BlobKey, message.ContentHash),
-            cancellationToken).ConfigureAwait(false);
+        var prepared = await embeddingService.EmbedAsync(message, cancellationToken).ConfigureAwait(false);
 
         await using var _ = await unitOfWork.BeginAsync(cancellationToken).ConfigureAwait(false);
         if (!await inbox.TryRecordAsync(context.MessageId, context.Consumer, cancellationToken).ConfigureAwait(false))

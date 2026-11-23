@@ -1,6 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Research.Shared.Bus.Mediation;
-using Research.Shared.Kernel.Results;
 using Research.Synthesis.Application.WriteReport;
 
 namespace Research.Synthesis.Application;
@@ -12,7 +10,7 @@ public static class SynthesisApplicationServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddScoped<IRequestHandler<WriteReportCommand, Result<WrittenReport>>, WriteReportHandler>();
+        services.AddScoped<ReportSynthesisService>();
 
         return services;
     }

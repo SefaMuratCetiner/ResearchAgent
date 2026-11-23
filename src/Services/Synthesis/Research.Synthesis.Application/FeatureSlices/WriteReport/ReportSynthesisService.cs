@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Research.Shared.Contracts.Synthesis;
 using Research.Shared.Core.Llm;
 using Research.Shared.Core.Logging;
-using Research.Shared.Bus.Mediation;
 using Research.Shared.Kernel.Results;
 using Research.Shared.Core.Security;
 using Research.Synthesis.Application.Common.Interfaces;
@@ -20,7 +20,7 @@ namespace Research.Synthesis.Application.WriteReport;
 /// <c>synthesis.uncited_report</c> rather than presenting unsupported text as research (OWASP LLM09, ASI09).
 /// </para>
 /// </summary>
-public sealed partial class WriteReportHandler : ICommandHandler<WriteReportCommand, Result<WrittenReport>>
+public sealed partial class ReportSynthesisService
 {
     private readonly IKnowledgeRetriever _retriever;
     private readonly ILlmClient _llm;
@@ -29,7 +29,7 @@ public sealed partial class WriteReportHandler : ICommandHandler<WriteReportComm
     private readonly ILogger _logger;
     private readonly ILogger _reportLogger;
 
-    public WriteReportHandler(
+    public ReportSynthesisService(
         IKnowledgeRetriever retriever,
         ILlmClient llm,
         IOptionsSnapshot<SynthesisOptions> options,
@@ -41,18 +41,19 @@ public sealed partial class WriteReportHandler : ICommandHandler<WriteReportComm
         _llm = llm;
         _options = options;
         _contentOptions = contentOptions;
-        _logger = loggerFactory.CreateLogger<WriteReportHandler>();
+        _logger = loggerFactory.CreateLogger<ReportSynthesisService>();
         _reportLogger = loggerFactory.CreateLogger(ContentLogCategories.Reports);
     }
 
-    public async Task<Result<WrittenReport>> HandleAsync(WriteReportCommand command, CancellationToken cancellationToken)
+    public async Task<Result<WrittenReport>> SynthesizeAsync(SynthesisRequested message, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(message);
         var settings = _options.Value;
+        var subQuestions = message.SubQuestions ?? [];
 
-        var queries = new List<string> { command.Question };
-        queries.AddRange(command.SubQuestions);
-        var passages = await _retriever.RetrieveAsync(command.JobId, queries, command.TopK, cancellationToken).ConfigureAwait(false);
+        var queries = new List<string> { message.Question };
+        queries.AddRange(subQuestions);
+        var passages = await _retriever.RetrieveAsync(message.JobId, queries, message.TopK, cancellationToken).ConfigureAwait(false);
         if (passages.Count == 0)
         {
             return Result<WrittenReport>.Failure(SynthesisErrors.NoPassages);
@@ -66,7 +67,7 @@ public sealed partial class WriteReportHandler : ICommandHandler<WriteReportComm
             return Result<WrittenReport>.Failure(SynthesisErrors.NoPassages);
         }
 
-        var completion = await CompleteReportAsync(command, context, fence, settings, cancellationToken).ConfigureAwait(false);
+        var completion = await CompleteReportAsync(message.Question, subQuestions, context, fence, settings, cancellationToken).ConfigureAwait(false);
         if (completion.StopReason == LlmStopReason.Refused)
         {
             return Result<WrittenReport>.Failure(SynthesisErrors.LlmRefused);
@@ -76,7 +77,7 @@ public sealed partial class WriteReportHandler : ICommandHandler<WriteReportComm
         if (sanitized.Removals.Total > 0 && _logger.IsEnabled(LogLevel.Warning))
         {
             var removals = sanitized.Removals.ToString();
-            LogOutputSanitized(_logger, command.JobId, removals);
+            LogOutputSanitized(_logger, message.JobId, removals);
         }
 
         var content = sanitized.Content;
@@ -89,20 +90,21 @@ public sealed partial class WriteReportHandler : ICommandHandler<WriteReportComm
         var cited = citations.CitedIn(content);
         if (cited.Count == 0)
         {
-            LogUncited(_logger, command.JobId);
-            LogTruncatedReport(command.JobId, content, 0);
+            LogUncited(_logger, message.JobId);
+            LogTruncatedReport(message.JobId, content, 0);
             return Result<WrittenReport>.Failure(SynthesisErrors.UncitedReport);
         }
 
-        LogReportWritten(_logger, command.JobId, passages.Count, cited.Count, truncated);
-        LogTruncatedReport(command.JobId, content, cited.Count);
+        LogReportWritten(_logger, message.JobId, passages.Count, cited.Count, truncated);
+        LogTruncatedReport(message.JobId, content, cited.Count);
 
         return Result<WrittenReport>.Success(
             new WrittenReport(content, cited, truncated, completion.InputTokens, completion.OutputTokens, completion.Model));
     }
 
     private Task<LlmCompletion> CompleteReportAsync(
-        WriteReportCommand command,
+        string question,
+        IReadOnlyList<string> subQuestions,
         string context,
         PromptFence fence,
         SynthesisOptions settings,
@@ -113,7 +115,7 @@ public sealed partial class WriteReportHandler : ICommandHandler<WriteReportComm
                 settings.Model,
                 settings.Effort,
                 SynthesisPrompts.System,
-                SynthesisPrompts.User(command.Question, command.SubQuestions, context, fence),
+                SynthesisPrompts.User(question, subQuestions, context, fence),
                 settings.MaxTokens),
             cancellationToken);
 

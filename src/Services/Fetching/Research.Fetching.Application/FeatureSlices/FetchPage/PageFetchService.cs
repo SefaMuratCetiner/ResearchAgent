@@ -5,9 +5,9 @@ using Microsoft.Extensions.Options;
 using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Application.Observability;
 using Research.Fetching.Domain;
+using Research.Shared.Contracts.Fetching;
 using Research.Shared.Core.Documents;
 using Research.Shared.Core.Logging;
-using Research.Shared.Bus.Mediation;
 using Research.Shared.Core.Security;
 using Research.Shared.Kernel.Results;
 
@@ -19,7 +19,7 @@ namespace Research.Fetching.Application.FetchPage;
 /// blob). The extracted text is logged under <see cref="ContentLogCategories.Documents"/>. No database work: the
 /// message handler records the result in one transaction with the reply.
 /// </summary>
-public sealed partial class FetchPageHandler : ICommandHandler<FetchPageCommand, Result<FetchedPage>>
+public sealed partial class PageFetchService
 {
     private readonly IRobotsPolicy _robots;
     private readonly IDomainThrottle _throttle;
@@ -30,10 +30,10 @@ public sealed partial class FetchPageHandler : ICommandHandler<FetchPageCommand,
     private readonly IOptionsSnapshot<FetchingOptions> _options;
     private readonly IOptionsSnapshot<ContentLoggingOptions> _contentOptions;
     private readonly TimeProvider _timeProvider;
-    private readonly ILogger<FetchPageHandler> _logger;
+    private readonly ILogger<PageFetchService> _logger;
     private readonly ILogger _contentLogger;
 
-    public FetchPageHandler(
+    public PageFetchService(
         IRobotsPolicy robots,
         IDomainThrottle throttle,
         IPageDownloader downloader,
@@ -55,33 +55,33 @@ public sealed partial class FetchPageHandler : ICommandHandler<FetchPageCommand,
         _options = options;
         _contentOptions = contentOptions;
         _timeProvider = timeProvider;
-        _logger = loggerFactory.CreateLogger<FetchPageHandler>();
+        _logger = loggerFactory.CreateLogger<PageFetchService>();
         _contentLogger = loggerFactory.CreateLogger(ContentLogCategories.Documents);
     }
 
-    public async Task<Result<FetchedPage>> HandleAsync(FetchPageCommand command, CancellationToken cancellationToken)
+    public async Task<Result<FetchedPage>> FetchAsync(FetchRequested message, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(message);
         var started = _timeProvider.GetTimestamp();
-        var result = await FetchAsync(command, cancellationToken).ConfigureAwait(false);
+        var result = await FetchPageAsync(message, cancellationToken).ConfigureAwait(false);
         var outcome = result.IsSuccess ? "ok" : result.Error.Code;
         _metrics.PageProcessed(outcome, _timeProvider.GetElapsedTime(started));
 
         if (result.IsSuccess)
         {
-            LogFetched(_logger, command.JobId, command.Url, result.Value.CharacterCount, result.Value.SizeBytes);
+            LogFetched(_logger, message.JobId, message.Url, result.Value.CharacterCount, result.Value.SizeBytes);
         }
         else
         {
-            LogRejected(_logger, command.JobId, command.Url, result.Error.Code);
+            LogRejected(_logger, message.JobId, message.Url, result.Error.Code);
         }
 
         return result;
     }
 
-    private async Task<Result<FetchedPage>> FetchAsync(FetchPageCommand command, CancellationToken cancellationToken)
+    private async Task<Result<FetchedPage>> FetchPageAsync(FetchRequested message, CancellationToken cancellationToken)
     {
-        if (!TryParseWebUrl(command.Url, out var url))
+        if (!TryParseWebUrl(message.Url, out var url))
         {
             return Result<FetchedPage>.Failure(FetchingErrors.InvalidUrl);
         }
@@ -101,7 +101,7 @@ public sealed partial class FetchPageHandler : ICommandHandler<FetchPageCommand,
             return Result<FetchedPage>.Failure(FetchingErrors.BlockedDomain);
         }
 
-        var fallbackTitle = string.IsNullOrWhiteSpace(command.Title) ? url.Host : command.Title.Trim();
+        var fallbackTitle = string.IsNullOrWhiteSpace(message.Title) ? url.Host : message.Title.Trim();
         var extracted = _extractor.Extract(page.Body, page.MediaType, page.Charset, fallbackTitle);
         var text = extracted.Text.Length > settings.MaxContentChars ? extracted.Text[..settings.MaxContentChars] : extracted.Text;
         if (text.Length < settings.MinContentChars)
@@ -109,7 +109,7 @@ public sealed partial class FetchPageHandler : ICommandHandler<FetchPageCommand,
             return Result<FetchedPage>.Failure(FetchingErrors.ContentTooShort);
         }
 
-        if (ShouldRejectForInjection(command, text, settings))
+        if (ShouldRejectForInjection(message, text, settings))
         {
             return Result<FetchedPage>.Failure(FetchingErrors.SuspectedInjection);
         }
@@ -121,12 +121,12 @@ public sealed partial class FetchPageHandler : ICommandHandler<FetchPageCommand,
         if (_contentLogger.IsEnabled(LogLevel.Information))
         {
             var truncated = LogContentTruncator.Truncate(text, _contentOptions.Value.MaxChars);
-            LogPageText(_contentLogger, command.JobId, command.Url, extracted.Title, truncated);
+            LogPageText(_contentLogger, message.JobId, message.Url, extracted.Title, truncated);
         }
 
         return Result<FetchedPage>.Success(new FetchedPage(
-            command.Url,
-            Sha256Hex(command.Url),
+            message.Url,
+            Sha256Hex(message.Url),
             page.FinalUrl.AbsoluteUri,
             extracted.Title,
             page.MediaType,
@@ -136,7 +136,7 @@ public sealed partial class FetchPageHandler : ICommandHandler<FetchPageCommand,
             blobKey));
     }
 
-    private bool ShouldRejectForInjection(FetchPageCommand command, string text, FetchingOptions settings)
+    private bool ShouldRejectForInjection(FetchRequested message, string text, FetchingOptions settings)
     {
         var signals = PromptInjectionSignals.Find(text);
         if (signals.Count == 0)
@@ -148,7 +148,7 @@ public sealed partial class FetchPageHandler : ICommandHandler<FetchPageCommand,
         if (_logger.IsEnabled(LogLevel.Warning))
         {
             var summary = string.Join(", ", signals);
-            LogInjectionSignals(_logger, command.JobId, command.Url, summary, settings.RejectSuspectedInjection);
+            LogInjectionSignals(_logger, message.JobId, message.Url, summary, settings.RejectSuspectedInjection);
         }
 
         return settings.RejectSuspectedInjection;

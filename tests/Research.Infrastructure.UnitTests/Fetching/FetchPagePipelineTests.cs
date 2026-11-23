@@ -9,6 +9,7 @@ using Research.Fetching.Application.Observability;
 using Research.Fetching.Domain;
 using Research.Fetching.Infrastructure.Download;
 using Research.Fetching.Infrastructure.Extraction;
+using Research.Shared.Contracts.Fetching;
 using Research.Shared.Core.Logging;
 using Research.Infrastructure.UnitTests.TestSupport;
 
@@ -23,14 +24,14 @@ public sealed class FetchPagePipelineTests
     {
         var site = new FakeSite();
         site.Pages["/article"] = Html($"<title>T</title><p>{LongParagraph}</p>");
-        var (handler, store) = Create(site);
+        var (fetchService, store) = Create(site);
 
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/article", "Search title"), CancellationToken.None);
+        var result = await fetchService.FetchAsync(new FetchRequested(Guid.NewGuid(), "fetch", "https://example.com/article", "Search title"), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value!.Title.ShouldBe("T");
         result.Value.BlobKey.ShouldBe($"pages/{result.Value.ContentHash}.txt");
-        result.Value.ContentHash.ShouldBe(FetchPageHandler.Sha256Hex(store.Blobs[result.Value.BlobKey]));
+        result.Value.ContentHash.ShouldBe(PageFetchService.Sha256Hex(store.Blobs[result.Value.BlobKey]));
         result.Value.CharacterCount.ShouldBe(LongParagraph.Length);
     }
 
@@ -39,9 +40,9 @@ public sealed class FetchPagePipelineTests
     {
         var site = new FakeSite { Robots = "User-agent: *\nDisallow: /\n" };
         site.Pages["/article"] = Html($"<p>{LongParagraph}</p>");
-        var (handler, _) = Create(site);
+        var (fetchService, _) = Create(site);
 
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/article", null), CancellationToken.None);
+        var result = await fetchService.FetchAsync(new FetchRequested(Guid.NewGuid(), "fetch", "https://example.com/article", null), CancellationToken.None);
 
         result.Error!.Code.ShouldBe(FetchingErrors.FetchDisallowed.Code);
         site.Requests.ShouldNotContain("/article");
@@ -50,8 +51,8 @@ public sealed class FetchPagePipelineTests
     [Fact]
     public async Task NotFound_IsPermanentHttpError()
     {
-        var (handler, _) = Create(new FakeSite());
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/missing", null), CancellationToken.None);
+        var (fetchService, _) = Create(new FakeSite());
+        var result = await fetchService.FetchAsync(new FetchRequested(Guid.NewGuid(), "fetch", "https://example.com/missing", null), CancellationToken.None);
         result.Error!.Code.ShouldBe(FetchingErrors.HttpError.Code);
     }
 
@@ -60,10 +61,10 @@ public sealed class FetchPagePipelineTests
     {
         var site = new FakeSite();
         site.Status["/flaky"] = HttpStatusCode.ServiceUnavailable;
-        var (handler, _) = Create(site);
+        var (fetchService, _) = Create(site);
 
         await Should.ThrowAsync<HttpRequestException>(() =>
-            handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/flaky", null), CancellationToken.None));
+            fetchService.FetchAsync(new FetchRequested(Guid.NewGuid(), "fetch", "https://example.com/flaky", null), CancellationToken.None));
     }
 
     [Fact]
@@ -71,9 +72,9 @@ public sealed class FetchPagePipelineTests
     {
         var site = new FakeSite();
         site.Pages["/short"] = Html("<p>Too short.</p>");
-        var (handler, _) = Create(site);
+        var (fetchService, _) = Create(site);
 
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/short", null), CancellationToken.None);
+        var result = await fetchService.FetchAsync(new FetchRequested(Guid.NewGuid(), "fetch", "https://example.com/short", null), CancellationToken.None);
         result.Error!.Code.ShouldBe(FetchingErrors.ContentTooShort.Code);
     }
 
@@ -82,9 +83,9 @@ public sealed class FetchPagePipelineTests
     {
         var site = new FakeSite();
         site.Pages["/doc.pdf"] = new ByteArrayContent([1, 2, 3]) { Headers = { ContentType = new("application/pdf") } };
-        var (handler, _) = Create(site);
+        var (fetchService, _) = Create(site);
 
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/doc.pdf", null), CancellationToken.None);
+        var result = await fetchService.FetchAsync(new FetchRequested(Guid.NewGuid(), "fetch", "https://example.com/doc.pdf", null), CancellationToken.None);
         result.Error!.Code.ShouldBe(FetchingErrors.UnsupportedContent.Code);
     }
 
@@ -94,20 +95,20 @@ public sealed class FetchPagePipelineTests
     [InlineData("/relative")]
     public async Task InvalidUrl_IsRejected(string url)
     {
-        var (handler, _) = Create(new FakeSite());
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), url, null), CancellationToken.None);
+        var (fetchService, _) = Create(new FakeSite());
+        var result = await fetchService.FetchAsync(new FetchRequested(Guid.NewGuid(), "fetch", url, null), CancellationToken.None);
         result.Error!.Code.ShouldBe(FetchingErrors.InvalidUrl.Code);
     }
 
     private static StringContent Html(string body) => new($"<html><body>{body}</body></html>", Encoding.UTF8, "text/html");
 
-    private static (FetchPageHandler Handler, InMemoryDocumentStore Store) Create(FakeSite site)
+    private static (PageFetchService Service, InMemoryDocumentStore Store) Create(FakeSite site)
     {
         var options = TestOptions.Of(new FetchingOptions { MinContentChars = 200 });
         var clients = new FakeHttpClientFactory(site);
         var time = new FakeTimeProvider();
         var store = new InMemoryDocumentStore();
-        var handler = new FetchPageHandler(
+        var fetchService = new PageFetchService(
             new RobotsPolicy(clients, options, time),
             new DomainThrottle(options),
             new PageDownloader(clients, options),
@@ -118,7 +119,7 @@ public sealed class FetchPagePipelineTests
             TestOptions.Of(new ContentLoggingOptions()),
             time,
             NullLoggerFactory.Instance);
-        return (handler, store);
+        return (fetchService, store);
     }
 
     private sealed class FakeSite : HttpMessageHandler

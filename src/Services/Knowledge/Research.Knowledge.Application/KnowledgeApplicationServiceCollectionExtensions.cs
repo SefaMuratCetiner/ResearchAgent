@@ -16,7 +16,7 @@ public static class KnowledgeApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.TryAddSingleton<KnowledgeMetrics>();
-        services.AddScoped<IRequestHandler<PrepareDocumentCommand, Result<PreparedDocument>>, PrepareDocumentHandler>();
+        services.AddScoped<DocumentEmbeddingService>();
         services.AddScoped<IRequestHandler<SearchPassagesQuery, Result<IReadOnlyList<PassageMatchDto>>>, SearchPassagesHandler>();
         services.AddScoped<IRequestValidator<SearchPassagesQuery>, SearchPassagesQueryValidator>();
 

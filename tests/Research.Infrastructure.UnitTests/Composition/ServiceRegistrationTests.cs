@@ -107,19 +107,19 @@ public sealed class ServiceRegistrationTests
         services.AddSearchApplication();
         services.AddSearchInfrastructure();
 
-        services.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<FetchPageCommand, Result<FetchedPage>>));
+        services.ShouldContain(static d => d.ServiceType == typeof(PageFetchService));
         services.ShouldContain(static d => d.ServiceType == typeof(IPageDownloader));
         services.ShouldContain(static d => d.ServiceType == typeof(IContentExtractor));
         services.ShouldContain(static d => d.ServiceType == typeof(IFetchedDocumentRepository));
 
-        services.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<PrepareDocumentCommand, Result<PreparedDocument>>));
+        services.ShouldContain(static d => d.ServiceType == typeof(DocumentEmbeddingService));
         services.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<SearchPassagesQuery, Result<IReadOnlyList<PassageMatchDto>>>));
         services.ShouldContain(static d => d.ServiceType == typeof(IRequestValidator<SearchPassagesQuery>));
         services.ShouldContain(static d => d.ServiceType == typeof(IKnowledgeRepository));
 
-        services.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<CreatePlanCommand, Result<ResearchPlan>>));
-        services.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<RunSearchCommand, Result<SearchResponse>>));
-        services.ShouldContain(static d => d.ServiceType == typeof(IRequestHandler<WriteReportCommand, Result<WrittenReport>>));
+        services.ShouldContain(static d => d.ServiceType == typeof(ResearchPlanningService));
+        services.ShouldContain(static d => d.ServiceType == typeof(WebSearchService));
+        services.ShouldContain(static d => d.ServiceType == typeof(ReportSynthesisService));
     }
 
     [Fact]

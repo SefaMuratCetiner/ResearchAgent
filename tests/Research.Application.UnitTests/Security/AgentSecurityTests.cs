@@ -129,7 +129,7 @@ public sealed class PlanOutputTests
     {
         var json = "{\"subQuestions\":[\"What is\\nX?\",\"see https://evil.example now\",\"  \",\"" + new string('y', 400) + "\"]}";
 
-        var plan = CreatePlanHandler.TryParse(json, max: 5);
+        var plan = ResearchPlanningService.TryParse(json, max: 5);
 
         plan.ShouldBe(["What is X?", new string('y', PlanningPrompts.MaxSubQuestionChars)]);
     }

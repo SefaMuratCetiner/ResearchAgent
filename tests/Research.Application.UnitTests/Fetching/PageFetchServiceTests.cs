@@ -7,13 +7,14 @@ using Research.Fetching.Application.Common.Interfaces;
 using Research.Fetching.Application.FetchPage;
 using Research.Fetching.Application.Observability;
 using Research.Fetching.Domain;
+using Research.Shared.Contracts.Fetching;
 using Research.Shared.Core.Logging;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Application.UnitTests.Fetching;
 
-/// <summary>Pure Application tests for <see cref="FetchPageHandler"/> using fakes of every I/O port.</summary>
-public sealed class FetchPageHandlerTests
+/// <summary>Pure Application tests for <see cref="PageFetchService"/> using fakes of every I/O port.</summary>
+public sealed class PageFetchServiceTests
 {
     private static readonly string LongParagraph = string.Join(' ', Enumerable.Repeat("Readable sentence about the topic.", 30));
 
@@ -21,9 +22,9 @@ public sealed class FetchPageHandlerTests
     public async Task ValidPage_IsExtractedAndStoredUnderContentHashKey()
     {
         var store = new InMemoryDocumentStore();
-        var handler = Create(store, extracted: new ExtractedContent("Page Title", LongParagraph));
+        var fetchService = Create(store, extracted: new ExtractedContent("Page Title", LongParagraph));
 
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/article", "Fallback"), CancellationToken.None);
+        var result = await fetchService.FetchAsync(new FetchRequested(Guid.NewGuid(), "fetch", "https://example.com/article", "Fallback"), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value!.Title.ShouldBe("Page Title");
@@ -35,9 +36,9 @@ public sealed class FetchPageHandlerTests
     public async Task RobotsDisallow_FailsWithoutDownloading()
     {
         var downloader = new FakePageDownloader(Result<DownloadedPage>.Success(SamplePage()));
-        var handler = Create(new InMemoryDocumentStore(), robotsAllowed: false, downloader: downloader);
+        var fetchService = Create(new InMemoryDocumentStore(), robotsAllowed: false, downloader: downloader);
 
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/article", null), CancellationToken.None);
+        var result = await fetchService.FetchAsync(new FetchRequested(Guid.NewGuid(), "fetch", "https://example.com/article", null), CancellationToken.None);
 
         result.Error!.Code.ShouldBe(FetchingErrors.FetchDisallowed.Code);
         downloader.Calls.ShouldBe(0);
@@ -47,12 +48,12 @@ public sealed class FetchPageHandlerTests
     public async Task BlockedDomain_FailsBeforeCheckingRobots()
     {
         var downloader = new FakePageDownloader(Result<DownloadedPage>.Success(SamplePage()));
-        var handler = Create(
+        var fetchService = Create(
             new InMemoryDocumentStore(),
             options: new FetchingOptions { BlockedDomains = ["blocked.example"] },
             downloader: downloader);
 
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://sub.blocked.example/page", null), CancellationToken.None);
+        var result = await fetchService.FetchAsync(new FetchRequested(Guid.NewGuid(), "fetch", "https://sub.blocked.example/page", null), CancellationToken.None);
 
         result.Error!.Code.ShouldBe(FetchingErrors.BlockedDomain.Code);
         downloader.Calls.ShouldBe(0);
@@ -62,9 +63,9 @@ public sealed class FetchPageHandlerTests
     public async Task DownloadFailure_PropagatesError()
     {
         var downloader = new FakePageDownloader(Result<DownloadedPage>.Failure(FetchingErrors.HttpError));
-        var handler = Create(new InMemoryDocumentStore(), downloader: downloader);
+        var fetchService = Create(new InMemoryDocumentStore(), downloader: downloader);
 
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/missing", null), CancellationToken.None);
+        var result = await fetchService.FetchAsync(new FetchRequested(Guid.NewGuid(), "fetch", "https://example.com/missing", null), CancellationToken.None);
 
         result.Error!.Code.ShouldBe(FetchingErrors.HttpError.Code);
     }
@@ -72,9 +73,9 @@ public sealed class FetchPageHandlerTests
     [Fact]
     public async Task ShortExtractedText_IsContentTooShort()
     {
-        var handler = Create(new InMemoryDocumentStore(), extracted: new ExtractedContent("T", "Too short."));
+        var fetchService = Create(new InMemoryDocumentStore(), extracted: new ExtractedContent("T", "Too short."));
 
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), "https://example.com/short", null), CancellationToken.None);
+        var result = await fetchService.FetchAsync(new FetchRequested(Guid.NewGuid(), "fetch", "https://example.com/short", null), CancellationToken.None);
 
         result.Error!.Code.ShouldBe(FetchingErrors.ContentTooShort.Code);
     }
@@ -85,15 +86,15 @@ public sealed class FetchPageHandlerTests
     [InlineData("/relative")]
     public async Task InvalidUrl_IsRejected(string url)
     {
-        var handler = Create(new InMemoryDocumentStore());
-        var result = await handler.HandleAsync(new FetchPageCommand(Guid.NewGuid(), url, null), CancellationToken.None);
+        var fetchService = Create(new InMemoryDocumentStore());
+        var result = await fetchService.FetchAsync(new FetchRequested(Guid.NewGuid(), "fetch", url, null), CancellationToken.None);
         result.Error!.Code.ShouldBe(FetchingErrors.InvalidUrl.Code);
     }
 
     private static DownloadedPage SamplePage(string url = "https://example.com/article") =>
         new(new Uri(url), "text/html", "utf-8", Encoding.UTF8.GetBytes("<p>body</p>"));
 
-    private static FetchPageHandler Create(
+    private static PageFetchService Create(
         InMemoryDocumentStore store,
         bool robotsAllowed = true,
         FakePageDownloader? downloader = null,

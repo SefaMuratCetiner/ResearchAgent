@@ -2,8 +2,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Research.Search.Application.Observability;
 using Research.Search.Domain.Policies;
+using Research.Shared.Contracts.Search;
 using Research.Shared.Core.Logging;
-using Research.Shared.Bus.Mediation;
 using Research.Shared.Core.Search;
 using Research.Shared.Core.Security;
 using Research.Shared.Kernel.Results;
@@ -14,7 +14,7 @@ namespace Research.Search.Application.RunSearch;
 /// Runs one search through the decorated provider, canonicalizes and deduplicates the URLs, and logs the query and
 /// every hit under <see cref="ContentLogCategories.Search"/>. Permanent provider rejections become failures.
 /// </summary>
-public sealed partial class RunSearchHandler : ICommandHandler<RunSearchCommand, Result<SearchResponse>>
+public sealed partial class WebSearchService
 {
     private readonly ISearchProvider _provider;
     private readonly SearchMetrics _metrics;
@@ -22,7 +22,7 @@ public sealed partial class RunSearchHandler : ICommandHandler<RunSearchCommand,
     private readonly TimeProvider _timeProvider;
     private readonly ILogger _contentLogger;
 
-    public RunSearchHandler(
+    public WebSearchService(
         ISearchProvider provider,
         SearchMetrics metrics,
         IOptionsSnapshot<SearchOptions> options,
@@ -37,20 +37,20 @@ public sealed partial class RunSearchHandler : ICommandHandler<RunSearchCommand,
         _contentLogger = loggerFactory.CreateLogger(ContentLogCategories.Search);
     }
 
-    public async Task<Result<SearchResponse>> HandleAsync(RunSearchCommand command, CancellationToken cancellationToken)
+    public async Task<Result<SearchResponse>> SearchAsync(SearchRequested message, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(command);
-        var maxResults = Math.Clamp(command.MaxResults, 1, _options.Value.MaxResults);
+        ArgumentNullException.ThrowIfNull(message);
+        var maxResults = Math.Clamp(message.MaxResults, 1, _options.Value.MaxResults);
         var started = _timeProvider.GetTimestamp();
 
         SearchResponse response;
         try
         {
-            response = await _provider.SearchAsync(new SearchQuery(command.Query, maxResults), cancellationToken).ConfigureAwait(false);
+            response = await _provider.SearchAsync(new SearchQuery(message.Query, maxResults), cancellationToken).ConfigureAwait(false);
         }
         catch (SearchProviderException exception)
         {
-            LogRejected(_contentLogger, command.Query, exception.Error.Code);
+            LogRejected(_contentLogger, message.Query, exception.Error.Code);
             return Result<SearchResponse>.Failure(exception.Error);
         }
 
@@ -76,10 +76,10 @@ public sealed partial class RunSearchHandler : ICommandHandler<RunSearchCommand,
         }
 
         _metrics.Searched(_provider.Name, _timeProvider.GetElapsedTime(started), hits.Count);
-        LogQuery(_contentLogger, command.Query, hits.Count, _provider.Name);
+        LogQuery(_contentLogger, message.Query, hits.Count, _provider.Name);
         foreach (var hit in hits)
         {
-            LogHit(_contentLogger, command.Query, hit.Url, hit.Title, hit.PageAge);
+            LogHit(_contentLogger, message.Query, hit.Url, hit.Title, hit.PageAge);
         }
 
         return Result<SearchResponse>.Success(response with { Hits = hits });

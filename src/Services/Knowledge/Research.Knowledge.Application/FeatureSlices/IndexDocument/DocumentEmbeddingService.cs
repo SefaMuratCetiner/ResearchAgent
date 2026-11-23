@@ -3,9 +3,9 @@ using Microsoft.Extensions.Options;
 using Research.Knowledge.Application.Common.Interfaces;
 using Research.Knowledge.Domain;
 using Research.Knowledge.Domain.Policies;
+using Research.Shared.Contracts.Fetching;
 using Research.Shared.Core.Documents;
 using Research.Shared.Core.Embeddings;
-using Research.Shared.Bus.Mediation;
 using Research.Shared.Kernel.Results;
 
 namespace Research.Knowledge.Application.IndexDocument;
@@ -14,25 +14,25 @@ namespace Research.Knowledge.Application.IndexDocument;
 /// The slow, transaction-free part of indexing: looks up the content hash, and for new content reads the blob, chunks
 /// it and embeds the passages in batches. The message handler writes the result in one short transaction.
 /// </summary>
-public sealed partial class PrepareDocumentHandler(
+public sealed partial class DocumentEmbeddingService(
     IKnowledgeRepository repository,
     IDocumentStore documents,
     IEmbeddingGenerator embeddings,
     IOptionsSnapshot<KnowledgeOptions> options,
     TimeProvider timeProvider,
-    ILogger<PrepareDocumentHandler> logger) : ICommandHandler<PrepareDocumentCommand, Result<PreparedDocument>>
+    ILogger<DocumentEmbeddingService> logger)
 {
-    public async Task<Result<PreparedDocument>> HandleAsync(PrepareDocumentCommand command, CancellationToken cancellationToken)
+    public async Task<Result<PreparedDocument>> EmbedAsync(DocumentFetched message, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(message);
 
-        var existing = await repository.FindDocumentAsync(command.ContentHash, embeddings.ModelId, cancellationToken).ConfigureAwait(false);
+        var existing = await repository.FindDocumentAsync(message.ContentHash, embeddings.ModelId, cancellationToken).ConfigureAwait(false);
         if (existing is not null)
         {
             return Result<PreparedDocument>.Success(PreparedDocument.From(existing));
         }
 
-        var text = await documents.ReadTextAsync(command.BlobKey, cancellationToken).ConfigureAwait(false);
+        var text = await documents.ReadTextAsync(message.BlobKey, cancellationToken).ConfigureAwait(false);
         if (text is null)
         {
             return Result<PreparedDocument>.Failure(KnowledgeErrors.DocumentMissing);
@@ -61,15 +61,15 @@ public sealed partial class PrepareDocumentHandler(
         var document = new KnowledgeDocument
         {
             Id = Guid.CreateVersion7(now),
-            ContentHash = command.ContentHash,
+            ContentHash = message.ContentHash,
             EmbeddingModel = embeddings.ModelId,
-            Url = command.Url,
-            Title = command.Title,
+            Url = message.Url,
+            Title = message.Title,
             CharacterCount = text.Length,
             PassageCount = passages.Count,
         };
 
-        LogPrepared(logger, command.Url, passages.Count, embeddings.ModelId);
+        LogPrepared(logger, message.Url, passages.Count, embeddings.ModelId);
         return Result<PreparedDocument>.Success(new PreparedDocument(null, document, passages));
     }
 

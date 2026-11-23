@@ -1,7 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Research.Planning.Application.CreatePlan;
-using Research.Shared.Bus.Mediation;
-using Research.Shared.Kernel.Results;
 
 namespace Research.Planning.Application;
 
@@ -12,7 +10,7 @@ public static class PlanningApplicationServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddScoped<IRequestHandler<CreatePlanCommand, Result<ResearchPlan>>, CreatePlanHandler>();
+        services.AddScoped<ResearchPlanningService>();
 
         return services;
     }

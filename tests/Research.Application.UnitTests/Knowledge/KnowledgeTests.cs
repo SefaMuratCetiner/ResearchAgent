@@ -8,6 +8,7 @@ using Research.Knowledge.Domain;
 using Research.Knowledge.Domain.Policies;
 using Research.Knowledge.Application.IndexDocument;
 using Research.Knowledge.Application.SearchPassages;
+using Research.Shared.Contracts.Fetching;
 
 namespace Research.Application.UnitTests.Knowledge;
 
@@ -130,16 +131,16 @@ public sealed class SearchPassagesHandlerTests
     }
 }
 
-public sealed class PrepareDocumentHandlerTests
+public sealed class DocumentEmbeddingServiceTests
 {
     [Fact]
     public async Task KnownContent_IsReusedWithoutReadingTheBlob()
     {
         var existing = new StoredDocument(Guid.NewGuid(), 7);
         var store = new InMemoryDocumentStore();
-        var handler = Create(new LookupRepository(existing), store);
+        var embeddingService = Create(new LookupRepository(existing), store);
 
-        var result = await handler.HandleAsync(new PrepareDocumentCommand("https://e.com", "t", "pages/missing.txt", "hash"), CancellationToken.None);
+        var result = await embeddingService.EmbedAsync(Fetched("pages/missing.txt", "hash"), CancellationToken.None);
 
         result.Value!.Existing.ShouldBe(existing);
         result.Value.NewDocument.ShouldBeNull();
@@ -148,8 +149,8 @@ public sealed class PrepareDocumentHandlerTests
     [Fact]
     public async Task MissingBlob_IsDocumentMissing()
     {
-        var handler = Create(new LookupRepository(null), new InMemoryDocumentStore());
-        var result = await handler.HandleAsync(new PrepareDocumentCommand("https://e.com", "t", "pages/missing.txt", "hash"), CancellationToken.None);
+        var embeddingService = Create(new LookupRepository(null), new InMemoryDocumentStore());
+        var result = await embeddingService.EmbedAsync(Fetched("pages/missing.txt", "hash"), CancellationToken.None);
         result.Error!.Code.ShouldBe(KnowledgeErrors.DocumentMissing.Code);
     }
 
@@ -159,9 +160,9 @@ public sealed class PrepareDocumentHandlerTests
         var store = new InMemoryDocumentStore();
         store.Blobs["pages/h.txt"] = string.Join("\n\n", Enumerable.Repeat("A paragraph of readable text about pgvector.", 80));
         var embeddings = new FakeEmbeddingGenerator();
-        var handler = Create(new LookupRepository(null), store, embeddings);
+        var embeddingService = Create(new LookupRepository(null), store, embeddings);
 
-        var result = await handler.HandleAsync(new PrepareDocumentCommand("https://e.com", "t", "pages/h.txt", "h"), CancellationToken.None);
+        var result = await embeddingService.EmbedAsync(Fetched("pages/h.txt", "h"), CancellationToken.None);
 
         var prepared = result.Value!;
         prepared.NewDocument!.EmbeddingModel.ShouldBe(embeddings.ModelId);
@@ -171,7 +172,10 @@ public sealed class PrepareDocumentHandlerTests
         prepared.Passages.ShouldAllBe(p => p.Embedding.Length == embeddings.Dimensions);
     }
 
-    private static PrepareDocumentHandler Create(
+    private static DocumentFetched Fetched(string blobKey, string contentHash) =>
+        new(Guid.NewGuid(), "index", Guid.NewGuid(), "https://e.com", "t", blobKey, contentHash, 0);
+
+    private static DocumentEmbeddingService Create(
         IKnowledgeRepository repository,
         InMemoryDocumentStore store,
         FakeEmbeddingGenerator? embeddings = null) => new(
@@ -180,7 +184,7 @@ public sealed class PrepareDocumentHandlerTests
             embeddings ?? new FakeEmbeddingGenerator(),
             TestOptions.Of(new KnowledgeOptions()),
             new FakeTimeProvider(),
-            NullLogger<PrepareDocumentHandler>.Instance);
+            NullLogger<DocumentEmbeddingService>.Instance);
 
     private sealed class LookupRepository(StoredDocument? existing) : IKnowledgeRepository
     {

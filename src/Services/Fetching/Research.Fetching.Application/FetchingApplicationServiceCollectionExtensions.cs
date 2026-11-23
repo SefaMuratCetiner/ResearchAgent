@@ -2,8 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Research.Fetching.Application.FetchPage;
 using Research.Fetching.Application.Observability;
-using Research.Shared.Bus.Mediation;
-using Research.Shared.Kernel.Results;
 
 namespace Research.Fetching.Application;
 
@@ -15,7 +13,7 @@ public static class FetchingApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.TryAddSingleton<FetchingMetrics>();
-        services.AddScoped<IRequestHandler<FetchPageCommand, Result<FetchedPage>>, FetchPageHandler>();
+        services.AddScoped<PageFetchService>();
 
         return services;
     }
